@@ -54,6 +54,27 @@ module.exports = {
         }
     },
 
+    editAgency: async (req, res) => {
+        try {
+          const agency = await Agency.findById(req.params.id);
+          const hashedPassword = await bcrypt.hashSync(req.body.password, 10);
+
+          const editAgency = {
+            name: req.body.name ? req.body.name : agency.name,
+            email: req.body.email ? req.body.email : agency.email,
+            password: req.body.password ? hashedPassword : agency.password,
+            phone: req.body.phone ? req.body.phone : agency.phone,
+            percentage: req.body.percentage ? req.body.percentage : agency.percentage
+          }
+    
+          const updatedAgency = await Agency.findByIdAndUpdate(req.params.id, editAgency);
+          res.status(200).json(updatedAgency);
+    
+        } catch (error) {
+          res.status(500).json("error -> " + error);
+        }
+      },
+
     getAll: async (req, res) => {
         try {
             const all = await Agency.find({}, "-password").sort({createdAt:'desc'});
