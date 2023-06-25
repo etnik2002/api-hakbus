@@ -56,12 +56,21 @@ module.exports = {
 
     getAll: async (req, res) => {
         try {
-          const all = await Agency.find({}, "-password"); 
-          res.status(200).json(all);
+            const all = await Agency.find({}, "-password").sort({createdAt:'desc'});
+            res.status(200).json(all)
         } catch (error) {
           res.status(500).send({ message: "Some error happened" + error });
         }
-      }
-      
+    },
+
+    deleteAgency: async (req, res) => {
+        try {
+          const deleteAgency = await Agency.findByIdAndRemove(req.params.id);
+          res.status(200).json({ message: "Agjencia u fshi me sukses"});
+        } catch (error) {
+          console.error(error);
+          res.status(500).json("error -> " + error);
+        }
+      },
 
 }
