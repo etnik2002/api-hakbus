@@ -94,4 +94,14 @@ module.exports = {
         }
       },
 
+      getSingleAgency : async (req,res) => {
+        try {
+            const agency = await Agency.findById(req.params.id);
+            res.status(200).json(agency)
+        } catch (error) {
+          res.status(500).json("error -> " + error);
+            
+        }
+      },
+
 }
