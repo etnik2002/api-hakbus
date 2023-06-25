@@ -31,9 +31,12 @@ module.exports = {
     loginAsAgency: async (req, res) => {
         try {
 
-            const agency = await Agency.findOne({ email: req.body.email }, {isActive:true} );
+            const agency = await Agency.findOne({ email: req.body.email });
             if (!agency) {
                 return res.status(401).json({ message: "Invalid Email " });
+            }
+            if(!agency.isActive) {
+                return res.status(403).json('Your account is deactivated, please contact us')
             }
                 
             const validPassword = await bcrypt.compare(
