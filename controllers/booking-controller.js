@@ -22,8 +22,12 @@ module.exports = {
             
             await newBooking.save().then( async () =>{
                 await Ticket.findByIdAndUpdate(req.params.ticketID, { $inc : {numberOfTickets: -1} });
+                await Agency.findByIdAndUpdate(
+                    req.params.sellerID,
+                    { $inc: { totalSales: 1, profit: req.body.price } }
+                  );
              });
-
+             
             res.status(200).json(newBooking);
 
         } catch (error) {

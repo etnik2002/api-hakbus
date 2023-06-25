@@ -7,6 +7,7 @@ module.exports = {
 
     createAgency :  async (req,res) => {
         try {
+            console.log(req.body)
             const hashedPassword = await bcrypt.hashSync(req.body.password, 10);
 
             const newAgency = new Agency({
@@ -19,7 +20,7 @@ module.exports = {
 
             await newAgency.save();
 
-            res.status(200).json(`successfully created the new agency -> ${newAgency}`);
+            res.status(200).json(newAgency);
 
         } catch (error) {
             console.error(error);
@@ -30,7 +31,7 @@ module.exports = {
     loginAsAgency: async (req, res) => {
         try {
 
-            const agency = await Agency.findOne({ email: req.body.email });
+            const agency = await Agency.findOne({ email: req.body.email }, {isActive:true} );
             if (!agency) {
                 return res.status(401).json({ message: "Invalid Email " });
             }
@@ -52,5 +53,14 @@ module.exports = {
             res.status(500).send({  message: "Some error happened" + error });
         }
     },
+
+    getAll : async (req,res) =>{
+        try {
+            const all = await Agency.find({})
+            res.status(200).json(all)
+        } catch (error) {
+            res.status(500).send({  message: "Some error happened" + error });
+        }
+    }
 
 }

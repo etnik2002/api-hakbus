@@ -22,6 +22,16 @@ const agencySchema = mongoose.Schema({
         type: Number,
         required: true
 
+    },
+    totalSales: {
+        type:Number,
+    },
+    profit: {
+        type:Number,
+    },
+    isActive: {
+        type:Boolean,
+        default: true,
     }
 } , { timestamps : true } )
 
