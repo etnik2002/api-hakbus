@@ -7,16 +7,18 @@ module.exports = {
 
     placeBooking : async (req,res) => {
         try {
+            const ticket = await Ticket.findById(req.params.ticketID);
 
             const newBooking = new Booking({
                 buyer: req.params.buyerID,
                 seller: req.params.sellerID,
                 ticket: req.params.ticketID,
-                price: req.body.price,
                 firstname: req.body.firstname,
                 lastname: req.body.lastname,
                 email: req.body.email,
                 phone: req.body.phone,
+                age: req.body.age,
+                price: req.body.age < 12 ? childrenPrice : price,
             })
 
             

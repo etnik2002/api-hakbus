@@ -13,6 +13,10 @@ const bookingSchema = mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Ticket'
     },
+    age: {
+        type: Number,
+        required: true
+    },
     price: {
         type: Number
     },

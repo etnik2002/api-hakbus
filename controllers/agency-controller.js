@@ -54,13 +54,14 @@ module.exports = {
         }
     },
 
-    getAll : async (req,res) =>{
+    getAll: async (req, res) => {
         try {
-            const all = await Agency.find({})
-            res.status(200).json(all)
+          const all = await Agency.find({}, "-password"); 
+          res.status(200).json(all);
         } catch (error) {
-            res.status(500).send({  message: "Some error happened" + error });
+          res.status(500).send({ message: "Some error happened" + error });
         }
-    }
+      }
+      
 
 }
