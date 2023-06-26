@@ -41,11 +41,21 @@ const ticketSchema = mongoose.Schema({
     type: Number,
     required: true
   },
-  lng: {
-    type: Number
+  startLng: {
+    type: Number,
+    required: true,
   },
-  lat: {
-    type: Number
+  startLat: {
+    type: Number,
+    required: true,
+  },
+  endLng: {
+    type: Number,
+    required: true
+  },
+  endLat: {
+    type: Number,
+    required: true,
   },
   agency: {
     type: mongoose.Schema.Types.ObjectId,
