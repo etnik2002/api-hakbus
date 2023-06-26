@@ -107,4 +107,22 @@ module.exports = {
         }
       },
 
+      getAgencyTickets : async(req,res) => {
+        try {
+          const tickets = await Ticket.find({agency:req.params.id}).sort({createdAt:'desc'})
+          res.status(200).json(tickets)
+        } catch (error) {
+          res.status(500).json("error -> " + error);
+        }
+      },
+
+      soldTickets : async(req,res) => {
+        try {
+          const soldTickets = await Booking.find({seller:req.params.id}).populate('buyer seller ticket')
+          res.status(200).json(soldTickets)
+        } catch (error) {
+          res.status(500).json("error -> " + error);
+        }
+      }
+
 }

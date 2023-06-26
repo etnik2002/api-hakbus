@@ -50,7 +50,7 @@ module.exports = {
 
     getSingleBooking: async(req,res) => {
         try {
-            const booking = await Booking.findById(req.params.id);
+            const booking = await Booking.findById(req.params.id).populate('seller');
             if(!booking) {
                 return res.status(404).json("Booking not found");
             }
