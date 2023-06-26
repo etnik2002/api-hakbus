@@ -61,30 +61,29 @@ module.exports = {
         }
     },
 
-    getMonthlyBookings : async (req,res) => {
+    getMonthlyBookings: async (req, res) => {
         try {
-            const allBookings = await Booking.find({}).lean();
-            const monthlyStats = {};
-
-            allBookings.forEach((booking) => {
-                const bookingDate = moment(booking.createdAt);
-                const monthYear = bookingDate.format("MMMM YYYY");
-                console.log(monthYear)
-
-                if(!monthlyStats[monthYear]) {
-                    monthlyStats[monthYear] = []
-                }
-                
-                monthlyStats[monthYear].push(booking);
-            })
-
-            res.status(200).json(monthlyStats);
-
+          const now = new Date();
+          const currentYear = now.getFullYear();
+          const monthlyBookings = [];
+      
+          for (let month = 0; month < 12; month++) {
+            const startDate = new Date(currentYear, month, 1);
+            const endDate = new Date(currentYear, month + 1, 0, 23, 59, 59);
+      
+            const bookings = await Booking.find({
+              createdAt: { $gte: startDate, $lte: endDate },
+            });
+      
+            monthlyBookings.push({ month: month + 1, bookings, length: bookings.length });
+          }
+      
+          res.status(200).json(monthlyBookings);
         } catch (error) {
-            res.status(500).json({ message: `Server error -> ${error}` })
-            
+          res.status(500).json({ message: `Server error -> ${error}` });
         }
-    },
+      },
+      
     getWeeklyBookings: async (req, res) => {
         try {
           console.log("start")
