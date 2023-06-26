@@ -9,7 +9,7 @@ module.exports = {
 
     registerTicket: async (req, res) => {
         try {
-    
+          
           const agencyID = req.params.agencyID;
     
           const newTicket = new Ticket({
@@ -24,8 +24,10 @@ module.exports = {
             price: req.body.price,
             childrenPrice: req.body.childrenPrice,
             agency: agencyID,
-            lat: req.body.lat,
-            lng: req.body.lng,
+            startLng: req.body.startLng,
+            startLat: req.body.startLat,
+            endLng: req.body.endLng,
+            endLat: req.body.endLat,
           });
     
           await newTicket.save();

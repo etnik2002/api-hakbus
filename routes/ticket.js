@@ -1,3 +1,6 @@
 const router = require("express").Router();
+const { registerTicket } = require("../controllers/ticket-controller");
 
-module.exports = router
+router.post('/create/:agencyID', registerTicket);
+
+module.exports = router;

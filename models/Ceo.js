@@ -17,6 +17,11 @@ const ceoSchema = mongoose.Schema({
     otp: {
         type: Number
     },
+    totalProfit: {
+        type: Number,
+        
+    }
+
 }, { timestamps: true })
 
 ceoSchema.methods.generateAuthToken = function (data) {

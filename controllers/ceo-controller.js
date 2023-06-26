@@ -59,14 +59,9 @@ module.exports = {
           const allTickets = await Ticket.find({});
           const soldTickets = await Booking.find({});
           const activeCities = await City.find({});
-
-          var totalProfit = 0;
-          allAgencies.map((a)=>{
-            if(a.profit>0){
-              totalProfit+=a.profit;
-            }
-          })
-          res.status(200).json({allAgencies:allAgencies.length,allTickets:allTickets.length,soldTickets:soldTickets.length,totalProfit:totalProfit,activeCities:activeCities.length} )
+          const ceo = await Ceo.find({});
+         
+          res.status(200).json({allAgencies:allAgencies.length,allTickets:allTickets.length,soldTickets:soldTickets.length,totalProfit:ceo[0].totalProfit,activeCities:activeCities.length} )
         } catch (error) {
           res.status(500).send({ message: "Some error happened" + error });
         }
