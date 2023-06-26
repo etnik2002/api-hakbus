@@ -55,13 +55,14 @@ module.exports = {
 
       getStats : async(req,res) => {
         try {
-          const allAgencies = await Agency.find({});
+          const allAgencies = await Agency.find({}).sort({totalSales: -1}).limit(3);
+          console.log(allAgencies)
           const allTickets = await Ticket.find({});
-          const soldTickets = await Booking.find({});
+          const soldTickets = await Booking.countDocuments();
           const activeCities = await City.find({});
           const ceo = await Ceo.find({});
-         
-          res.status(200).json({allAgencies:allAgencies.length,allTickets:allTickets.length,soldTickets:soldTickets.length,totalProfit:ceo[0].totalProfit,activeCities:activeCities.length} )
+         console.log(soldTickets)
+          res.status(200).json({allAgencies:allAgencies,allTickets:allTickets.length,soldTickets:soldTickets,totalProfit:ceo[0].totalProfit,activeCities:activeCities.length} )
         } catch (error) {
           res.status(500).send({ message: "Some error happened" + error });
         }
