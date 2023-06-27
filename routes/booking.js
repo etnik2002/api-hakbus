@@ -8,7 +8,4 @@ router.post('/create/:buyerID/:sellerID/:ticketID', placeBooking);
 
 router.get('/:id', getSingleBooking);
 
-
-
-
 module.exports = router;
