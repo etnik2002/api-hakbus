@@ -48,6 +48,20 @@ module.exports = {
           res.status(500).json({ message: "Internal error -> " + error });
         }
       },
+      
+      getAllTicket: async (req,res)=>{ 
+        try {
+          const page= req.query.page || 0;
+          const size= req.query.size || 10;
+          const all = await Ticket.find({})
+
+            const allTickets = await Ticket.find({}).skip(page*size).limit(size).populate('agency');
+            res.status(200).json({allTickets,all:all.length});
+        } catch (error) {
+          console.log(error)
+          res.status(500).json({ message: "Internal error -> " + error });
+        }
+      },
 
       getSearchedTickets: async (req, res) => {
         try {
