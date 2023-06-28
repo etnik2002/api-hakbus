@@ -17,7 +17,7 @@ module.exports = {
             to: req.body.to,
             date: req.body.date,
             returnDate: req.body.returnDate,
-            time: req.body.from,
+            time: req.body.time,
             arrivalTime: req.body.arrivalTime,
             returnArrivalDate: req.body.returnArrivalDate,
             arrivalDate: req.body.arrivalDate,
