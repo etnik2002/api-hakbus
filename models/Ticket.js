@@ -21,6 +21,18 @@ const ticketSchema = mongoose.Schema({
     type: String,
     required: true
   },
+  arrivalTime: {
+    type: String,
+  },
+  returnArrivalTime: {
+    type:String,
+  },
+  arrivalDate: {
+    type: String,
+  },
+  returnArrivalDate: {
+    type:String,
+  },
   returnTime: {
     type: String
   },

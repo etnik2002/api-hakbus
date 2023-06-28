@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const { registerTicket, editTicket, deleteTicket, getSingleTicket, getAllTicket} = require("../controllers/ticket-controller");
+const { registerTicket, editTicket, deleteTicket, getSingleTicket, getAllTicket, getSearchedTickets} = require("../controllers/ticket-controller");
 
 router.get('/all', getAllTicket)
 
@@ -10,6 +10,8 @@ router.post('/edit/:agencyID', editTicket);
 router.post('/delete/:id',deleteTicket)
 
 router.get('/:id', getSingleTicket)
+
+router.get('/', getSearchedTickets)
 
 
 module.exports = router;
