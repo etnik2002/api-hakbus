@@ -35,6 +35,9 @@ const bookingSchema = mongoose.Schema({
     isScanned: {
         type: Boolean,
         default: false
+    },
+    bookingDate: {
+        type: String
     }
 } , { timestamps : true });
 

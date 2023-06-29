@@ -33,6 +33,7 @@ module.exports = {
                 email: req.body.email,
                 phone: req.body.phone,
                 age: req.body.age,
+                bookingDate: moment().format("DD-M-YYYY"),
                 price: price,
                 
             });
@@ -74,7 +75,7 @@ module.exports = {
             return res.status(200).json("Please fill the fields");
           } else {
             const filteredBookings = await Booking.find({
-              createdAt: { $gte: req.query.from, $lte: req.query.to },
+              bookingDate: { $gte: req.query.from, $lte: req.query.to },
               seller: req.query.agency
             }).populate('seller buyer ticket');
             res.status(200).json(filteredBookings);
@@ -85,23 +86,23 @@ module.exports = {
       },
       
       
-      getBookingsFromDateRange: async (req,res) => {
+      getBookingsFromDateRange: async (req, res) => {
         try {
-          if(req.query.from == "" && req.query.to == "") {
+          if (req.query.from === "" && req.query.to === "") {
             const filteredBookings = await Booking.find().populate('seller buyer ticket');
             res.status(200).json(filteredBookings);
           } else {
-            
+           
             const filteredBookings = await Booking.find({
-              createdAt: { $gte: req.query.from, $lte: req.query.to }
+              bookingDate: { $gte: fromDate, $lte: toDate }
             }).populate('seller buyer ticket');
             res.status(200).json(filteredBookings);
           }
-
         } catch (error) {
           res.status(500).json({ message: `Server error -> ${error}` });
         }
       },
+      
 
     getSingleBooking: async(req,res) => {
         try {
