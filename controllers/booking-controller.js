@@ -4,18 +4,25 @@ const Ticket = require("../models/Ticket");
 const moment = require("moment");
 const Agency = require("../models/Agency");
 const Ceo = require("../models/Ceo");
+const { sendOrderToUsersEmail } = require("../helpers/mail");
+const User = require("../models/User");
 
 module.exports = {
 
     placeBooking: async (req, res) => {
         try {
+
+            const user = await User.findById(req.params.buyerID);
             const ticket = await Ticket.findById(req.params.ticketID);
-            const price = req.body.age <= 12 ? ticket.childrenPrice : ticket.price;
             const agency = await Agency.findById(req.params.sellerID);
+            const price = req.body.age <= 12 ? ticket.childrenPrice : ticket.price;
 
             const agencyPercentage = agency.percentage / 100;
             const agencyEarnings = price - price * agencyPercentage;
             const ourEarnings = price - agencyEarnings;
+
+            const sendEmailNotification = req.body.sendEmailNotification;
+            const sendSmsNotification = req.body.sendSmsNotification;
 
             const newBooking = new Booking({
                 buyer: req.params.buyerID,
@@ -27,6 +34,7 @@ module.exports = {
                 phone: req.body.phone,
                 age: req.body.age,
                 price: price,
+                
             });
         
             await newBooking.save().then(async () => {
@@ -40,6 +48,8 @@ module.exports = {
                 await Ceo.findByIdAndUpdate('6498755c438b9ec3237688ca', { $inc: { totalProfit: ourEarnings }});
             });
 
+            const customersName = `${req.body.firstname} ${req.body.lastname}`;
+            await sendOrderToUsersEmail(user.email, ticket, user._id, user.name, customersName);
             
             res.status(200).json(newBooking);
             } catch (error) {
