@@ -53,10 +53,55 @@ module.exports = {
             
             res.status(200).json(newBooking);
             } catch (error) {
-            res.status(500).json({ message: `Server error -> ${error}` });
+              res.status(500).json({ message: `Server error -> ${error}` });
             }
       },
       
+      getAllBookings: async (req,res)=>{
+        try {
+          const allBookings = await Booking.find({}).populate('seller buyer ticket');
+          res.status(200).json(allBookings)
+        } catch (error) {
+          res.status(500).json({ message: `Server error -> ${error}` });
+          
+        }
+
+      },
+
+      getFilteredBookings: async (req, res) => {
+        try {
+          if (req.query.agency == "" || req.query.from == "" || req.query.to == "") {
+            return res.status(200).json("Please fill the fields");
+          } else {
+            const filteredBookings = await Booking.find({
+              createdAt: { $gte: req.query.from, $lte: req.query.to },
+              seller: req.query.agency
+            }).populate('seller buyer ticket');
+            res.status(200).json(filteredBookings);
+          }
+        } catch (error) {
+          res.status(500).json({ message: `Server error -> ${error}` });
+        }
+      },
+      
+      
+      getBookingsFromDateRange: async (req,res) => {
+        try {
+          if(req.query.from == "" && req.query.to == "") {
+            const filteredBookings = await Booking.find().populate('seller buyer ticket');
+            res.status(200).json(filteredBookings);
+          } else {
+            
+            const filteredBookings = await Booking.find({
+              createdAt: { $gte: req.query.from, $lte: req.query.to }
+            }).populate('seller buyer ticket');
+            res.status(200).json(filteredBookings);
+          }
+
+        } catch (error) {
+          res.status(500).json({ message: `Server error -> ${error}` });
+        }
+      },
 
     getSingleBooking: async(req,res) => {
         try {
