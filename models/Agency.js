@@ -32,7 +32,10 @@ const agencySchema = mongoose.Schema({
     isActive: {
         type:Boolean,
         default: true,
-    }
+    },
+    debt: {
+        type:Number,
+    },
 } , { timestamps : true } )
 
 agencySchema.methods.generateAuthToken = function (data) {

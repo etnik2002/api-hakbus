@@ -116,13 +116,27 @@ module.exports = {
         }
       },
 
-      soldTickets : async(req,res) => {
+      soldTickets : async(req, res) => {
         try {
-          const soldTickets = await Booking.find({seller:req.params.id}).populate('buyer seller ticket')
+          const soldTickets = await Booking.find({seller:req.params.id}).populate({
+            path: 'seller buyer ticket',
+            select: '-password' 
+          });
           res.status(200).json(soldTickets)
         } catch (error) {
           res.status(500).json("error -> " + error);
         }
-      }
+      },
+      getAgenciesInDebt: async (req, res) => {
+        try {
+            const agenciesInDebt = await Agency.find({ debt: { $exists: true, $gt: 0 } }).select('-password');
+            console.log(agenciesInDebt);
+            res.status(200).json(agenciesInDebt);
+        } catch (error) {
+            res.status(500).json("error -> " + error);
+        }
+    },
+    
+    
 
 }

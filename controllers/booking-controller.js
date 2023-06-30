@@ -6,6 +6,8 @@ const Agency = require("../models/Agency");
 const Ceo = require("../models/Ceo");
 const { sendOrderToUsersEmail } = require("../helpers/mail");
 const User = require("../models/User");
+const mongoose = require('mongoose');
+
 
 module.exports = {
 
@@ -60,7 +62,10 @@ module.exports = {
       
       getAllBookings: async (req,res)=>{
         try {
-          const allBookings = await Booking.find({}).populate('seller buyer ticket');
+          const allBookings = await Booking.find({}).populate({
+            path: 'seller buyer ticket',
+            select: '-password' 
+          });
           res.status(200).json(allBookings)
         } catch (error) {
           res.status(500).json({ message: `Server error -> ${error}` });
@@ -71,13 +76,21 @@ module.exports = {
 
       getFilteredBookings: async (req, res) => {
         try {
-          if (req.query.agency == "" || req.query.from == "" || req.query.to == "") {
-            return res.status(200).json("Please fill the fields");
+          if (req.query.agency === '' || req.query.from === '' || req.query.to === '') {
+            return res.status(500).json('Please fill in all the fields');
           } else {
+            const fromDate = moment(req.query.from, 'DD-MM-YYYY').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]'); 
+            const toDate = moment(req.query.to, 'DD-MM-YYYY').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]'); 
+            console.log(fromDate, toDate)
+
             const filteredBookings = await Booking.find({
-              bookingDate: { $gte: req.query.from, $lte: req.query.to },
+              createdAt: { $gte: fromDate, $lte: toDate },
               seller: req.query.agency
-            }).populate('seller buyer ticket');
+            }).populate({
+              path: 'seller buyer ticket',
+              select: '-password' 
+            });
+      
             res.status(200).json(filteredBookings);
           }
         } catch (error) {
@@ -89,24 +102,38 @@ module.exports = {
       getBookingsFromDateRange: async (req, res) => {
         try {
           if (req.query.from === "" && req.query.to === "") {
-            const filteredBookings = await Booking.find().populate('seller buyer ticket');
+            const filteredBookings = await Booking.find()
+              .populate({
+                path: 'seller buyer ticket',
+                select: '-password' 
+              });
             res.status(200).json(filteredBookings);
           } else {
-           
+            const fromDate = moment(req.query.from, 'DD-MM-YYYY').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
+            const toDate = moment(req.query.to, 'DD-MM-YYYY').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
+      
             const filteredBookings = await Booking.find({
-              bookingDate: { $gte: fromDate, $lte: toDate }
-            }).populate('seller buyer ticket');
+              createdAt: { $gte: fromDate, $lte: toDate }
+            }).populate({
+              path: 'seller buyer ticket',
+              select: '-password' 
+            });
             res.status(200).json(filteredBookings);
           }
         } catch (error) {
+          console.log(error);
           res.status(500).json({ message: `Server error -> ${error}` });
         }
       },
       
+      
 
     getSingleBooking: async(req,res) => {
         try {
-            const booking = await Booking.findById(req.params.id).populate('seller');
+            const booking = await Booking.findById(req.params.id).populate({
+              path: 'seller',
+              select: '-password' 
+            });
             if(!booking) {
                 return res.status(404).json("Booking not found");
             }
