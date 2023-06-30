@@ -1,3 +1,4 @@
+const Booking = require('../models/Booking');
 const User = require('../models/User');
 const bcrypt = require("bcrypt")
 
@@ -52,8 +53,12 @@ module.exports = {
       
       getUserProfile: async (req,res) => {
         try {
+          const userBookings = await Booking.find({buyer:req.params.id}).populate({
+            path:'ticket buyer seller',
+            select: '-password'
+          })
           const user = await User.findById(req.params.id);
-          res.status(200).json(user);
+          res.status(200).json({user:user,userBookings:userBookings});
         } catch (error) {
           res.status(500).send({ message: "Some error happened" + error });
         }
