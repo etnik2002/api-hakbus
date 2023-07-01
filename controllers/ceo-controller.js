@@ -56,12 +56,12 @@ module.exports = {
       getStats : async(req,res) => {
         try {
           const allAgencies = await Agency.find({}).sort({totalSales: -1}).limit(3);
-          const totalAgencies = await Agency.find({});
-          const allTickets = await Ticket.find({});
+          const totalAgencies = await Agency.find({}).sort({createdAt: 'desc'});
+          const allTickets = await Ticket.find({}).sort({createdAt: 'desc'});
           const soldTickets = await Booking.countDocuments().populate({
             path: 'seller buyer ticket',
             select: '-password' 
-          });;
+          }).sort({createdAt: 'desc'});
           const activeCities = await City.find({});
           const ceo = await Ceo.find({});
          console.log(soldTickets)

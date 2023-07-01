@@ -59,7 +59,7 @@ module.exports = {
           const size= req.query.size || 10;
           const all = await Ticket.find({})
 
-            const allTickets = await Ticket.find({}).skip(page*size).limit(size).populate('agency');
+            const allTickets = await Ticket.find({}).skip(page*size).limit(size).populate('agency').sort({createdAt: 'desc'});
             res.status(200).json({allTickets,all:all.length});
         } catch (error) {
           console.log(error)
@@ -76,7 +76,9 @@ module.exports = {
           let type = req.query.type;
           let price = req.body.price;
           let childrenPrice = req.body.childrenPrice;
-      
+          
+          const dateNow = moment().format('DD-MM-YYYY');
+
           const searchParams = {};
       
           if (from) searchParams.from = from;
@@ -98,7 +100,7 @@ module.exports = {
           const allTickets = await Ticket.find({
             ...ticketQuery,
             ...searchParams,
-            // createdAt: {$gte:new Date().getTime()}
+            date: { $gte: dateNow }
           })
             .populate({
               path: 'agency',
@@ -106,6 +108,8 @@ module.exports = {
             })
             .sort({ createdAt: 'desc' });
           
+            console.log(allTickets[0].date, dateNow)
+
           const filteredTickets = allTickets.filter((ticket) =>
             ticket.agency && ticket.agency.isActive
           );
@@ -130,8 +134,13 @@ module.exports = {
 
       editTicket: async (req, res) => {
         try {
+          console.log(req.params.id)
           const ticket = await Ticket.findById(req.params.id);
-    
+
+          if (!ticket) {
+            return res.status(404).json("Ticket not found");
+          }
+      
           const editTicket = {
             from: req.body.from ? req.body.from : ticket.from,
             to: req.body.to ? req.body.to : ticket.to,
@@ -145,13 +154,15 @@ module.exports = {
             agency: ticket.agency,
             type: req.body.type ? req.body.type : ticket.type,
           }
-    
+      
           const updatedTicket = await Ticket.findByIdAndUpdate(req.params.id, editTicket);
           res.status(200).json(updatedTicket);
-    
+      
         } catch (error) {
-          res.status(500).json("error -> " + error);
+          console.log(error);
+          res.status(500).json("Error -> " + error);
         }
       },
+      
 
 }

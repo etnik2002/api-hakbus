@@ -5,7 +5,7 @@ router.get('/all', getAllTicket)
 
 router.post('/create/:agencyID', registerTicket);
 
-router.post('/edit/:agencyID', editTicket);
+router.post('/edit/:id', editTicket);
 
 router.post('/delete/:id',deleteTicket)
 
