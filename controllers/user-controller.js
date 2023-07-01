@@ -56,7 +56,7 @@ module.exports = {
           const userBookings = await Booking.find({buyer:req.params.id}).populate({
             path:'ticket buyer seller',
             select: '-password'
-          })
+          }).sort({createdAt: 'desc'})
           const user = await User.findById(req.params.id);
           res.status(200).json({user:user,userBookings:userBookings});
         } catch (error) {

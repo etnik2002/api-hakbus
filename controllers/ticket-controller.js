@@ -69,22 +69,6 @@ module.exports = {
 
       getSearchedTickets: async (req, res) => {
         try {
-          // console.log(req.connection.remoteAddress)
-          // const authHeader = req.headers.authorization;
-    
-          // let user;
-          // if (authHeader) {
-          //   const token = authHeader.split(' ')[1];
-          //   let decoded;
-          //   decoded = jwt.verify(token, process.env.OUR_SECRET);
-          //   user = decoded.data;
-          //   const searchedFrom = req.query.from.toLowerCase();
-    
-          //   if (searchedFrom && user && !user.searched.includes(searchedFrom)) {
-          //     await User.findByIdAndUpdate(user._id, { $push: { searched: searchedFrom } });
-          //   }
-          // }
-    
           let from = req.query.from;
           let to = req.query.to;
           let date = req.query.date;
@@ -92,9 +76,9 @@ module.exports = {
           let type = req.query.type;
           let price = req.body.price;
           let childrenPrice = req.body.childrenPrice;
-
+      
           const searchParams = {};
-    
+      
           if (from) searchParams.from = from;
           if (to) searchParams.to = to;
           if (date) searchParams.date = date;
@@ -102,7 +86,7 @@ module.exports = {
           if (type) searchParams.type = type;
           if (price) searchParams.price = price;
           if (childrenPrice) searchParams.childrenPrice = childrenPrice;
-    
+      
           const searchFields = ['from', 'to', 'type'];
           const textQuery = searchFields
             .filter((field) => searchParams[field])
@@ -110,20 +94,29 @@ module.exports = {
               [field]: { $regex: searchParams[field], $options: 'i' },
             }));
           const ticketQuery = textQuery.length > 0 ? { $or: textQuery } : {};
-    
+      
           const allTickets = await Ticket.find({
             ...ticketQuery,
             ...searchParams,
             // createdAt: {$gte:new Date().getTime()}
-          })      
-            .populate('agency')
+          })
+            .populate({
+              path: 'agency',
+              match: { isActive: true }
+            })
             .sort({ createdAt: 'desc' });
-          res.status(200).json(allTickets);
+          
+          const filteredTickets = allTickets.filter((ticket) =>
+            ticket.agency && ticket.agency.isActive
+          );
+      
+          res.status(200).json(filteredTickets);
         } catch (error) {
           console.error(error);
           res.status(500).json({ message: 'Internal server error -> ' + error });
         }
       },
+      
 
       deleteTicket: async (req, res) => {
         try {

@@ -131,7 +131,7 @@ module.exports = {
     getSingleBooking: async(req,res) => {
         try {
             const booking = await Booking.findById(req.params.id).populate({
-              path: 'seller',
+              path: 'seller ticket buyer',
               select: '-password' 
             });
             if(!booking) {
