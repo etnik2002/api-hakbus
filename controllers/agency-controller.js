@@ -2,6 +2,7 @@ const Agency = require("../models/Agency");
 const Ticket = require("../models/Ticket");
 const Booking = require("../models/Booking");
 const bcrypt = require("bcrypt");
+const Token = require("../models/ScannerToken")
 
 module.exports = {
 
@@ -137,6 +138,57 @@ module.exports = {
         }
     },
     
-    
+    scanBooking : async (req,res) => {
+      try {
+          const booking = await Booking.findById(req.params.bookingID);
+          console.log(booking);
+          
+          if(booking.seller != req.params.agencyID) {
+              return res.status(401).json("You are not authorized to scan this boking!");
+          }
+          if(booking.isScanned){
+              return res.status(403).json("Booking is already scanned or you are not authorized.")
+          } else {
+              await Order.findByIdAndUpdate(req.params.bookingID, { $set: { isScanned: true }});
+          }
+
+          res.status(200).json( "Booking scanned successfully!" );
+  
+      } catch (error) {
+          res.status(500).json(error);   
+      }
+  },
+
+  createScanningToken : async (req,res) => {
+      try {
+          const token = new Token({token: req.params.bookingID})
+          await token.save()
+          res.status(200).json("token created");
+          
+      } catch (error) {
+          res.status(500).json(error)
+      }
+  },
+
+  getToken : async (req,res) => {
+      try {
+          const all = await Token.find({});
+          var token = all[all.length -1];
+          res.status(200).json(token)
+          
+      } catch (error) {
+          res.status(500).json(error)
+      }
+  },
+
+  deleteToken: async (req,res) => {
+      try {
+          await Token.findByIdAndRemove(req.params.token);
+          res.status(200).json("deleted")
+
+      } catch (error) {
+          res.status(500).json(error)
+      }
+  },
 
 }

@@ -1,9 +1,17 @@
 const router = require("express").Router();
-const { createAgency, loginAsAgency, getAll, deleteAgency, editAgency, getAgenciesInDebt, getSingleAgency, getAgencyTickets, soldTickets } = require("../controllers/agency-controller");
+const { createAgency, loginAsAgency, getAll, deleteAgency, editAgency, getAgenciesInDebt, getSingleAgency, getAgencyTickets, soldTickets, scanBooking, createScanningToken, getToken, deleteToken } = require("../controllers/agency-controller");
 
 router.get('/debt', getAgenciesInDebt);
 
 router.post('/create', createAgency);
+
+router.post('/scan/:bookingID/:agencyID', scanBooking)
+
+router.post('/create/token/:bookingID', createScanningToken);
+
+router.get('/get-token', getToken);
+
+router.post('/delete-token/:token', deleteToken);
 
 router.post('/login', loginAsAgency);
 
