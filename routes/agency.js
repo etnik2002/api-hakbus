@@ -7,7 +7,7 @@ router.post('/create', createAgency);
 
 router.post('/scan/:bookingID/:agencyID', scanBooking)
 
-router.post('/create/token/:bookingID', createScanningToken);
+router.post('/create/token/:bookingID/:ticketID', createScanningToken);
 
 router.get('/get-token', getToken);
 
