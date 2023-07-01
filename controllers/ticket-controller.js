@@ -69,6 +69,7 @@ module.exports = {
 
       getSearchedTickets: async (req, res) => {
         try {
+          console.log(req.query)
           let from = req.query.from;
           let to = req.query.to;
           let date = req.query.date;
@@ -89,7 +90,7 @@ module.exports = {
           if (price) searchParams.price = price;
           if (childrenPrice) searchParams.childrenPrice = childrenPrice;
       
-          const searchFields = ['from', 'to', 'type'];
+          const searchFields = ['from', 'to', 'type', 'date', 'returnDate'];
           const textQuery = searchFields
             .filter((field) => searchParams[field])
             .map((field) => ({
@@ -108,7 +109,6 @@ module.exports = {
             })
             .sort({ createdAt: 'desc' });
           
-            console.log(allTickets[0].date, dateNow)
 
           const filteredTickets = allTickets.filter((ticket) =>
             ticket.agency && ticket.agency.isActive
@@ -116,7 +116,6 @@ module.exports = {
       
           res.status(200).json(filteredTickets);
         } catch (error) {
-          console.error(error);
           res.status(500).json({ message: 'Internal server error -> ' + error });
         }
       },
