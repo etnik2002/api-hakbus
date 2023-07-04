@@ -162,7 +162,7 @@ module.exports = {
 
   createScanningToken : async (req,res) => {
       try {
-          const token = new Token({token: req.params.bookingID})
+          const token = new Token({token: req.params.bookingID,ticket:req.params.ticketID})
           await token.save()
           res.status(200).json("token created");
           
