@@ -36,7 +36,10 @@ const agencySchema = mongoose.Schema({
     debt: {
         type:Number,
     },
-    pl: {
+    idc: {
+        type: String,
+    },
+    scc: {
         type: String,
     }
 } , { timestamps : true } )

@@ -17,7 +17,8 @@ module.exports = {
                 password: hashedPassword,
                 phone: req.body.phone,
                 percentage: req.body.percentage,
-                pl: req.body.pl,
+                idc: req.body.idc,
+                scc: req.body.scc,
             })
 
             await newAgency.save();
