@@ -7,14 +7,15 @@ const Ceo = require("../models/Ceo");
 const { sendOrderToUsersEmail } = require("../helpers/mail");
 const User = require("../models/User");
 const mongoose = require('mongoose');
-
+const stripe = require('stripe');
+require("dotenv").config();
 
 module.exports = {
 
     placeBooking: async (req, res) => {
         try {
-
-            const user = await User.findById(req.params.buyerID);
+            console.log({query: req.params, body: req.body})
+            const user = await User.findById(req.query.buyerID);
             const ticket = await Ticket.findById(req.params.ticketID);
             const agency = await Agency.findById(req.params.sellerID);
             const price = req.body.age <= 12 ? ticket.childrenPrice : ticket.price;
@@ -25,7 +26,7 @@ module.exports = {
 
             const sendEmailNotification = req.body.sendEmailNotification;
             const sendSmsNotification = req.body.sendSmsNotification;
-
+            console.log("before booking")
             const newBooking = new Booking({
                 buyer: req.params.buyerID,
                 seller: req.params.sellerID,
@@ -37,8 +38,8 @@ module.exports = {
                 age: req.body.age,
                 bookingDate: moment().format("DD-M-YYYY"),
                 price: price,
-                
             });
+            console.log(newBooking, "AFTER BOOKING")
         
             await newBooking.save().then(async () => {
                 await Ticket.findByIdAndUpdate(req.params.ticketID, {
@@ -51,14 +52,92 @@ module.exports = {
                 await Ceo.findByIdAndUpdate('6498755c438b9ec3237688ca', { $inc: { totalProfit: ourEarnings }});
             });
 
+            console.log("before send email")
             const customersName = `${req.body.firstname} ${req.body.lastname}`;
-            await sendOrderToUsersEmail(user.email, ticket, user._id, user.name, customersName);
-            
+            // await sendOrderToUsersEmail(user.email, ticket, user._id, user.name, customersName);
+            console.log("after send email")
+            console.log(newBooking)
             res.status(200).json(newBooking);
             } catch (error) {
+              console.log(error)
               res.status(500).json({ message: `Server error -> ${error}` });
             }
       },
+
+
+      payBooking: async (req, res) => {
+        try {
+          console.log("start");
+          const DOMAIN = "http://localhost:4462";
+          const user = await User.findById(req.params.buyerID);
+          const ticket = await Ticket.findById(req.params.ticketID).populate('agency');
+          const agency = await Agency.find({});
+          const price = req.body.age <= 12 ? ticket.childrenPrice : ticket.price;
+          const API_KEY = agency.pls;
+          
+          const agencyPercentage = agency.percentage / 100;
+          const agencyEarnings = price - price * agencyPercentage;
+          const ourEarnings = price - agencyEarnings;
+      
+          const sendEmailNotification = req.body.sendEmailNotification;
+          const sendSmsNotification = req.body.sendSmsNotification;
+          const stripeInstance = stripe(API_KEY);
+          
+          try {
+            const { token } = req.body;
+      
+            const customer = await stripeInstance.customers.create({
+              source: token.id,
+              email: token.email,
+            });
+      
+            const charge = await stripeInstance.charges.create({
+              amount: price,
+              currency: "eur",
+              customer: customer.id,
+              receipt_email: token.email,
+              description: "Hak Bus Ticket"
+            });
+      
+      
+          } catch (error) {
+            console.error(error);
+            res.status(500).json({ error: 'Failed to create checkout session -> ' + error });
+          }
+      
+          const newBooking = new Booking({
+            buyer: req.params.buyerID,
+            seller: req.params.sellerID,
+            ticket: req.params.ticketID,
+            firstname: req.body.firstname,
+            lastname: req.body.lastname,
+            email: req.body.email,
+            phone: req.body.phone,
+            age: req.body.age,
+            bookingDate: moment().format("DD-M-YYYY"),
+            price: price,
+          });
+      
+          await newBooking.save().then(async () => {
+            await Ticket.findByIdAndUpdate(req.params.ticketID, {
+              $inc: { numberOfTickets: -1 },
+            });
+            await Agency.findByIdAndUpdate(req.params.sellerID, {
+              $inc: { totalSales: 1, profit: agencyEarnings },
+            });
+      
+            await Ceo.findByIdAndUpdate('6498755c438b9ec3237688ca', { $inc: { totalProfit: ourEarnings } });
+          });
+      
+          const customersName = `${req.body.firstname} ${req.body.lastname}`;
+          await sendOrderToUsersEmail(user.email, ticket, user._id, user.name, customersName);
+      
+          res.status(200).json(newBooking);
+        } catch (error) {
+          res.status(500).json({ message: `Server error -> ${error}` });
+        }
+      },
+      
       
       getAllBookings: async (req,res)=>{
         try {
@@ -195,5 +274,78 @@ module.exports = {
         }
       },
       
+      payPalOrder: async (req,res) => {
+        app.post("/create-paypal-order", async (req, res) => {
+          const order = await createOrder();
+          res.json(order);
+        });
+        
+        // capture payment & store order information or fullfill order
+        app.post("/capture-paypal-order", async (req, res) => {
+          const { orderID } = req.body;
+          const captureData = await capturePayment(orderID);
+          // TODO: store payment information such as the transaction ID
+          res.json(captureData);
+        });
+        
+        //////////////////////
+        // PayPal API helpers
+        //////////////////////
+        
+        // use the orders api to create an order
+        async function createOrder() {
+          const accessToken = await generateAccessToken();
+          const url = `${baseURL.sandbox}/v2/checkout/orders`;
+          const response = await fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify({
+              intent: "CAPTURE",
+              purchase_units: [
+                {
+                  amount: {
+                    currency_code: "USD",
+                    value: "100.00",
+                  },
+                },
+              ],
+            }),
+          });
+          const data = await response.json();
+          return data;
+        }
+        
+        // use the orders api to capture payment for an order
+        async function capturePayment(orderId) {
+          const accessToken = await generateAccessToken();
+          const url = `${baseURL.sandbox}/v2/checkout/orders/${orderId}/capture`;
+          const response = await fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`,
+            },
+          });
+          const data = await response.json();
+          return data;
+        }
+        
+        // generate an access token using client id and app secret
+        async function generateAccessToken() {
+          const auth = Buffer.from(CLIENT_ID + ":" + APP_SECRET).toString("base64")
+          const response = await fetch(`${baseURL.sandbox}/v1/oauth2/token`, {
+            method: "POST",
+            body: "grant_type=client_credentials",
+            headers: {
+              Authorization: `Basic ${auth}`,
+            },
+          });
+          const data = await response.json();
+          return data.access_token;
+        }
+      }
 
 }

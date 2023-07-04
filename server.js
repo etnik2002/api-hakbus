@@ -7,13 +7,16 @@ const bodyParser = require("body-parser");
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
 require("dotenv").config();
+const paypal = require('./controllers/paypal-controller')
 
 const userRoutes = require("./routes/user")
 const agencyRoutes = require("./routes/agency")
 const ticketRoutes = require("./routes/ticket")
 const bookingRoutes = require("./routes/booking")
-const ceoRoutes = require("./routes/ceo")
+const ceoRoutes = require("./routes/ceo");
+const axios = require("axios");
 
+const apiurl = process.env.API_URL;
 
 app.use(function (req, res, next) {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -60,6 +63,37 @@ app.use(function (req, res, next) {
     .then(() => { console.log("Connected to database!") })
     .catch((err) => { console.log("Connection failed!", err) });
 
+
+
+    app.post("/my-server/create-paypal-order", async (req, res) => {
+      try {
+        const order = await paypal.createOrder(req.body);
+        res.json(order);
+      } catch (err) {
+        res.status(500).json(err);
+      }
+    });
+    
+    app.post("/my-server/capture-paypal-order/:buyerID/:sellerID/:ticketID", async (req, res) => {
+      console.log({bodyFromFront: req.body})
+      const { orderID } = req.body;
+      const { firstname, lastname, email, phone, age, sendEmailNotification, sendSmsNotification } = req.body;
+      
+      try {
+        const captureData = await paypal.capturePayment(orderID).then( async () => {
+          const booking = await axios.post(`${apiurl}/booking/create/${req.params.buyerID}/${req.params.sellerID}/${req.params.ticketID}`,{
+            firstname, lastname, email, phone, age, sendEmailNotification, sendSmsNotification
+          }).then((res) => {
+            console.log(res)
+          })
+        })
+        console.log(captureData)
+        res.status(200).json(captureData);
+      } catch (err) {
+        console.log(err)
+        res.status(500).json(err);
+      }
+    });
 
 
 app.listen(PORT, ()=> {console.log(`server listeting on http://localhost:${PORT}`)})

@@ -220,7 +220,6 @@ async function sendOrderToUsersEmail ( userEmail, ticket, userID, buyerName, cus
             `, 
           });
     
-          console.log(info);
         
     } catch (error) {
         console.error({error})

@@ -36,6 +36,9 @@ const agencySchema = mongoose.Schema({
     debt: {
         type:Number,
     },
+    pl: {
+        type: String,
+    }
 } , { timestamps : true } )
 
 agencySchema.methods.generateAuthToken = function (data) {
