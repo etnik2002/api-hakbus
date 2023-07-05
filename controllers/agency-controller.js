@@ -193,4 +193,28 @@ module.exports = {
       }
   },
 
+  payDebt: async (req,res) => {
+    try {
+        const { debt } = req.body;
+        debtValue = parseFloat(debt);
+        const agency = await Agency.findById(req.params.id);
+
+        if(agency.debt < 1) {
+          return res.status(403).json("Agjencioni nuk ka borxhe!");
+        }
+        if(debt < 1) {
+          return res.status(403).json("Ju lutemi shkruani nje numer valid");
+        }
+        if(debt > agency.debt) {
+          return res.status(403).json("Shuma e pageses eshte me e madhe se borxhi!");
+        }
+        
+        await Agency.findByIdAndUpdate(req.params.id, { $inc: { debt: -debtValue } });
+        res.status(200).json("Borxhi u pagua me sukses");
+
+    } catch (error) {
+        res.status(500).json(error);
+    }
+  },
+
 }

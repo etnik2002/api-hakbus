@@ -114,6 +114,8 @@ module.exports = {
             ticket.agency && ticket.agency.isActive
           );
       
+            console.log(allTickets)
+
           res.status(200).json(filteredTickets);
         } catch (error) {
           res.status(500).json({ message: 'Internal server error -> ' + error });
