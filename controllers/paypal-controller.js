@@ -1,41 +1,47 @@
 const axios = require("axios");
-const fetch = require('node-fetch')
+const fetch = require('node-fetch');
+const Agency = require("../models/Agency");
 
 const CLIENT_ID = "AShTOLoaJm1fYBPuYn4AIG6x4s_k2KmYm7YU4-gBYfzbxbhHX1W7xnlYQQRxoxScSBRxKc0rMkb47MPV";
 const APP_SECRET = "EIaVStYsJq_jGpy-dak6j8h0axKWQ2oxjvRpwiiqcuZw3tGPSZHz3_9F5LsA6_yv_SnXLOQlAYNqylfb"
 const base = "https://api-m.sandbox.paypal.com";
 
-async function createOrder(data) {
+async function createOrder(data, agencyID) {
+  try {
     console.log("inside capture order")
-  const accessToken = await generateAccessToken();
-  console.log("after accesstoken")
-  const url = `${base}/v2/checkout/orders`;
-  const response = await fetch(url, {
-    method: "post",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify({
-      intent: "CAPTURE",
-      purchase_units: [
-        {
-          amount: {
-            currency_code: "EUR",
-            value: data.product.cost,
+    const accessToken = await generateAccessToken(agencyID);
+    console.log("after accesstoken")
+    const url = `${base}/v2/checkout/orders`;
+    const response = await fetch(url, {
+      method: "post",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({
+        intent: "CAPTURE",
+        purchase_units: [
+          {
+            amount: {
+              currency_code: "EUR",
+              value: data.product.cost,
+            },
           },
-        },
-      ],
-    }),
-  });
-  console.log("capture order finished")
-
-  return handleResponse(response);
+        ],
+      }),
+    });
+    console.log("capture order finished")
+  
+    return handleResponse(response);
+  } catch (error) {
+    console.log(error)
+  }
+   
 }
 
-async function capturePayment(orderId) {
+async function capturePayment(orderId, agencyID) {
     console.log("inside capture payment")
-  const accessToken = await generateAccessToken();
+  const accessToken = await generateAccessToken(agencyID);
   const url = `${base}/v2/checkout/orders/${orderId}/capture`;
   const response = await fetch(url, {
     method: "post",
@@ -49,9 +55,11 @@ async function capturePayment(orderId) {
   return handleResponse(response);
 }
 
-async function generateAccessToken() {
-    console.log("inside generate token")
-  const auth = Buffer.from(CLIENT_ID + ":" + APP_SECRET).toString("base64");
+async function generateAccessToken(agencyID) {
+  console.log(agencyID)
+  const agency = await Agency.findById(agencyID)
+  console.log("inside generate token")
+  const auth = Buffer.from(agency.idc + ":" + agency.scc).toString("base64");
   const response = await fetch(`${base}/v1/oauth2/token`, {
     method: "post",
     body: "grant_type=client_credentials",

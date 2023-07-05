@@ -15,6 +15,7 @@ const ticketRoutes = require("./routes/ticket")
 const bookingRoutes = require("./routes/booking")
 const ceoRoutes = require("./routes/ceo");
 const axios = require("axios");
+const Agency = require("./models/Agency");
 
 const apiurl = process.env.API_URL;
 
@@ -65,9 +66,9 @@ app.use(function (req, res, next) {
 
 
 
-    app.post("/my-server/create-paypal-order", async (req, res) => {
+    app.post("/my-server/create-paypal-order/:agencyID", async (req, res) => {
       try {
-        const order = await paypal.createOrder(req.body);
+        const order = await paypal.createOrder(req.body, req.params.agencyID);
         res.json(order);
       } catch (err) {
         res.status(500).json(err);
@@ -78,9 +79,11 @@ app.use(function (req, res, next) {
       console.log({bodyFromFront: req.body})
       const { orderID } = req.body;
       const { firstname, lastname, email, phone, age, sendEmailNotification, sendSmsNotification } = req.body;
+      const agency = await Agency.findById(req.params.sellerID)
       
+
       try {
-        const captureData = await paypal.capturePayment(orderID).then( async () => {
+        const captureData = await paypal.capturePayment(orderID, agency._id).then( async () => {
           const booking = await axios.post(`${apiurl}/booking/create/${req.params.buyerID}/${req.params.sellerID}/${req.params.ticketID}`,{
             firstname, lastname, email, phone, age, sendEmailNotification, sendSmsNotification
           }).then((res) => {
