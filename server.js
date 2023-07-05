@@ -19,6 +19,16 @@ const Agency = require("./models/Agency");
 
 const apiurl = process.env.API_URL;
 
+var admin = require("firebase-admin");
+
+var serviceAccount = require("./helpers/firebase/firebase-config.json");
+const User = require("./models/User");
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
+
+
 app.use(function (req, res, next) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
@@ -76,21 +86,36 @@ app.use(function (req, res, next) {
     });
     
     app.post("/my-server/capture-paypal-order/:buyerID/:sellerID/:ticketID", async (req, res) => {
-      console.log({bodyFromFront: req.body})
       const { orderID } = req.body;
       const { firstname, lastname, email, phone, age, sendEmailNotification, sendSmsNotification } = req.body;
       const agency = await Agency.findById(req.params.sellerID)
-      
+      const user = await User.findById(req.params.buyerID);
+      const fcmToken = user.fcmToken;
+
+      const message = {
+        data: {
+          title: 'Booking successfull',
+          body: 'Ticket successfully booked'
+        },
+        token: fcmToken
+      };
 
       try {
         const captureData = await paypal.capturePayment(orderID, agency._id).then( async () => {
           const booking = await axios.post(`${apiurl}/booking/create/${req.params.buyerID}/${req.params.sellerID}/${req.params.ticketID}`,{
             firstname, lastname, email, phone, age, sendEmailNotification, sendSmsNotification
-          }).then((res) => {
-            console.log(res)
+          }).then(async(res) => {
+ 
+            await admin.messaging().send(message)
+              .then((response) => {
+                console.log('Successfully sent message:', response, message);
+              })
+              .catch((error) => {
+                console.log('Error sending message:', error);
+              });
           })
         })
-        console.log(captureData)
+        
         res.status(200).json(captureData);
       } catch (err) {
         console.log(err)

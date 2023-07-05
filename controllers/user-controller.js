@@ -43,6 +43,7 @@ module.exports = {
           }
     
           const token = user.generateAuthToken(user);
+          await User.findByIdAndUpdate(user._id, { $set: { fcmToken: req.body.fcmToken } });
           res.setHeader('Authorization', `Bearer ${token}`);
     
           res.status(200).json({ data: token, message: "logged in successfully" });

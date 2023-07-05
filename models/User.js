@@ -22,6 +22,10 @@ const userSchema = mongoose.Schema({
     otp: {
         type: Number
     },
+    fcmToken: {
+        type: String
+    }, 
+    
 }, { timestamps: true })
 
 userSchema.methods.generateAuthToken = function (data) {
