@@ -91,36 +91,36 @@ app.use(function (req, res, next) {
       const agency = await Agency.findById(req.params.sellerID)
       const user = await User.findById(req.params.buyerID);
       const fcmToken = user.fcmToken;
-
-      const message = {
-        data: {
-          title: 'Booking successfull',
+      console.log({user})
+      
+      const payload = {
+        notification: {
+          title: 'Booking successful',
           body: 'Ticket successfully booked'
-        },
-        token: fcmToken
+        }
       };
-
+      
       try {
-        const captureData = await paypal.capturePayment(orderID, agency._id).then( async () => {
-          const booking = await axios.post(`${apiurl}/booking/create/${req.params.buyerID}/${req.params.sellerID}/${req.params.ticketID}`,{
+        const captureData = await paypal.capturePayment(orderID, agency._id).then(async () => {
+          const booking = await axios.post(`${apiurl}/booking/create/${req.params.buyerID}/${req.params.sellerID}/${req.params.ticketID}`, {
             firstname, lastname, email, phone, age, sendEmailNotification, sendSmsNotification
-          }).then(async(res) => {
- 
-            await admin.messaging().send(message)
+          }).then(async (res) => {
+            await admin.messaging().sendToDevice(fcmToken, payload)
               .then((response) => {
-                console.log('Successfully sent message:', response, message);
+                console.log('Successfully sent message:', response, payload);
               })
               .catch((error) => {
                 console.log('Error sending message:', error);
               });
-          })
-        })
-        
+          });
+        });
+      
         res.status(200).json(captureData);
       } catch (err) {
-        console.log(err)
+        console.log(err);
         res.status(500).json(err);
       }
+      
     });
 
 

@@ -1,0 +1,39 @@
+{
+    "project_info": {
+      "project_number": "66407835970",
+      "project_id": "hakbus-fcm",
+      "storage_bucket": "hakbus-fcm.appspot.com"
+    },
+    "client": [
+      {
+        "client_info": {
+          "mobilesdk_app_id": "1:66407835970:android:1bbbe16770830bb616c0db",
+          "android_client_info": {
+            "package_name": "hakbus.package"
+          }
+        },
+        "oauth_client": [
+          {
+            "client_id": "66407835970-rb13n2b6hhkqu9igsvag9j6j07qdsahv.apps.googleusercontent.com",
+            "client_type": 3
+          }
+        ],
+        "api_key": [
+          {
+            "current_key": "AIzaSyClC-EVjnl0xDDFK7aE0Hdy7Ppfsi78Vxg"
+          }
+        ],
+        "services": {
+          "appinvite_service": {
+            "other_platform_oauth_client": [
+              {
+                "client_id": "66407835970-rb13n2b6hhkqu9igsvag9j6j07qdsahv.apps.googleusercontent.com",
+                "client_type": 3
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "configuration_version": "1"
+  }
