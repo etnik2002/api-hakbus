@@ -91,7 +91,6 @@ app.use(function (req, res, next) {
       const agency = await Agency.findById(req.params.sellerID)
       const user = await User.findById(req.params.buyerID);
       const fcmToken = user.fcmToken;
-      console.log({user})
       
       const payload = {
         notification: {
@@ -107,7 +106,7 @@ app.use(function (req, res, next) {
           }).then(async (res) => {
             await admin.messaging().sendToDevice(fcmToken, payload)
               .then((response) => {
-                console.log('Successfully sent message:', response, payload);
+                console.log('Successfully sent message:', response.results[0].error, payload);
               })
               .catch((error) => {
                 console.log('Error sending message:', error);

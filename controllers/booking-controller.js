@@ -26,8 +26,8 @@ module.exports = {
 
             const sendEmailNotification = req.body.sendEmailNotification;
             const sendSmsNotification = req.body.sendSmsNotification;
-            console.log("before booking")
-            const newBooking = new Booking({
+ 
+           const newBooking = new Booking({
                 buyer: req.params.buyerID,
                 seller: req.params.sellerID,
                 ticket: req.params.ticketID,
@@ -39,7 +39,6 @@ module.exports = {
                 bookingDate: moment().format("DD-M-YYYY"),
                 price: price,
             });
-            console.log(newBooking, "AFTER BOOKING")
         
             await newBooking.save().then(async () => {
                 await Ticket.findByIdAndUpdate(req.params.ticketID, {
@@ -52,10 +51,8 @@ module.exports = {
                 await Ceo.findByIdAndUpdate('6498755c438b9ec3237688ca', { $inc: { totalProfit: ourEarnings }});
             });
 
-            console.log("before send email")
             const customersName = `${req.body.firstname} ${req.body.lastname}`;
             // await sendOrderToUsersEmail(user.email, ticket, user._id, user.name, customersName);
-            console.log("after send email")
             console.log(newBooking)
             res.status(200).json(newBooking);
             } catch (error) {
