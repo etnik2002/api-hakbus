@@ -94,7 +94,7 @@ app.use(function (req, res, next) {
       
       const payload = {
         notification: {
-          title: 'Booking successful',
+          title: 'Hak Bus',
           body: 'Ticket successfully booked'
         }
       };

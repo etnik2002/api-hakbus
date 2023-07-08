@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const { registerTicket, editTicket, deleteTicket, getSingleTicket, getAllTicket, getSearchedTickets} = require("../controllers/ticket-controller");
+const { registerTicket, editTicket, deleteTicket, getSingleTicket, getAllTicket, getSearchedTickets, getNearestTicket} = require("../controllers/ticket-controller");
 
 router.get('/all', getAllTicket)
 
@@ -13,5 +13,6 @@ router.get('/:id', getSingleTicket)
 
 router.get('/', getSearchedTickets)
 
+router.get('/nearest', getNearestTicket);
 
 module.exports = router;

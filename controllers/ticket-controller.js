@@ -122,6 +122,15 @@ module.exports = {
         }
       },
       
+      getNearestTicket: async (req,res) => {
+        try {
+          const dateNow = moment().format('DD-MM-YYYY');
+          const ticket = await Ticket.findOne({ from: req.body.from, to: req.body,to, date: { $gte: dateNow } });
+        } catch (error) {
+          res.status(500).json({ message: 'Internal server error -> ' + error });
+          
+        }
+      },
 
       deleteTicket: async (req, res) => {
         try {
