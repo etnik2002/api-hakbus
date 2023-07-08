@@ -1,6 +1,8 @@
 const router = require("express").Router();
 const { registerTicket, editTicket, deleteTicket, getSingleTicket, getAllTicket, getSearchedTickets, getNearestTicket} = require("../controllers/ticket-controller");
 
+router.get('/nearest', getNearestTicket);
+
 router.get('/all', getAllTicket)
 
 router.post('/create/:agencyID', registerTicket);
@@ -13,6 +15,5 @@ router.get('/:id', getSingleTicket)
 
 router.get('/', getSearchedTickets)
 
-router.get('/nearest', getNearestTicket);
 
 module.exports = router;

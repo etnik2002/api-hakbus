@@ -122,13 +122,26 @@ module.exports = {
         }
       },
       
-      getNearestTicket: async (req,res) => {
+      getNearestTicket: async (req, res) => {
         try {
           const dateNow = moment().format('DD-MM-YYYY');
-          const ticket = await Ticket.findOne({ from: req.body.from, to: req.body,to, date: { $gte: dateNow } });
+          const ticket = await Ticket.find({
+            from: req.query.from,
+            to: req.query.to,
+            date: { $gte: dateNow },
+          })
+            .populate({
+              path: 'agency',
+              match: { isActive: true },
+            })
+
+          if (ticket) {
+            res.status(200).json(ticket); 
+          } else {
+            res.status(404).json({ message: 'No nearest ticket found.' }); 
+          }
         } catch (error) {
           res.status(500).json({ message: 'Internal server error -> ' + error });
-          
         }
       },
 
