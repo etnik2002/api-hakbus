@@ -13,31 +13,29 @@ const bookingSchema = mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Ticket'
     },
-    age: {
-        type: Number,
-        required: true
-    },
+    passengers: [
+        {
+            age: {
+                type: Number,
+                required: true
+            },
+            fullName: {
+                type: String
+            },
+            email: {
+                type: String
+            },
+            phone: {
+                type: String
+            },
+        }
+    ],
     price: {
         type: Number
-    },
-    firstname: {
-        type: String
-    },
-    lastname: {
-        type: String
-    },
-    email: {
-        type: String
-    },
-    phone: {
-        type: String
     },
     isScanned: {
         type: Boolean,
         default: false
-    },
-    bookingDate: {
-        type: String
     }
 } , { timestamps : true });
 

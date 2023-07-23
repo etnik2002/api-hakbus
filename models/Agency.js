@@ -21,27 +21,26 @@ const agencySchema = mongoose.Schema({
     percentage: {
         type: Number,
         required: true
-
     },
     totalSales: {
-        type:Number,
+        type: Number,
     },
     profit: {
-        type:Number,
+        type: Number,
     },
     isActive: {
-        type:Boolean,
+        type: Boolean,
         default: true,
     },
     debt: {
-        type:Number,
+        type: Number,
     },
-    idc: {
-        type: String,
-    },
-    scc: {
-        type: String,
-    }
+    // idc: {
+    //     type: String,
+    // },
+    // scc: {
+    //     type: String,
+    // }
 } , { timestamps : true } )
 
 agencySchema.methods.generateAuthToken = function (data) {

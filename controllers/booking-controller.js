@@ -14,7 +14,6 @@ module.exports = {
 
     placeBooking: async (req, res) => {
         try {
-            console.log({query: req.params, body: req.body})
             const user = await User.findById(req.query.buyerID);
             const ticket = await Ticket.findById(req.params.ticketID);
             const agency = await Agency.findById(req.params.sellerID);
@@ -36,7 +35,6 @@ module.exports = {
                 email: req.body.email,
                 phone: req.body.phone,
                 age: req.body.age,
-                bookingDate: moment().format("DD-M-YYYY"),
                 price: price,
             });
         
@@ -51,9 +49,9 @@ module.exports = {
                 await Ceo.findByIdAndUpdate('6498755c438b9ec3237688ca', { $inc: { totalProfit: ourEarnings }});
             });
 
-            const customersName = `${req.body.firstname} ${req.body.lastname}`;
-            // await sendOrderToUsersEmail(user.email, ticket, user._id, user.name, customersName);
-            console.log(newBooking)
+            const customersName = `${req.body.firstname || user.name} ${req.body.lastname  || user.name}`;
+            sendEmailNotification && await sendOrderToUsersEmail(req.body.email  || user.email, ticket, user._id, user.name, customersName);
+
             res.status(200).json(newBooking);
             } catch (error) {
               console.log(error)
@@ -61,6 +59,7 @@ module.exports = {
             }
       },
 
+      
 
       payBooking: async (req, res) => {
         try {
@@ -343,6 +342,8 @@ module.exports = {
           const data = await response.json();
           return data.access_token;
         }
-      }
+      },
+
+
 
 }

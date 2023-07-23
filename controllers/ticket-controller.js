@@ -2,49 +2,60 @@ const Ticket = require("../models/Ticket");
 const Agency = require("../models/Agency");
 const moment = require("moment");
 const User = require("../models/User");
-const jwt = require("jsonwebtoken");
+const TicketService = require("../services/ticketService");
+const { default: mongoose } = require("mongoose");
+
 
 
 module.exports = {
 
     registerTicket: async (req, res) => {
+      try {
+        const selectedDayOfTheWeek = req.body.dayOfWeek;
+        const selectedReturnDayOfWeek = req.body.returnDayOfWeek;
+
+        const ticketData = {
+          from: req.body.from,
+          to: req.body.to,
+          lineCode: req.body.lineCode,
+          time: req.body.time,
+          type: req.body.type,
+          numberOfTickets: req.body.numberOfTickets,
+          numberOfReturnTickets: req.body.numberOfReturnTickets,
+          price: req.body.price,
+          childrenPrice: req.body.childrenPrice,
+          startLng: req.body.startLng,
+          startLat: req.body.startLat,
+          endLng: req.body.endLng,
+          endLat: req.body.endLat,
+          changes: req.body.changes,
+        };
+    
+        const newTicket = new Ticket({
+          ...ticketData,
+        });
+    
+        // await newTicket.save();
+    
+        const generatedTickets = await generateTicketsForNextTwoYears(ticketData, selectedDayOfTheWeek, selectedReturnDayOfWeek);
+    
+        res.status(200).json({
+          newTicket,
+          generatedTickets,
+        });
+      } catch (error) {
+        res.status(500).json({ message: "Internal error -> " + error });
+      }
+    },
+    
+      getSingleTicket: async (req, res)=>{ 
         try {
-          
-          const agencyID = req.params.agencyID;
-    
-          const newTicket = new Ticket({
-            from: req.body.from,
-            to: req.body.to,
-            date: req.body.date,
-            returnDate: req.body.returnDate,
-            time: req.body.time,
-            arrivalTime: req.body.arrivalTime,
-            returnArrivalDate: req.body.returnArrivalDate,
-            arrivalDate: req.body.arrivalDate,
-            returnArrivalTime: req.body.returnArrivalTime,
-            returnTime: req.body.returnTime,
-            type: req.body.type,
-            numberOfTickets: req.body.numberOfTickets,
-            price: req.body.price,
-            childrenPrice: req.body.childrenPrice,
-            agency: agencyID,
-            startLng: req.body.startLng,
-            startLat: req.body.startLat,
-            endLng: req.body.endLng,
-            endLat: req.body.endLat,
-          });
-    
-          await newTicket.save();
-          res.status(200).json(newTicket);
-        } catch (error) {
-          res.status(500).json({ message: "Internal error -> " + error });
-        }
-      },
-    
-      getSingleTicket: async (req,res)=>{ 
-        try {
-            const ticket = await Ticket.findById(req.params.id).populate({ path: 'agency', select:'-password' });
-            if(!ticket) {
+          const ticket = await Ticket.findById(req.params.id).populate([
+            { path: 'agency', select: '-password' },
+            { path: 'lineCode' },
+          ]);
+            
+          if(!ticket) {
                 return res.status(404).json({ message: "Ticket not found" });
             }
             res.status(200).json(ticket);
@@ -53,13 +64,29 @@ module.exports = {
         }
       },
       
-      getAllTicket: async (req,res)=>{ 
+      getAllTicket: async (req,res) => {
+        try {
+          const ticketsService = new TicketService();
+          
+          await ticketsService.getAllTickets().then((data) => {
+            res.status(200).json(data);
+          })
+
+        } catch (error) {
+          res.status(500).json({ message: "Internal error -> " + error });
+        }
+      },
+
+      getAllTicketPagination: async (req,res)=>{ 
         try {
           const page= req.query.page || 0;
           const size= req.query.size || 10;
           const all = await Ticket.find({})
 
-            const allTickets = await Ticket.find({}).skip(page*size).limit(size).populate('agency').sort({createdAt: 'desc'});
+            const allTickets = await Ticket.find({}).skip(page*size).limit(size).populate([
+              { path: 'agency', select: '-password' },
+              { path: 'lineCode' },
+            ]).sort({createdAt: 'desc'});
             res.status(200).json({allTickets,all:all.length});
         } catch (error) {
           console.log(error)
@@ -69,7 +96,6 @@ module.exports = {
 
       getSearchedTickets: async (req, res) => {
         try {
-          console.log(req.query)
           let from = req.query.from;
           let to = req.query.to;
           let date = req.query.date;
@@ -103,19 +129,17 @@ module.exports = {
             ...searchParams,
             date: { $gte: dateNow }
           })
-            .populate({
-              path: 'agency',
-              match: { isActive: true }
-            })
+            .populate([
+              { path: 'agency', select: '-password' },
+              { path: 'lineCode' },
+            ])
             .sort({ createdAt: 'desc' });
           
 
           const filteredTickets = allTickets.filter((ticket) =>
             ticket.agency && ticket.agency.isActive
           );
-      
-            console.log(allTickets)
-
+    
           res.status(200).json(filteredTickets);
         } catch (error) {
           res.status(500).json({ message: 'Internal server error -> ' + error });
@@ -130,10 +154,10 @@ module.exports = {
             to: req.query.to,
             date: { $gte: dateNow },
           })
-            .populate({
-              path: 'agency',
-              match: { isActive: true },
-            })
+            .populate([
+              { path: 'agency', select: '-password', match: { isActive: true } },
+              { path: 'lineCode' },
+            ])
 
           if (ticket) {
             res.status(200).json(ticket); 
@@ -182,10 +206,120 @@ module.exports = {
           res.status(200).json(updatedTicket);
       
         } catch (error) {
-          console.log(error);
           res.status(500).json("Error -> " + error);
         }
       },
-      
-
 }
+
+
+
+const generateTicketsForNextTwoYears = async (ticketData, selectedDayOfWeek, selectedReturnDayOfWeek) => {
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() + ((1 + 7 - startDate.getDay()) % selectedDayOfWeek));
+  startDate.setHours(8, 0, 0, 0);
+
+  const returnDate = new Date();
+  returnDate.setDate(returnDate.getDate() + ((1 + 7 - returnDate.getDay()) % selectedReturnDayOfWeek));
+  returnDate.setHours(8, 0, 0, 0);
+  const tickets = [];
+
+  for (let i = 0; i < 2 * 52; i++) {
+    const ticketDate = new Date(startDate);
+    ticketDate.setDate(ticketDate.getDate() + 7 * i);
+
+    const ticketReturnDate = new Date(returnDate);
+    ticketReturnDate.setDate(ticketReturnDate.getDate() + 7 * i);
+
+      const day = String(ticketDate.getDate()).padStart(2, '0');
+      const month = String(ticketDate.getMonth() + 1).padStart(2, '0');
+      const year = ticketDate.getFullYear();
+
+      const returnday = String(ticketReturnDate.getDate()).padStart(2, '0');
+      const returnmonth = String(ticketReturnDate.getMonth() + 1).padStart(2, '0');
+      const returnyear = ticketReturnDate.getFullYear();
+
+      const ticketDateString = `${day}-${month}-${year}`;
+      const returnTicketDateString = `${returnday}-${returnmonth}-${returnyear}`;
+
+      console.log(ticketDateString, returnTicketDateString)
+
+      const ticketDataWithDate = {
+        ...ticketData,
+        date: ticketDateString,
+        returnDate: returnTicketDateString
+      }
+
+      const ticket = new Ticket(ticketDataWithDate);
+
+      ticket.date = ticketDateString;
+      ticket.returnDate = returnTicketDateString;
+
+      await ticket.save();
+      tickets.push(ticket);
+  }
+
+    console.log({ tickets });
+    return tickets;
+};
+
+
+
+// const createTicket = async (ticketData) => {
+//   const ticket = new Ticket(ticketData);
+//   return ticket.save();
+// };
+
+// const generateAllTickets = async () => {
+//   const ticketData = {
+//     agency: "agencyId", 
+//     from: "Start City",
+//     to: "End City",
+//     lineCode: "lineId",
+//     changes: [
+//       {
+//         city: "Change City",
+//         date: "Change Date",
+//         time: "Change Time",
+//       },
+//     ],
+//     time: "08:00", 
+//     price: 10, 
+//     childrenPrice: 5,
+//     startLng: 0, 
+//     startLat: 0, 
+//     endLng: 1, 
+//     endLat: 1, 
+//   };
+
+//   const startDate = new Date(); 
+//   startDate.setDate(startDate.getDate() + ((1 + 7 - startDate.getDay()) % 7));
+//   startDate.setHours(8, 0, 0, 0); 
+
+//   const tickets = [];
+
+//   for (let i = 0; i < 3 * 52; i++) {
+//     const ticketDate = new Date(startDate);
+//     ticketDate.setDate(ticketDate.getDate() + 7 * i); 
+
+//     const ticketDateString = ticketDate.toISOString().substring(0, 10);
+//     const ticketDataWithDate = {
+//       ...ticketData,
+//       date: ticketDateString,
+//     };
+
+//     const ticket = await createTicket(ticketDataWithDate);
+//     tickets.push(ticket);
+//   }
+
+//   return tickets;
+// };
+
+// generateAllTickets()
+//   .then((tickets) => {
+//     console.log("Tickets created:", tickets);
+//     mongoose.disconnect();
+//   })
+//   .catch((error) => {
+//     console.error("Error creating tickets:", error);
+//     mongoose.disconnect();
+//   })

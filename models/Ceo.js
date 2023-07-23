@@ -19,7 +19,6 @@ const ceoSchema = mongoose.Schema({
     },
     totalProfit: {
         type: Number,
-        
     }
 
 }, { timestamps: true })

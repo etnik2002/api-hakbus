@@ -6,8 +6,8 @@ const PORT = process.env.PORT | 4462;
 const bodyParser = require("body-parser");
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
-require("dotenv").config();
 const paypal = require('./controllers/paypal-controller')
+require("dotenv").config();
 
 const userRoutes = require("./routes/user")
 const agencyRoutes = require("./routes/agency")
@@ -23,11 +23,22 @@ var admin = require("firebase-admin");
 
 var serviceAccount = require("./helpers/firebase/firebase-config.json");
 const User = require("./models/User");
+const Ticket = require("./models/Ticket");
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
 });
 
+// var whitelist = ['http://localhost:8100','http://localhost:8101', 'https://admin-hakbus-6ktvemx13-etnik2002.vercel.app/']
+// var corsOptions = {
+//   origin: function (origin, callback) {
+//     if (whitelist.indexOf(origin) !== -1) {
+//       callback(null, true)
+//     } else {
+//       callback(new Error('Not allowed by CORS'))
+//     }
+//  }
+// }
 
 app.use(function (req, res, next) {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -37,6 +48,23 @@ app.use(function (req, res, next) {
     next();
   });
   
+  // app.use(function (req, res, next) {
+  //   const allowedOrigins = ['http://localhost:8100','http://localhost:8101', 'https://admin-hakbus-6ktvemx13-etnik2002.vercel.app/'];
+  
+  //   const origin = req.headers.origin;
+  //   if (allowedOrigins.includes(origin)) {
+  //     res.setHeader('Access-Control-Allow-Origin', origin);
+  //   } else {
+  //     return res.status(403).json({ error: 'Unauthorized origin' });
+  //   }
+  
+  //   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+  //   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  //   res.setHeader('Access-Control-Allow-Credentials', true);
+  //   next();
+  // });
+  
+
   app.use(
     express.urlencoded({
       extended: true,
@@ -88,29 +116,32 @@ app.use(function (req, res, next) {
     app.post("/my-server/capture-paypal-order/:buyerID/:sellerID/:ticketID", async (req, res) => {
       const { orderID } = req.body;
       const { firstname, lastname, email, phone, age, sendEmailNotification, sendSmsNotification } = req.body;
-      const agency = await Agency.findById(req.params.sellerID)
+      const agency = await Agency.findById(req.params.sellerID);
       const user = await User.findById(req.params.buyerID);
+      const ticket = await Ticket.findById(req.params.ticketID);
       const fcmToken = user.fcmToken;
       
-      const payload = {
+      const notificationPayload = {
         notification: {
           title: 'Hak Bus',
-          body: 'Ticket successfully booked'
-        }
+          body: `Hey ${user.name}. Your booking is ${ticket.from} -> ${ticket.to}`
+        },
+         
       };
       
       try {
         const captureData = await paypal.capturePayment(orderID, agency._id).then(async () => {
           const booking = await axios.post(`${apiurl}/booking/create/${req.params.buyerID}/${req.params.sellerID}/${req.params.ticketID}`, {
-            firstname, lastname, email, phone, age, sendEmailNotification, sendSmsNotification
+            firstname: req.body.firstname, lastname: req.body.lastname, email: req.body.email, phone: req.body.phone, age: req.body.age, sendEmailNotification: req.body.sendEmailNotification, sendSmsNotification: req.body.sendSmsNotification
           }).then(async (res) => {
-            await admin.messaging().sendToDevice(fcmToken, payload)
-              .then((response) => {
-                console.log('Successfully sent message:', response.results[0].error, payload);
-              })
-              .catch((error) => {
-                console.log('Error sending message:', error);
-              });
+            // await admin.messaging().sendToDevice(fcmToken, notificationPayload)
+            //   .then((response) => {
+            //     console.log('Successfully sent message:', response.results[0].error, payload);
+            //   })
+            //   .catch((error) => {
+            //     console.log('Error sending message:', error);
+            //   });
+            console.log(res)
           });
         });
       
@@ -122,5 +153,13 @@ app.use(function (req, res, next) {
       
     });
 
+    const TicketService = require("./services/ticketService");
+    app.get('/alltickets', (req,res) => {
+      const ticketService = new TicketService();
+      ticketService.getAllTickets().then((data) => {
+        console.log(data)
+        res.status(200).json(data)
+      } )
+    })
 
 app.listen(PORT, ()=> {console.log(`server listeting on http://localhost:${PORT}`)})
