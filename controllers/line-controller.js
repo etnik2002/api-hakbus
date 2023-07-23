@@ -7,6 +7,8 @@ module.exports = {
         try {
             const newLine = new Line({
                 code: req.body.code,
+                from: req.body.from,
+                to: req.body.to,
 
             })
 
