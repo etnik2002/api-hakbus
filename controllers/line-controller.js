@@ -20,6 +20,15 @@ module.exports = {
         }
     },  
 
+    getAllLines: async (req,res) => {
+      try {
+        const all = await Line.find({});
+        res.status(200).json(all);
+      } catch (error) {
+        res.status(500).json(error);
+      }
+    },
+
     getLineBookings: async (req, res) => {
         try {
           const lines = await Line.find({});

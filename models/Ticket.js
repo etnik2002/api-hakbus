@@ -11,9 +11,8 @@ const ticketSchema = mongoose.Schema({
     required: true,
   },
   lineCode: {
-    // type: mongoose.Schema.Types.ObjectId,
-    // ref: 'Line',
-    type: String
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Line',
   },
   changes: [
     {
