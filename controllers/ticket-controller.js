@@ -83,10 +83,8 @@ module.exports = {
           const size= req.query.size || 10;
           const all = await Ticket.find({})
 
-            const allTickets = await Ticket.find({}).skip(page*size).limit(size).populate([
-              { path: 'agency', select: '-password' },
-              { path: 'lineCode' },
-            ]).sort({createdAt: 'desc'});
+            const allTickets = await Ticket.find({})
+            console.log(allTickets)
             res.status(200).json({allTickets,all:all.length});
         } catch (error) {
           console.log(error)
