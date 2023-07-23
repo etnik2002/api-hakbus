@@ -13,6 +13,8 @@ const userRoutes = require("./routes/user")
 const agencyRoutes = require("./routes/agency")
 const ticketRoutes = require("./routes/ticket")
 const bookingRoutes = require("./routes/booking")
+const lineRoutes = require("./routes/line")
+const driverRoutes = require("./routes/driver")
 const ceoRoutes = require("./routes/ceo");
 const axios = require("axios");
 const Agency = require("./models/Agency");
@@ -86,6 +88,8 @@ app.use(function (req, res, next) {
   app.use('/agency', agencyRoutes);
   app.use('/booking', bookingRoutes);
   app.use('/ceo', ceoRoutes);
+  app.use('/driver', driverRoutes);
+  app.use('/line', lineRoutes);
   
   app.use(
     session({
