@@ -34,11 +34,11 @@ module.exports = {
         const bookingsForLine = await Booking.find({}).populate({
           path: 'ticket',
           populate: { path: 'lineCode' }
-        });
+        }).populate('buyer');
     
         const lineBookings = lines.map(line => {
           const bookings = bookingsForLine.filter(booking => line.code === booking.ticket.lineCode.code);
-          return { line: line.code, bookings: bookings };
+          return { line: line.code, from: line.from,to: line.to, bookings: bookings };
         });
     
         res.status(200).json(lineBookings);
