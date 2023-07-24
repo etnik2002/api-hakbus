@@ -17,7 +17,7 @@ module.exports = {
             const user = await User.findById(req.query.buyerID);
             const ticket = await Ticket.findById(req.params.ticketID);
             // const agency = await Agency.findById(req.params.sellerID);
-            const price = req.body.age <= 12 ? ticket.childrenPrice : ticket.price;
+            const price = req.body.age <= 10 ? ticket.childrenPrice : ticket.price;
 
             // const agencyPercentage = agency.percentage / 100;
             // const agencyEarnings = price - price * agencyPercentage;
@@ -36,6 +36,8 @@ module.exports = {
                 phone: req.body.phone,
                 age: req.body.age,
                 price: price,
+                passengers: req.body.passengers,
+                
             });
         
             await newBooking.save().then(async () => {

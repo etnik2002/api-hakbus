@@ -33,13 +33,18 @@ module.exports = {
         try {
           const lines = await Line.find({});
       
-          const lineBookings = {};
+          var lineBookings = [];
+          const bookingsForLine = await Booking.find({}).populate({
+            path: 'ticket',
+            populate: { path: 'lineCode' }
+          })
       
           for (const line of lines) {
-            const bookingsForLine = await Booking.find({ 'ticket.lineCode': line.code })
-              .populate('ticket'); 
-      
-            lineBookings[line._id] = bookingsForLine;
+            for (const booking of bookingsForLine) {
+              if (line.code == booking.ticket.lineCode.code) {
+                lineBookings.push({ line: line.code, booking: booking })
+              }
+            }
           }
       
           res.status(200).json(lineBookings);
@@ -50,7 +55,7 @@ module.exports = {
 
       getSingleLineBookings: async (req,res) =>{
         try {
-          const bookingsForLine = await Booking.find().populate({
+          const bookingsForLine = await Booking.find({}).populate({
             path: 'ticket',
             populate: { path: 'lineCode' }
           }).populate({
