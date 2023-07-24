@@ -9,6 +9,9 @@ const driverSchema = mongoose.Schema({
     },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
+    code: {
+      type: String
+    },
     lines: [
       {
         type: mongoose.Schema.Types.ObjectId,

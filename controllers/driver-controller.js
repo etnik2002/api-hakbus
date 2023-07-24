@@ -11,6 +11,7 @@ module.exports = {
                 name: req.body.name,
                 email: req.body.email,
                 password: req.body.password,
+                code: req.body.code,
                 lines: req.body.lines
             })
 
