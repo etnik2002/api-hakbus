@@ -28,30 +28,25 @@ module.exports = {
         res.status(500).json(error);
       }
     },
-
     getLineBookings: async (req, res) => {
-        try {
-          const lines = await Line.find({});
-      
-          var lineBookings = [];
-          const bookingsForLine = await Booking.find({}).populate({
-            path: 'ticket',
-            populate: { path: 'lineCode' }
-          })
-      
-          for (const line of lines) {
-            for (const booking of bookingsForLine) {
-              if (line.code == booking.ticket.lineCode.code) {
-                lineBookings.push({ line: line.code, booking: booking })
-              }
-            }
-          }
-      
-          res.status(200).json(lineBookings);
-        } catch (error) {
-          res.status(500).json(error);
-        }
-      },
+      try {
+        const lines = await Line.find({});
+        const bookingsForLine = await Booking.find({}).populate({
+          path: 'ticket',
+          populate: { path: 'lineCode' }
+        });
+    
+        const lineBookings = lines.map(line => {
+          const bookings = bookingsForLine.filter(booking => line.code === booking.ticket.lineCode.code);
+          return { line: line.code, bookings: bookings };
+        });
+    
+        res.status(200).json(lineBookings);
+      } catch (error) {
+        res.status(500).json(error);
+      }
+    },
+    
 
       getSingleLineBookings: async (req,res) =>{
         try {
