@@ -62,6 +62,11 @@ const ticketSchema = mongoose.Schema({
     type: Number,
     required: true,
   },
+  isActive: {
+    type: Boolean,
+    enum: ['true', 'false'],
+    default: false
+  },
   // startLng: {
   //   type: Number,
   //   required: true,

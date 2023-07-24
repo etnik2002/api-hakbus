@@ -49,12 +49,31 @@ module.exports = {
       },
 
       getSingleLineBookings: async (req,res) =>{
-            try {
-                const bookingsForLine = await Booking.find({ 'ticket.lineCode': req.params.lineID }).populate('ticket'); 
-                res.status(200).json(bookingsForLine);
-            } catch (error) {
-                res.status(500).json(error);
+        try {
+          const bookingsForLine = await Booking.find().populate({
+            path: 'ticket',
+            populate: { path: 'lineCode' }
+          }).populate({
+            path: 'buyer',
+            select: '-password'
+          });
+          
+
+
+          var bookings = [];
+      
+          for (const booking of bookingsForLine) {
+            if (booking.ticket.lineCode._id == req.params.id && booking.ticket.date == req.params.from) {
+              bookings.push(booking);
+              console.log(booking)
             }
+          }
+
+          console.log(bookings)
+          res.status(200).json(bookings);
+        } catch (error) {
+          res.status(500).json(error);
+        }
       },
 
       deleteLine: async (req,res) => {

@@ -51,7 +51,7 @@ module.exports = {
       getSingleTicket: async (req, res)=>{ 
         try {
           const ticket = await Ticket.findById(req.params.id).populate([
-            { path: 'agency', select: '-password' },
+            // { path: 'agency', select: '-password' },
             { path: 'lineCode' },
           ]);
             
@@ -82,12 +82,47 @@ module.exports = {
           const page= req.query.page || 0;
           const size= req.query.size || 10;
           const all = await Ticket.find({})
+          const today = moment().format('DD-MM-YYYY');
 
-            const allTickets = await Ticket.find({})
-            console.log(allTickets)
+            const allTickets = await Ticket.find({date: {$gte: today}}).populate('lineCode')
+            console.log(today)
             res.status(200).json({allTickets,all:all.length});
         } catch (error) {
           console.log(error)
+          res.status(500).json({ message: "Internal error -> " + error });
+        }
+      },
+
+      getTicketLinesBasedOnDate: async (req,res)=>{ 
+        try {
+          const today = moment().format('DD-MM-YYYY');
+          const tomorrow = moment().add(1, 'day').format('DD-MM-YYYY');
+      
+          const fromDate = req.query.from || today;
+          const toDate = req.query.to || tomorrow;
+      
+          var allTickets = [];
+
+          if(fromDate) {
+            allTickets = await Ticket.find({
+              date: {
+                $gte: fromDate,
+                $lte: fromDate,
+              }
+            }).populate('lineCode');
+          }
+          else {
+            allTickets = await Ticket.find({
+              date: {
+                $gte: today,
+                $lte: today,
+              }
+            }).populate('lineCode');
+          }
+      
+          res.status(200).json({ allTickets: allTickets });
+        } catch (error) {
+          console.log(error);
           res.status(500).json({ message: "Internal error -> " + error });
         }
       },
@@ -128,17 +163,17 @@ module.exports = {
             date: { $gte: dateNow }
           })
             .populate([
-              { path: 'agency', select: '-password' },
+              // { path: 'agency', select: '-password' },
               { path: 'lineCode' },
             ])
             .sort({ createdAt: 'desc' });
           
 
-          const filteredTickets = allTickets.filter((ticket) =>
-            ticket.agency && ticket.agency.isActive
-          );
+          // const filteredTickets = allTickets.filter((ticket) =>
+          //   ticket.agency && ticket.agency.isActive
+          // );
     
-          res.status(200).json(filteredTickets);
+          res.status(200).json(allTickets);
         } catch (error) {
           res.status(500).json({ message: 'Internal server error -> ' + error });
         }
@@ -153,7 +188,7 @@ module.exports = {
             date: { $gte: dateNow },
           })
             .populate([
-              { path: 'agency', select: '-password', match: { isActive: true } },
+              // { path: 'agency', select: '-password', match: { isActive: true } },
               { path: 'lineCode' },
             ])
 
@@ -207,6 +242,35 @@ module.exports = {
           res.status(500).json("Error -> " + error);
         }
       },
+
+      stopSales: async (req,res) => {
+          try {
+            const deactivated = await Ticket.findByIdAndUpdate(req.params.id, { $set: { isActive: false } })
+            res.status(200).json(deactivated );
+          } catch (error) {
+              res.status(500).json("Error -> " + error);
+          }
+      },
+
+      allowSales: async (req,res) => {
+          try {
+            const deactivated = await Ticket.findByIdAndUpdate(req.params.id, { $set: { isActive: true } })
+            res.status(200).json(deactivated );
+          } catch (error) {
+              res.status(500).json("Error -> " + error);
+          }
+      },
+
+      updateSeats: async (req,res)=> {
+        try {
+          const newNumberOfTickets = req.body.newNumberOfTickets;
+          await Ticket.findByIdAndUpdate(req.params.id, { $set: { numberOfTickets: newNumberOfTickets } })
+          res.status(200).json("updated nr. tickets");
+        } catch (error) {
+          res.status(500).json("Error -> " + error);
+        }
+      },
+
 }
 
 

@@ -7,7 +7,7 @@ router.get('/', getAllLines);
 
 router.get('/line-bookings', getLineBookings);
 
-router.get('/line-bookings/:id',getSingleLineBookings)
+router.get('/line-bookings/:id/:from', getSingleLineBookings)
 
 router.post('/delete/:id', deleteLine)
 
