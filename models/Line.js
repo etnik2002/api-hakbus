@@ -13,6 +13,18 @@ const LineSchema = mongoose.Schema({
     to: {
         type: String
     },
+    lat: {
+        type: Number,
+    },
+    lng: {
+        type: Number,
+    },
+    endLat: {
+        type: Number,
+    },
+    endLng: {
+        type: Number,
+    },
 
   });
 

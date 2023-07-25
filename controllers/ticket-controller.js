@@ -84,7 +84,7 @@ module.exports = {
           const all = await Ticket.find({})
           const today = moment().format('DD-MM-YYYY');
 
-            const allTickets = await Ticket.find({date: {$gte: today}}).populate('lineCode')
+            const allTickets = await Ticket.find({date: {$gte: today}}).populate('lineCode').sort({createdAt: 'desc'})
             console.log(today)
             res.status(200).json({allTickets,all:all.length});
         } catch (error) {
@@ -109,7 +109,7 @@ module.exports = {
                 $gte: fromDate,
                 $lte: fromDate,
               }
-            }).populate('lineCode');
+            }).populate('lineCode').sort({createdAt: 'desc'});
           }
           else {
             allTickets = await Ticket.find({
@@ -117,7 +117,7 @@ module.exports = {
                 $gte: today,
                 $lte: today,
               }
-            }).populate('lineCode');
+            }).populate('lineCode').sort({createdAt: 'desc'});
           }
       
           res.status(200).json({ allTickets: allTickets });

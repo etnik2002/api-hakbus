@@ -44,7 +44,7 @@ const ticketSchema = mongoose.Schema({
   type: {
     type: String,
     enum: ["oneWay", "return"],
-    default: "oneWay",
+    default: "return",
   },
   numberOfTickets: {
     type: Number,
@@ -67,22 +67,7 @@ const ticketSchema = mongoose.Schema({
     enum: ['true', 'false'],
     default: false
   },
-  // startLng: {
-  //   type: Number,
-  //   required: true,
-  // },
-  // startLat: {
-  //   type: Number,
-  //   required: true,
-  // },
-  // endLng: {
-  //   type: Number,
-  //   required: true,
-  // },
-  // endLat: {
-  //   type: Number,
-  //   required: true,
-  // },
+
 }, { timestamps: true });
 
 module.exports = mongoose.model("Ticket", ticketSchema);

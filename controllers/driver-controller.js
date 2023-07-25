@@ -50,6 +50,30 @@ module.exports = {
         }
     },
 
+    editDriver: async (req, res) => {
+      try {
+        const driver = await Driver.findById(req.params.id);
+        if (!driver) {
+          return res.status(404).json({ message: 'Driver not found' });
+        }
+    
+        const editedData = {
+          name: req.body.name || driver.name,
+          email: req.body.email || driver.email,
+          password: driver.password,
+          code: req.body.code || driver.code,
+          lines: req.body.lines || driver.lines,
+          scannedBookings: driver.scannedBookings
+        };
+    
+        const edited = await Driver.findByIdAndUpdate(req.params.id, editedData);
+        
+        res.status(200).json(edited);
+      } catch (error) {
+        res.status(500).json(error);
+      }
+    },
+
 
     scanBooking: async (req, res) => {
         try {

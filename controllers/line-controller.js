@@ -9,11 +9,16 @@ module.exports = {
                 code: req.body.code,
                 from: req.body.from,
                 to: req.body.to,
-
+                lat: req.body.lat,
+                lng: req.body.lng,
+                endLat: req.body.endLat,
+                endLng: req.body.endLng,
             })
 
+            console.log(req.body)
+
             await newLine.save();
-            res.status(200).json("New line created!");
+            res.status(200).json("New line created!" + newLine);
 
         } catch (error) {
             res.status(500).json(error);
@@ -28,13 +33,15 @@ module.exports = {
         res.status(500).json(error);
       }
     },
+
+
     getLineBookings: async (req, res) => {
       try {
         const lines = await Line.find({});
         const bookingsForLine = await Booking.find({}).populate({
           path: 'ticket',
           populate: { path: 'lineCode' }
-        }).populate('buyer');
+        }).populate('buyer').sort({createdAt: 'desc'})
     
         const lineBookings = lines.map(line => {
           const bookings = bookingsForLine.filter(booking => line.code === booking.ticket.lineCode.code);
@@ -56,7 +63,7 @@ module.exports = {
           }).populate({
             path: 'buyer',
             select: '-password'
-          });
+          }).sort({createdAt: 'desc'})
           
 
 

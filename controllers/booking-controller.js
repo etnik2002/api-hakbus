@@ -208,8 +208,11 @@ module.exports = {
     getSingleBooking: async(req,res) => {
         try {
             const booking = await Booking.findById(req.params.id).populate({
-              path: 'seller ticket buyer',
+              path: 'seller buyer',
               select: '-password' 
+            }).populate({
+              path: 'ticket',
+              populate: { path: 'lineCode' }
             });
             if(!booking) {
                 return res.status(404).json("Booking not found");
