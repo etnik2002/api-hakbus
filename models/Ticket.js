@@ -2,19 +2,11 @@ const mongoose = require("mongoose");
 
 const ticketSchema = mongoose.Schema({
   
-  from: {
-    type: String,
-    required: true,
-  },
-  to: {
-    type: String,
-    required: true,
-  },
   lineCode: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Line',
   },
-  changes: [
+  changes: 
     {
       city: {
         type: String,
@@ -26,7 +18,7 @@ const ticketSchema = mongoose.Schema({
         type: String,
       },
     },
-  ],
+    
   date: {
     type: String,
     required: true,

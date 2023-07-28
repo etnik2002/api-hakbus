@@ -3,9 +3,7 @@ const Agency = require("../models/Agency");
 const moment = require("moment");
 const User = require("../models/User");
 const TicketService = require("../services/ticketService");
-const { default: mongoose } = require("mongoose");
-
-
+const mongoose = require("mongoose");
 
 module.exports = {
 
@@ -15,32 +13,19 @@ module.exports = {
         const selectedReturnDayOfWeek = req.body.returnDayOfWeek;
 
         const ticketData = {
-          from: req.body.from,
-          to: req.body.to,
-          lineCode: req.body.lineCode,
+          lineCode: req.query.lineCode,
           time: req.body.time,
-          type: req.body.type,
+          returnTime: req.body.returnTime,
           numberOfTickets: req.body.numberOfTickets,
           numberOfReturnTickets: req.body.numberOfReturnTickets,
           price: req.body.price,
           childrenPrice: req.body.childrenPrice,
-          startLng: req.body.startLng,
-          startLat: req.body.startLat,
-          endLng: req.body.endLng,
-          endLat: req.body.endLat,
           changes: req.body.changes,
         };
-    
-        const newTicket = new Ticket({
-          ...ticketData,
-        });
-    
-        // await newTicket.save();
     
         const generatedTickets = await generateTicketsForNextTwoYears(ticketData, selectedDayOfTheWeek, selectedReturnDayOfWeek);
     
         res.status(200).json({
-          newTicket,
           generatedTickets,
         });
       } catch (error) {
@@ -149,7 +134,7 @@ module.exports = {
           if (price) searchParams.price = price;
           if (childrenPrice) searchParams.childrenPrice = childrenPrice;
       
-          const searchFields = ['from', 'to', 'type', 'date', 'returnDate'];
+          const searchFields = ['from', 'to', 'type', 'date', 'returnDate', 'time'];
           const textQuery = searchFields
             .filter((field) => searchParams[field])
             .map((field) => ({
@@ -274,54 +259,52 @@ module.exports = {
 }
 
 
-
+  
 const generateTicketsForNextTwoYears = async (ticketData, selectedDayOfWeek, selectedReturnDayOfWeek) => {
-  const startDate = new Date();
-  startDate.setDate(startDate.getDate() + ((1 + 7 - startDate.getDay()) % selectedDayOfWeek));
-  startDate.setHours(8, 0, 0, 0);
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() + ((1 + 7 - startDate.getDay()) % selectedDayOfWeek));
+    startDate.setHours(8, 0, 0, 0);
 
-  const returnDate = new Date();
-  returnDate.setDate(returnDate.getDate() + ((1 + 7 - returnDate.getDay()) % selectedReturnDayOfWeek));
-  returnDate.setHours(8, 0, 0, 0);
-  const tickets = [];
+    const returnDate = new Date();
+    returnDate.setDate(returnDate.getDate() + ((1 + 7 - returnDate.getDay()) % selectedReturnDayOfWeek));
+    returnDate.setHours(8, 0, 0, 0);
+    const tickets = [];
 
-  for (let i = 0; i < 2 * 52; i++) {
-    const ticketDate = new Date(startDate);
-    ticketDate.setDate(ticketDate.getDate() + 7 * i);
+    for (let i = 0; i < 2 * 52; i++) {
+        const ticketDate = new Date(startDate);
+        ticketDate.setDate(ticketDate.getDate() + 7 * i);
 
-    const ticketReturnDate = new Date(returnDate);
-    ticketReturnDate.setDate(ticketReturnDate.getDate() + 7 * i);
+        const ticketReturnDate = new Date(returnDate);
+        ticketReturnDate.setDate(ticketReturnDate.getDate() + 7 * i);
+        const day = String(ticketDate.getDate()).padStart(2, '0');
+        const month = String(ticketDate.getMonth() + 1).padStart(2, '0');
+        const year = ticketDate.getFullYear();
+        const returnday = String(ticketReturnDate.getDate()).padStart(2, '0');
+        const returnmonth = String(ticketReturnDate.getMonth() + 1).padStart(2, '0');
+        const returnyear = ticketReturnDate.getFullYear();
+        
+        const ticketDateString = `${day}-${month}-${year}`;
+        const returnTicketDateString = `${returnday}-${returnmonth}-${returnyear}`;
 
-      const day = String(ticketDate.getDate()).padStart(2, '0');
-      const month = String(ticketDate.getMonth() + 1).padStart(2, '0');
-      const year = ticketDate.getFullYear();
+        console.log(ticketDateString, returnTicketDateString)
 
-      const returnday = String(ticketReturnDate.getDate()).padStart(2, '0');
-      const returnmonth = String(ticketReturnDate.getMonth() + 1).padStart(2, '0');
-      const returnyear = ticketReturnDate.getFullYear();
+        const ticketDataWithDate = {
+          ...ticketData,
+          date: ticketDateString,
+          returnDate: returnTicketDateString
+        }
 
-      const ticketDateString = `${day}-${month}-${year}`;
-      const returnTicketDateString = `${returnday}-${returnmonth}-${returnyear}`;
+        const ticket = new Ticket(ticketDataWithDate);
 
-      console.log(ticketDateString, returnTicketDateString)
+        ticket.date = ticketDateString;
+        ticket.returnDate = returnTicketDateString;
 
-      const ticketDataWithDate = {
-        ...ticketData,
-        date: ticketDateString,
-        returnDate: returnTicketDateString
-      }
+        await ticket.save();
+        tickets.push(ticket);
+    }
 
-      const ticket = new Ticket(ticketDataWithDate);
-
-      ticket.date = ticketDateString;
-      ticket.returnDate = returnTicketDateString;
-
-      await ticket.save();
-      tickets.push(ticket);
-  }
-
-    console.log({ tickets });
-    return tickets;
+      console.log({ tickets });
+      return tickets;
 };
 
 

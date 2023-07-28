@@ -42,15 +42,15 @@ module.exports = {
           path: 'ticket',
           populate: { path: 'lineCode' }
         }).populate('buyer').sort({createdAt: 'desc'})
-    
+        console.log(bookingsForLine, lines)
         const lineBookings = lines.map(line => {
           const bookings = bookingsForLine.filter(booking => line.code === booking.ticket.lineCode.code);
-          return { line: line.code, from: line.from,to: line.to, bookings: bookings };
+          return { line: line.code, from: line.from, to: line.to, bookings: bookings };
         });
     
         res.status(200).json(lineBookings);
       } catch (error) {
-        res.status(500).json(error);
+        res.status(500).json('error -> ' + error);
       }
     },
     
@@ -65,12 +65,10 @@ module.exports = {
             select: '-password'
           }).sort({createdAt: 'desc'})
           
-
-
           var bookings = [];
       
           for (const booking of bookingsForLine) {
-            if (booking.ticket.lineCode._id == req.params.id && booking.ticket.date == req.params.from) {
+            if (booking.ticket.lineCode._id == req.params.id && (booking.ticket.date == req.params.from || booking.ticket.returnDate == req.params.from)) {
               bookings.push(booking);
               console.log(booking)
             }

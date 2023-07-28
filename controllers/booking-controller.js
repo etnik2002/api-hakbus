@@ -252,7 +252,8 @@ module.exports = {
           console.log("start")
           const allBookings = await Booking.find({}).lean();
           const weeklyStats = {};
-      
+
+          
           allBookings.forEach((booking) => {
             const bookingDate = moment(booking.createdAt);
             const weekStartDate = moment().subtract(1, 'week').startOf('week');
