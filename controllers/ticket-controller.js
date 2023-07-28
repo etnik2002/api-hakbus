@@ -13,7 +13,7 @@ module.exports = {
         const selectedReturnDayOfWeek = req.body.returnDayOfWeek;
 
         const ticketData = {
-          lineCode: req.query.lineCode,
+          lineCode: req.body.lineCode,
           time: req.body.time,
           returnTime: req.body.returnTime,
           numberOfTickets: req.body.numberOfTickets,
