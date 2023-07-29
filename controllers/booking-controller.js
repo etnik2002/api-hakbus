@@ -51,7 +51,7 @@ module.exports = {
                 // await Ceo.findByIdAndUpdate('6498755c438b9ec3237688ca', { $inc: { totalProfit: ourEarnings }});
             });
 
-            const customersName = `${req.body.firstname || user.name} ${req.body.lastname  || user.name}`;
+            // const customersName = `${req.body.firstname || user.name} ${req.body.lastname  || user.name}`;
             // sendEmailNotification && await sendOrderToUsersEmail(req.body.email  || user.email, ticket, user._id, user.name, customersName);
 
             res.status(200).json(newBooking);

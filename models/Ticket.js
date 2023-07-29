@@ -57,7 +57,7 @@ const ticketSchema = mongoose.Schema({
   isActive: {
     type: Boolean,
     enum: ['true', 'false'],
-    default: false
+    default: true
   },
 
 }, { timestamps: true });

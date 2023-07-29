@@ -1,5 +1,7 @@
 const Booking = require("../models/Booking");
 const Line = require("../models/Line");
+const Ticket = require("../models/Ticket");
+const moment = require('moment')
 
 module.exports = {
 
@@ -23,7 +25,7 @@ module.exports = {
         } catch (error) {
             res.status(500).json(error);
         }
-    },  
+    },    
 
     getAllLines: async (req,res) => {
       try {
@@ -38,14 +40,24 @@ module.exports = {
     getLineBookings: async (req, res) => {
       try {
         const lines = await Line.find({});
-        const bookingsForLine = await Booking.find({}).populate({
-          path: 'ticket',
-          populate: { path: 'lineCode' }
-        }).populate('buyer').sort({createdAt: 'desc'})
-        console.log(bookingsForLine, lines)
-        const lineBookings = lines.map(line => {
-          const bookings = bookingsForLine.filter(booking => line.code === booking.ticket.lineCode.code);
-          return { line: line.code, from: line.from, to: line.to, bookings: bookings };
+        const bookingsForLine = await Booking.find({})
+          .populate({
+            path: 'ticket',
+            populate: { path: 'lineCode' },
+          })
+          .populate('buyer')
+          .sort({ createdAt: 'desc' });
+    
+        const lineBookings = lines.map((line) => {
+          const bookings = bookingsForLine.filter((booking) => line.code === booking.ticket.lineCode.code);
+          const todaysBookings = bookings.filter((b) => b.ticket.date === moment().format('DD-MM-YYYY') || b.ticket.returnDate === moment().format('DD-MM-YYYY'))
+    
+          return {
+            line: line.code,
+            from: line.from,
+            to: line.to,
+            bookings: todaysBookings,
+          };
         });
     
         res.status(200).json(lineBookings);
@@ -54,6 +66,16 @@ module.exports = {
       }
     },
     
+    
+    findTodaysLineTickets: async (req,res) => {
+      try {
+        let todayDate = moment().format('DD-MM-YYYY');
+        const tickets = await Ticket.find({$or: [{ date: todayDate }, { returnDate: todayDate }]}).populate('lineCode');
+        res.status(200).json(tickets);
+      } catch (error) {
+        res.status(500).json("error -> " + error)
+      }
+    },
 
       getSingleLineBookings: async (req,res) =>{
         try {

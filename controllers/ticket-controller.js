@@ -9,8 +9,8 @@ module.exports = {
 
     registerTicket: async (req, res) => {
       try {
-        const selectedDayOfTheWeek = req.body.dayOfWeek;
-        const selectedReturnDayOfWeek = req.body.returnDayOfWeek;
+        const selectedDayOfTheWeek = Number(req.body.dayOfWeek);
+        const selectedReturnDayOfWeek = Number(req.body.returnDayOfWeek);
 
         const ticketData = {
           lineCode: req.body.lineCode,
@@ -111,7 +111,6 @@ module.exports = {
           res.status(500).json({ message: "Internal error -> " + error });
         }
       },
-
       getSearchedTickets: async (req, res) => {
         try {
           let from = req.query.from;
@@ -121,20 +120,18 @@ module.exports = {
           let type = req.query.type;
           let price = req.body.price;
           let childrenPrice = req.body.childrenPrice;
-          
+      
           const dateNow = moment().format('DD-MM-YYYY');
-
+      
           const searchParams = {};
       
-          if (from) searchParams.from = from;
-          if (to) searchParams.to = to;
           if (date) searchParams.date = date;
           if (returnDate) searchParams.returnDate = returnDate;
           if (type) searchParams.type = type;
           if (price) searchParams.price = price;
           if (childrenPrice) searchParams.childrenPrice = childrenPrice;
       
-          const searchFields = ['from', 'to', 'type', 'date', 'returnDate', 'time'];
+          const searchFields = ['time'];
           const textQuery = searchFields
             .filter((field) => searchParams[field])
             .map((field) => ({
@@ -145,24 +142,25 @@ module.exports = {
           const allTickets = await Ticket.find({
             ...ticketQuery,
             ...searchParams,
-            date: { $gte: dateNow }
+            date: { $gte: dateNow },
           })
-            .populate([
-              // { path: 'agency', select: '-password' },
-              { path: 'lineCode' },
-            ])
-            .sort({ createdAt: 'desc' });
-          
-
-          // const filteredTickets = allTickets.filter((ticket) =>
-          //   ticket.agency && ticket.agency.isActive
-          // );
-    
-          res.status(200).json(allTickets);
+            .populate({
+              path: 'lineCode',
+              match: { from: { $regex: new RegExp('^' + from, 'i') }, to: { $regex: new RegExp('^' + to, 'i') } },
+            });
+      
+          // Filter out tickets where lineCode is null (no matching lineCode)
+          const filteredTickets = allTickets.filter((ticket) => ticket.lineCode);
+      
+          filteredTickets.sort((a, b) => new Date(a.date) - new Date(b.date));
+      
+          res.status(200).json(filteredTickets);
         } catch (error) {
           res.status(500).json({ message: 'Internal server error -> ' + error });
         }
       },
+      
+      
       
       getNearestTicket: async (req, res) => {
         try {
@@ -259,112 +257,49 @@ module.exports = {
 }
 
 
-  
 const generateTicketsForNextTwoYears = async (ticketData, selectedDayOfWeek, selectedReturnDayOfWeek) => {
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() + ((1 + 7 - startDate.getDay()) % selectedDayOfWeek));
-    startDate.setHours(8, 0, 0, 0);
+  const adjustDayOfWeek = (startDate, dayOfWeek) => {
+    const adjustedDate = new Date(startDate);
+    adjustedDate.setDate(startDate.getDate() + ((dayOfWeek + 7 - startDate.getDay()) % 7));
+    return adjustedDate;
+  };
 
-    const returnDate = new Date();
-    returnDate.setDate(returnDate.getDate() + ((1 + 7 - returnDate.getDay()) % selectedReturnDayOfWeek));
-    returnDate.setHours(8, 0, 0, 0);
-    const tickets = [];
+  if (selectedReturnDayOfWeek < selectedDayOfWeek) {
+    selectedReturnDayOfWeek = (selectedReturnDayOfWeek % 7) + 1;
+  }
 
-    for (let i = 0; i < 2 * 52; i++) {
-        const ticketDate = new Date(startDate);
-        ticketDate.setDate(ticketDate.getDate() + 7 * i);
+  const startDate = new Date();
+  const ticketDate = adjustDayOfWeek(startDate, selectedDayOfWeek);
+  startDate.setDate(ticketDate.getDate());
+  startDate.setHours(8, 0, 0, 0);
 
-        const ticketReturnDate = new Date(returnDate);
-        ticketReturnDate.setDate(ticketReturnDate.getDate() + 7 * i);
-        const day = String(ticketDate.getDate()).padStart(2, '0');
-        const month = String(ticketDate.getMonth() + 1).padStart(2, '0');
-        const year = ticketDate.getFullYear();
-        const returnday = String(ticketReturnDate.getDate()).padStart(2, '0');
-        const returnmonth = String(ticketReturnDate.getMonth() + 1).padStart(2, '0');
-        const returnyear = ticketReturnDate.getFullYear();
-        
-        const ticketDateString = `${day}-${month}-${year}`;
-        const returnTicketDateString = `${returnday}-${returnmonth}-${returnyear}`;
+  const returnDate = adjustDayOfWeek(ticketDate, selectedReturnDayOfWeek);
 
-        console.log(ticketDateString, returnTicketDateString)
+  const tickets = [];
 
-        const ticketDataWithDate = {
-          ...ticketData,
-          date: ticketDateString,
-          returnDate: returnTicketDateString
-        }
+  for (let i = 0; i < 2 ; i++) {
+    const ticketDateString = moment(ticketDate).subtract(1, 'days').format('DD-MM-YYYY');
+    const returnTicketDateString = moment(returnDate).subtract(1, 'days').format('DD-MM-YYYY');
 
-        const ticket = new Ticket(ticketDataWithDate);
+    const ticketDataWithDate = {
+      ...ticketData,
+      date: ticketDateString,
+      returnDate: returnTicketDateString,
+    };
 
-        ticket.date = ticketDateString;
-        ticket.returnDate = returnTicketDateString;
+    const ticket = new Ticket(ticketDataWithDate);
+    ticket.date = ticketDateString;
+    ticket.returnDate = returnTicketDateString;
 
-        await ticket.save();
-        tickets.push(ticket);
-    }
+    await ticket.save();
+    tickets.push(ticket);
 
-      console.log({ tickets });
-      return tickets;
+    ticketDate.setDate(ticketDate.getDate() + 7);
+    returnDate.setDate(returnDate.getDate() + 7);
+  }
+
+  console.log({ tickets });
+  return tickets;
 };
 
 
-
-// const createTicket = async (ticketData) => {
-//   const ticket = new Ticket(ticketData);
-//   return ticket.save();
-// };
-
-// const generateAllTickets = async () => {
-//   const ticketData = {
-//     agency: "agencyId", 
-//     from: "Start City",
-//     to: "End City",
-//     lineCode: "lineId",
-//     changes: [
-//       {
-//         city: "Change City",
-//         date: "Change Date",
-//         time: "Change Time",
-//       },
-//     ],
-//     time: "08:00", 
-//     price: 10, 
-//     childrenPrice: 5,
-//     startLng: 0, 
-//     startLat: 0, 
-//     endLng: 1, 
-//     endLat: 1, 
-//   };
-
-//   const startDate = new Date(); 
-//   startDate.setDate(startDate.getDate() + ((1 + 7 - startDate.getDay()) % 7));
-//   startDate.setHours(8, 0, 0, 0); 
-
-//   const tickets = [];
-
-//   for (let i = 0; i < 3 * 52; i++) {
-//     const ticketDate = new Date(startDate);
-//     ticketDate.setDate(ticketDate.getDate() + 7 * i); 
-
-//     const ticketDateString = ticketDate.toISOString().substring(0, 10);
-//     const ticketDataWithDate = {
-//       ...ticketData,
-//       date: ticketDateString,
-//     };
-
-//     const ticket = await createTicket(ticketDataWithDate);
-//     tickets.push(ticket);
-//   }
-
-//   return tickets;
-// };
-
-// generateAllTickets()
-//   .then((tickets) => {
-//     console.log("Tickets created:", tickets);
-//     mongoose.disconnect();
-//   })
-//   .catch((error) => {
-//     console.error("Error creating tickets:", error);
-//     mongoose.disconnect();
-//   })
