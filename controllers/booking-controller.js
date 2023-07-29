@@ -192,8 +192,11 @@ module.exports = {
             const filteredBookings = await Booking.find({
               createdAt: { $gte: fromDate, $lte: toDate }
             }).populate({
-              path: 'seller buyer ticket',
+              path: 'seller buyer',
               select: '-password' 
+            }).populate({
+              path: 'ticket',
+              populate: { path: 'lineCode' }
             });
             res.status(200).json(filteredBookings);
           }
