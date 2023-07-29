@@ -16,19 +16,19 @@ module.exports = {
         try {
             const user = await User.findById(req.query.buyerID);
             const ticket = await Ticket.findById(req.params.ticketID);
-            // const agency = await Agency.findById(req.params.sellerID);
+            const agency = await Agency.findById(req.params.sellerID);
             const price = req.body.age <= 10 ? ticket.childrenPrice : ticket.price;
 
-            // const agencyPercentage = agency.percentage / 100;
-            // const agencyEarnings = price - price * agencyPercentage;
-            // const ourEarnings = price - agencyEarnings;
+            const agencyPercentage = agency.percentage / 100;
+            const agencyEarnings = price - price * agencyPercentage;
+            const ourEarnings = price - agencyEarnings;
 
             const sendEmailNotification = req.body.sendEmailNotification;
             const sendSmsNotification = req.body.sendSmsNotification;
  
            const newBooking = new Booking({
                 buyer: req.params.buyerID,
-                // seller: req.params.sellerID,
+                seller: req.params.sellerID,
                 ticket: req.params.ticketID,
                 firstname: req.body.firstname,
                 lastname: req.body.lastname,
@@ -44,11 +44,11 @@ module.exports = {
                 await Ticket.findByIdAndUpdate(req.params.ticketID, {
                     $inc: { numberOfTickets: -1 },
                 });
-                // await Agency.findByIdAndUpdate(req.params.sellerID, {
-                //     $inc: { totalSales: 1, profit: agencyEarnings },
-                // });0607
+                await Agency.findByIdAndUpdate(req.params.sellerID, {
+                    $inc: { totalSales: 1, profit: agencyEarnings },
+                });
                 
-                // await Ceo.findByIdAndUpdate('6498755c438b9ec3237688ca', { $inc: { totalProfit: ourEarnings }});
+                await Ceo.findByIdAndUpdate('6498755c438b9ec3237688ca', { $inc: { totalProfit: ourEarnings }});
             });
 
             // const customersName = `${req.body.firstname || user.name} ${req.body.lastname  || user.name}`;
