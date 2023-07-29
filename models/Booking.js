@@ -15,10 +15,6 @@ const bookingSchema = mongoose.Schema({
     },
     passengers: [
         {
-            age: {
-                type: Number,
-                required: true,
-            },
             fullName: {
                 type: String,
             },
@@ -30,6 +26,7 @@ const bookingSchema = mongoose.Schema({
             },
             birthDate: {
                 type: String,
+                required: true,
             }
         }
     ],
