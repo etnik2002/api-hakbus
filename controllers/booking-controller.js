@@ -181,9 +181,13 @@ module.exports = {
           if (req.query.from === "" && req.query.to === "") {
             const filteredBookings = await Booking.find()
               .populate({
-                path: 'seller buyer ticket',
+                path: 'buyer',
                 select: '-password' 
-              });
+              }).populate({
+                path: 'ticket',
+                populate: { path: 'lineCode' } // Add this line to populate lineCode inside the ticket
+              })
+              .sort({ createdAt: 'desc' });
             res.status(200).json(filteredBookings);
           } else {
             const fromDate = moment(req.query.from, 'DD-MM-YYYY').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
@@ -191,13 +195,17 @@ module.exports = {
       
             const filteredBookings = await Booking.find({
               createdAt: { $gte: fromDate, $lte: toDate }
-            }).populate({
-              path: 'seller buyer',
-              select: '-password' 
-            }).populate({
-              path: 'ticket',
-              populate: { path: 'lineCode' }
-            });
+            })
+              .populate({
+                path: 'buyer',
+                select: '-password' 
+              })
+              .populate({
+                path: 'ticket',
+                populate: { path: 'lineCode' } // Add this line to populate lineCode inside the ticket
+              })
+              .sort({ createdAt: 'desc' });
+      
             res.status(200).json(filteredBookings);
           }
         } catch (error) {

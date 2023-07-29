@@ -13,7 +13,7 @@ router.get('/filtered', getFilteredBookings);
 
 router.get('/date-range', getBookingsFromDateRange)
 
-// router.post('/create/:buyerID/:sellerID/:ticketID', placeBooking);
+router.post('/create/:buyerID/:sellerID/:ticketID', placeBooking);
 
 router.get('/:id', getSingleBooking);
 
