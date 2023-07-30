@@ -10,56 +10,107 @@ const mongoose = require('mongoose');
 const stripe = require('stripe');
 require("dotenv").config();
 
+
+  function calculateAge(birthDate) {
+    const today = new Date();
+    const birthDateArray = birthDate.split("-"); 
+    const birthDateObj = new Date(
+      birthDateArray[2],
+      birthDateArray[1] - 1,
+      birthDateArray[0]
+    );
+  
+    let age = today.getFullYear() - birthDateObj.getFullYear();
+    const monthDiff = today.getMonth() - birthDateObj.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDateObj.getDate())) {
+      age -= 1;
+    }
+  
+    return age;
+  }
+  
+
 module.exports = {
 
-    placeBooking: async (req, res) => {
-        try {
-            const user = await User.findById(req.query.buyerID);
-            const ticket = await Ticket.findById(req.params.ticketID);
-            const agency = await Agency.findById(req.params.sellerID);
-            const price = req.body.age <= 10 ? ticket.childrenPrice : ticket.price;
-
-            const agencyPercentage = agency.percentage / 100;
-            const agencyEarnings = price - price * agencyPercentage;
-            const ourEarnings = price - agencyEarnings;
-
-            const sendEmailNotification = req.body.sendEmailNotification;
-            const sendSmsNotification = req.body.sendSmsNotification;
- 
-           const newBooking = new Booking({
-                buyer: req.params.buyerID,
-                seller: req.params.sellerID,
-                ticket: req.params.ticketID,
-                firstname: req.body.firstname,
-                lastname: req.body.lastname,
-                email: req.body.email,
-                phone: req.body.phone,
-                age: req.body.age,
-                price: price,
-                passengers: req.body.passengers,
-                
-            });
-        
-            await newBooking.save().then(async () => {
-                await Ticket.findByIdAndUpdate(req.params.ticketID, {
-                    $inc: { numberOfTickets: -1 },
-                });
-                await Agency.findByIdAndUpdate(req.params.sellerID, {
-                    $inc: { totalSales: 1, profit: agencyEarnings },
-                });
-                
-                await Ceo.findByIdAndUpdate('6498755c438b9ec3237688ca', { $inc: { totalProfit: ourEarnings }});
-            });
-
-            // const customersName = `${req.body.firstname || user.name} ${req.body.lastname  || user.name}`;
-            // sendEmailNotification && await sendOrderToUsersEmail(req.body.email  || user.email, ticket, user._id, user.name, customersName);
-
-            res.status(200).json(newBooking);
-            } catch (error) {
-              console.log(error)
-              res.status(500).json({ message: `Server error -> ${error}` });
-            }
-      },
+  placeBooking : async (req, res) => {
+    try {
+      const user = await User.findById(req.query.buyerID);
+      const ticket = await Ticket.findById(req.params.ticketID);
+      const agency = await Agency.findById(req.params.sellerID);
+      let totalPrice = 0;
+  
+      const passengers = req.body.passengers.map((passenger) => {
+        const age = calculateAge(passenger.birthDate);
+        const passengerPrice = age <= 10 ? ticket.childrenPrice : ticket.price;
+        totalPrice += passengerPrice;
+        return {
+          email: passenger.email,
+          phone: passenger.phone,
+          fullName: passenger.fullName,
+          birthDate: passenger.birthDate,
+          age: parseInt(age),
+          price: passengerPrice,
+        };
+      });
+  
+      const agencyPercentage = agency.percentage / 100;
+      const agencyEarnings = totalPrice - totalPrice * agencyPercentage;
+      const ourEarnings = totalPrice - agencyEarnings;
+  
+      const sendEmailNotification = req.body.sendEmailNotification;
+      const sendSmsNotification = req.body.sendSmsNotification;
+      const type = req.body.type;
+      const numberOfPsg = req.body.passengers.length;
+  
+      const newBooking = new Booking({
+        buyer: req.params.buyerID,
+        seller: req.params.sellerID,
+        ticket: req.params.ticketID,
+        firstname: req.body.firstname,
+        lastname: req.body.lastname,
+        email: req.body.email,
+        phone: req.body.phone,
+        age: req.body.age,
+        price: type == true ? totalPrice * 2 : totalPrice,
+        passengers: passengers,
+        type: type == true ? 'return' : 'oneway'
+      });
+  
+      await newBooking.save().then(async () => {
+        if (type) {
+          await Ticket.findByIdAndUpdate(req.params.ticketID, {
+            $inc: { numberOfTickets: -numberOfPsg },
+          });
+  
+          await Ticket.findByIdAndUpdate(req.params.ticketID, {
+            $inc: { numberOfReturnTickets: -numberOfPsg },
+          });
+        } else if (!type) {
+          await Ticket.findByIdAndUpdate(req.params.ticketID, {
+            $inc: { numberOfTickets: -numberOfPsg },
+          });
+        }
+  
+        await Agency.findByIdAndUpdate(req.params.sellerID, {
+          $inc: { totalSales: 1, profit: agencyEarnings },
+        });
+  
+        await Ceo.findByIdAndUpdate('6498755c438b9ec3237688ca', { $inc: { totalProfit: ourEarnings } });
+      });
+  
+      // Send email notifications to passengers
+      if (sendEmailNotification) {
+        passengers.forEach(async (passenger) => {
+          await sendOrderToUsersEmail(passenger.email || user.email, ticket, '6499b15485cb1e6f21a34a46', 'Test user', passenger.fullName);
+        });
+      }
+  
+      res.status(200).json(newBooking);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ message: `Server error -> ${error}` });
+    }
+  },
 
       
 

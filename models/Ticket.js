@@ -32,6 +32,7 @@ const ticketSchema = mongoose.Schema({
   },
   returnTime: {
     type: String,
+    required: true,
   },
   type: {
     type: String,

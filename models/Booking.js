@@ -27,7 +27,13 @@ const bookingSchema = mongoose.Schema({
             birthDate: {
                 type: String,
                 required: true,
-            }
+            },
+            age: {
+                type: Number,
+            },
+            price: {
+                type: Number,
+            },
         }
     ],
     price: {
