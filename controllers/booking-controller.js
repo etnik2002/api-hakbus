@@ -34,10 +34,23 @@ module.exports = {
 
   placeBooking : async (req, res) => {
     try {
+      const type = req.body.type;
       const user = await User.findById(req.query.buyerID);
       const ticket = await Ticket.findById(req.params.ticketID);
+
+      if(!type) {
+        if(ticket.numberOfTickets < 1){
+          return res.status(400).json("Not seats left");
+        } 
+      }
+
+      if(type) {
+        if(ticket.numberOfTickets < 1 || ticket.numberOfReturnTickets < 1 || (ticket.numberOfTickets < 1 && ticket.numberOfReturnTickets < 1)){
+          return res.status(400).json("Not seats left for both ways");
+        }
+      }
+
       const agency = await Agency.findById(req.params.sellerID);
-      const type = req.body.type;
       let totalPrice = 0;
   
       const passengers = req.body.passengers.map((passenger) => {
@@ -232,11 +245,11 @@ module.exports = {
           if (req.query.from === "" && req.query.to === "") {
             const filteredBookings = await Booking.find()
               .populate({
-                path: 'buyer',
+                path: 'buyer seller',
                 select: '-password' 
               }).populate({
                 path: 'ticket',
-                populate: { path: 'lineCode' } // Add this line to populate lineCode inside the ticket
+                populate: { path: 'lineCode' } 
               })
               .sort({ createdAt: 'desc' });
             res.status(200).json(filteredBookings);
@@ -253,7 +266,7 @@ module.exports = {
               })
               .populate({
                 path: 'ticket',
-                populate: { path: 'lineCode' } // Add this line to populate lineCode inside the ticket
+                populate: { path: 'lineCode' } 
               })
               .sort({ createdAt: 'desc' });
       
