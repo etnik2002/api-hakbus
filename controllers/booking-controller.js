@@ -35,8 +35,26 @@ module.exports = {
   placeBooking : async (req, res) => {
     try {
       const type = req.body.type;
+      const onlyReturn = req.body.onlyReturn;
+      const numberOfPsg = req.body.passengers.length;
       const user = await User.findById(req.query.buyerID);
       const ticket = await Ticket.findById(req.params.ticketID);
+
+      if(onlyReturn) {
+        if(ticket.numberOfReturnTickets < numberOfPsg) {
+          res.status(400).json('Number of tickets requested is more than available for this return trip');     
+        }
+      }
+
+      if(numberOfPsg > ticket.numberOfTickets) {
+        res.status(400).json('Number of tickets requested is more than available');
+      }
+      
+      if(type){
+        if(numberOfPsg > ticket.numberOfReturnTickets) {
+          res.status(400).json('Number of tickets requested is more than available for both ways');
+        }
+      }
 
       if(!type) {
         if(ticket.numberOfTickets < 1){
@@ -73,8 +91,17 @@ module.exports = {
   
       const sendEmailNotification = req.body.sendEmailNotification;
       const sendSmsNotification = req.body.sendSmsNotification;
-      const numberOfPsg = req.body.passengers.length;
-  
+
+      let bookingType;
+
+      if(type) {
+        bookingType = 'both'
+      } else if(onlyReturn) {
+        bookingType = 'return'
+      } else {
+        bookingType = 'oneway'
+      }
+
       const newBooking = new Booking({
         buyer: req.params.buyerID,
         seller: req.params.sellerID,
@@ -86,7 +113,8 @@ module.exports = {
         age: req.body.age,
         price: totalPrice,
         passengers: passengers,
-        type: type == true ? 'return' : 'oneway'
+        type: bookingType, 
+
       });
   
       await newBooking.save().then(async () => {
@@ -98,7 +126,15 @@ module.exports = {
           await Ticket.findByIdAndUpdate(req.params.ticketID, {
             $inc: { numberOfReturnTickets: -numberOfPsg },
           });
-        } else if (!type) {
+        } 
+
+        if (onlyReturn) {
+          await Ticket.findByIdAndUpdate(req.params.ticketID, {
+            $inc: { numberOfReturnTickets: -numberOfPsg },
+          });
+        }
+        
+        else {
           await Ticket.findByIdAndUpdate(req.params.ticketID, {
             $inc: { numberOfTickets: -numberOfPsg },
           });

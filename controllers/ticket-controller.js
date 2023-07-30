@@ -2,6 +2,7 @@ const Ticket = require("../models/Ticket");
 const Agency = require("../models/Agency");
 const moment = require("moment");
 const User = require("../models/User");
+const Line = require("../models/Line");
 const TicketService = require("../services/ticketService");
 const mongoose = require("mongoose");
 
@@ -11,6 +12,7 @@ module.exports = {
       try {
         const selectedDayOfTheWeek = Number(req.body.dayOfWeek);
         const selectedReturnDayOfWeek = Number(req.body.returnDayOfWeek);
+        const line = await Line.findById(req.body.lineCode);
 
         const ticketData = {
           lineCode: req.body.lineCode,
@@ -21,6 +23,8 @@ module.exports = {
           price: req.body.price,
           childrenPrice: req.body.childrenPrice,
           changes: req.body.changes,
+          from: line.from,
+          to: line.to,
         };
     
         const generatedTickets = await generateTicketsForNextTwoYears(ticketData, selectedDayOfTheWeek, selectedReturnDayOfWeek);
@@ -51,12 +55,8 @@ module.exports = {
       
       getAllTicket: async (req,res) => {
         try {
-          const ticketsService = new TicketService();
-          
-          await ticketsService.getAllTickets().then((data) => {
-            res.status(200).json(data);
-          })
-
+          const all = await Ticket.find({}).populate('lineCode')
+          res.status(200).json(all)
         } catch (error) {
           res.status(500).json({ message: "Internal error -> " + error });
         }
@@ -69,7 +69,7 @@ module.exports = {
           const all = await Ticket.find({})
           const today = moment().format('DD-MM-YYYY');
 
-            const allTickets = await Ticket.find({date: {$gte: today}}).populate('lineCode').sort({createdAt: 'desc'})
+            const allTickets = await Ticket.find({}).populate('lineCode').sort({createdAt: 'desc'})
             console.log(today)
             res.status(200).json({allTickets,all:all.length});
         } catch (error) {
@@ -111,6 +111,7 @@ module.exports = {
           res.status(500).json({ message: "Internal error -> " + error });
         }
       },
+
       getSearchedTickets: async (req, res) => {
         try {
           let from = req.query.from;
@@ -120,7 +121,18 @@ module.exports = {
           let type = req.query.type;
           let price = req.body.price;
           let childrenPrice = req.body.childrenPrice;
-      
+          
+          const tickets = await Ticket.find({
+            $or: [
+              { from: from, to: to },
+              { from: to, to: from },
+            ]
+          }).populate('lineCode');
+
+          if(tickets) {
+            return res.status(200).json(tickets);
+          }
+          
           const dateNow = moment().format('DD-MM-YYYY');
       
           const searchParams = {};
@@ -146,15 +158,15 @@ module.exports = {
           })
             .populate({
               path: 'lineCode',
-              match: { from: { $regex: new RegExp('^' + from, 'i') }, to: { $regex: new RegExp('^' + to, 'i') } },
+              match: { 'from': { $regex: new RegExp('^' + from, 'i') }, 'to': { $regex: new RegExp('^' + to, 'i') } },
             });
       
-          // Filter out tickets where lineCode is null (no matching lineCode)
+
           const filteredTickets = allTickets.filter((ticket) => ticket.lineCode);
       
           filteredTickets.sort((a, b) => new Date(a.date) - new Date(b.date));
       
-          res.status(200).json(filteredTickets);
+          res.status(200).json(tickets);
         } catch (error) {
           res.status(500).json({ message: 'Internal server error -> ' + error });
         }
@@ -248,6 +260,16 @@ module.exports = {
         try {
           const newNumberOfTickets = req.body.newNumberOfTickets;
           await Ticket.findByIdAndUpdate(req.params.id, { $set: { numberOfTickets: newNumberOfTickets } })
+          res.status(200).json("updated nr. tickets");
+        } catch (error) {
+          res.status(500).json("Error -> " + error);
+        }
+      },
+
+      updateReturnSeats: async (req,res)=> {
+        try {
+          const newNumberOfReturnTickets = req.body.newNumberOfReturnTickets;
+          await Ticket.findByIdAndUpdate(req.params.id, { $set: { numberOfReturnTickets: newNumberOfReturnTickets } })
           res.status(200).json("updated nr. tickets");
         } catch (error) {
           res.status(500).json("Error -> " + error);

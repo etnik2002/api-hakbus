@@ -6,6 +6,12 @@ const ticketSchema = mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Line',
   },
+  from: {
+    type: String,
+  },
+  to: {
+    type: String,
+  },
   changes: 
     {
       city: {

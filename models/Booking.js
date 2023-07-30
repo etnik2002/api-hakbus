@@ -42,6 +42,11 @@ const bookingSchema = mongoose.Schema({
     isScanned: {
         type: Boolean,
         default: false
+    },
+    type: {
+        type: String,
+        enum: ["oneway", "return", 'both'],
+        default: "oneway" 
     }
 } , { timestamps : true });
 
