@@ -37,19 +37,20 @@ module.exports = {
       const user = await User.findById(req.query.buyerID);
       const ticket = await Ticket.findById(req.params.ticketID);
       const agency = await Agency.findById(req.params.sellerID);
+      const type = req.body.type;
       let totalPrice = 0;
   
       const passengers = req.body.passengers.map((passenger) => {
         const age = calculateAge(passenger.birthDate);
         const passengerPrice = age <= 10 ? ticket.childrenPrice : ticket.price;
-        totalPrice += passengerPrice;
+        totalPrice +=  type == true ? passengerPrice * 2 : passengerPrice;
         return {
           email: passenger.email,
           phone: passenger.phone,
           fullName: passenger.fullName,
           birthDate: passenger.birthDate,
           age: parseInt(age),
-          price: passengerPrice,
+          price: type == true ? passengerPrice * 2 : passengerPrice,
         };
       });
   
@@ -59,7 +60,6 @@ module.exports = {
   
       const sendEmailNotification = req.body.sendEmailNotification;
       const sendSmsNotification = req.body.sendSmsNotification;
-      const type = req.body.type;
       const numberOfPsg = req.body.passengers.length;
   
       const newBooking = new Booking({
@@ -71,7 +71,7 @@ module.exports = {
         email: req.body.email,
         phone: req.body.phone,
         age: req.body.age,
-        price: type == true ? totalPrice * 2 : totalPrice,
+        price: totalPrice,
         passengers: passengers,
         type: type == true ? 'return' : 'oneway'
       });
