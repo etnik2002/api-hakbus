@@ -1,8 +1,9 @@
 const Driver = require('../models/Driver');
 const Booking = require('../models/Booking');
-
+const bcrypt = require('bcrypt')
 
 module.exports = {
+
 
     createDriver: async (req,res ) => {
         try {
@@ -30,6 +31,30 @@ module.exports = {
         } catch (error) {
             res.status(500).json(error)
         }
+    },
+
+    login: async (req, res) => {
+      try {
+  
+        const driver = await Driver.findOne({ email: req.body.email });
+        if (!driver) {
+          return res.status(401).json({ message: "Invalid Email " });
+        }
+  
+        const validPassword = req.body.password === driver.password;
+  
+        if (!validPassword) {
+          return res.status(401).json({ data: null, message: "Invalid  Password" });
+        }
+  
+        const token = driver.generateAuthToken(driver);
+        await Driver.findByIdAndUpdate(driver._id, { $set: { fcmToken: req.body.fcmToken } });
+        res.setHeader('Authorization', `Bearer ${token}`);
+  
+        res.status(200).json({ data: token, message: "logged in successfully" });
+      } catch (error) {
+        res.status(500).send({ message: "Some error happened" + error });
+      }
     },
 
     getDriverById: async (req,res) => {
