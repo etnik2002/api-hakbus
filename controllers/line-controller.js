@@ -56,7 +56,7 @@ module.exports = {
             line: line.code,
             from: line.from,
             to: line.to,
-            bookings: todaysBookings,
+            bookings: bookings,
           };
         });
     

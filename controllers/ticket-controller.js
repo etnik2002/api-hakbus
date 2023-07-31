@@ -5,6 +5,7 @@ const User = require("../models/User");
 const Line = require("../models/Line");
 const TicketService = require("../services/ticketService");
 const mongoose = require("mongoose");
+const Booking = require("../models/Booking");
 
 module.exports = {
 
@@ -78,34 +79,32 @@ module.exports = {
         }
       },
 
-      getTicketLinesBasedOnDate: async (req,res)=>{ 
+      getTicketLinesBasedOnDate: async (req, res) => {
         try {
           const today = moment().format('DD-MM-YYYY');
           const tomorrow = moment().add(1, 'day').format('DD-MM-YYYY');
+          const allBookings = await Booking.find({});
       
           const fromDate = req.query.from || today;
           const toDate = req.query.to || tomorrow;
       
-          var allTickets = [];
-
-          if(fromDate) {
-            allTickets = await Ticket.find({
-              date: {
-                $gte: fromDate,
-                $lte: fromDate,
-              }
-            }).populate('lineCode').sort({createdAt: 'desc'});
-          }
-          else {
-            allTickets = await Ticket.find({
-              date: {
-                $gte: today,
-                $lte: today,
-              }
-            }).populate('lineCode').sort({createdAt: 'desc'});
-          }
+          const ticketQuery = {
+            date: { $gte: fromDate, $lte: fromDate }
+          };
       
-          res.status(200).json({ allTickets: allTickets });
+          const allTickets = await Ticket.find(ticketQuery)
+            .populate('lineCode')
+            .sort({ createdAt: 'desc' });
+      
+          const ticketsWithBookings = allTickets.map(ticket => {
+            const bookingsForTicket = allBookings.filter(booking => booking.ticket.toString() === ticket._id.toString());
+            return {
+              ticket: ticket,
+              bookings: bookingsForTicket
+            };
+          });
+      
+          res.status(200).json(ticketsWithBookings);
         } catch (error) {
           console.log(error);
           res.status(500).json({ message: "Internal error -> " + error });
