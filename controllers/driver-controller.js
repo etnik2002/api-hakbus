@@ -74,43 +74,57 @@ module.exports = {
       }
     },
 
-
+    
     scanBooking: async (req, res) => {
-        try {
-          const driverID = req.params.driverID;
-          const bookingID = req.params.bookingID;
+      try {
       
-          const driver = await Driver.findById(driverID);
-          const booking = await Booking.findById(bookingID).populate('ticket');
-      
-          if (!driver) {
-            return res.status(401).json("Ju nuk jeni i autorizuar për të skenuar këtë biletë." );
-          }
-      
-          if (booking.isScanned) {
-            return res.status(410).json("Bileta është skenuar më parë." );
-          }
-      
-          let isLineMatched = false;
-          for (const line of driver.lines) {
-            if (driver.line === booking.ticket.lineCode) {
-              isLineMatched = true;
-              break;
-            }
-          }
-      
-          if (!isLineMatched) {
-            return res.status(401).json(
-              `Linja e biletës (${booking.ticket.lineCode}) nuk përputhet me linjën e shoferit (${driver.line}). Ju lutemi verifikoni nëse keni hypur në autobusin e duhur.`,
-            );
-          } else {
-            await Booking.findByIdAndUpdate(bookingID, { $set: { isScanned: true } });
-            await Driver.findByIdAndUpdate(driverID, { $push: { scannedBookings: bookingID } });
-            return res.status(200).json( "Bileta u skanua me sukses.");
-          }
-        } catch (error) {
-          res.status(500).json("Gabim i brendshëm i serverit.");
+    
+        const driverID = req.params.driverID;
+        const bookingID = req.params.bookingID;
+    
+        const driver = await Driver.findById(driverID).populate('lines');
+        const booking = await Booking.findById(bookingID).populate({
+          path: 'ticket',
+          populate: {
+            path: 'lineCode',
+          },
+        });
+    
+        if (!booking) {
+          return res.status(401).json("Rezervimi eshte anuluar ose nuk egziston!");
         }
+        console.log(booking)
+    
+        if (!driver) {
+          return res.status(401).json("Ju nuk jeni i autorizuar për të skenuar këtë biletë.");
+        }
+    
+        if (booking.isScanned) {
+          return res.status(410).json("Bileta është skenuar më parë.");
+        }
+    
+        let isLineMatched = false;
+        for (const line of driver.lines) {
+          if (line === booking.ticket.lineCode) {
+            isLineMatched = true;
+            break;
+          }
+        }
+    
+        if (!isLineMatched) {
+          return res.status(400).json(
+            `Linja e biletës (${booking.ticket.lineCode.code}) nuk përputhet me linjën e shoferit. Ju lutemi verifikoni nëse keni hypur në autobusin e duhur.`,
+          );
+        } else {
+          await Booking.findByIdAndUpdate(bookingID, { $set: { isScanned: true } });
+          await Driver.findByIdAndUpdate(driverID, { $push: { scannedBookings: bookingID } });
+          return res.status(200).json("Bileta u skanua me sukses.");
+        }
+      } catch (error) {
+        console.log(error)
+        requestInProgress = false; // Reset the requestInProgress flag in case of error
+        res.status(500).json("Gabim i brendshëm i serverit.");
+      }
       },
       
     
