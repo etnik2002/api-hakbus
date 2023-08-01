@@ -16,6 +16,7 @@ const bookingRoutes = require("./routes/booking")
 const lineRoutes = require("./routes/line")
 const driverRoutes = require("./routes/driver")
 const ceoRoutes = require("./routes/ceo");
+const notificationRoutes = require("./routes/notification");
 const axios = require("axios");
 const Agency = require("./models/Agency");
 
@@ -23,13 +24,10 @@ const apiurl = process.env.API_URL;
 
 var admin = require("firebase-admin");
 
-var serviceAccount = require("./helpers/firebase/firebase-config.json");
 const User = require("./models/User");
 const Ticket = require("./models/Ticket");
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
-});
+
 
 // var whitelist = ['http://localhost:8100','http://localhost:8101', 'https://admin-hakbus-6ktvemx13-etnik2002.vercel.app/']
 // var corsOptions = {
@@ -90,6 +88,7 @@ app.use(function (req, res, next) {
   app.use('/ceo', ceoRoutes);
   app.use('/driver', driverRoutes);
   app.use('/line', lineRoutes);
+  app.use('/notification', notificationRoutes);
   
   app.use(
     session({
