@@ -19,7 +19,28 @@ const ceoSchema = mongoose.Schema({
     },
     totalProfit: {
         type: Number,
-    }
+    },
+    notifications: [
+        {
+            message: {
+                type: String,
+            },
+            title: {
+                type: String,
+            },
+            agency_id: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'Agency',
+            },
+            value: {    
+                type: Number,
+            },
+            confirmed: {
+                type: Boolean,
+                default: false,
+            },
+        },
+    ]
 
 }, { timestamps: true })
 

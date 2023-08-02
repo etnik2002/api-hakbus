@@ -53,6 +53,15 @@ module.exports = {
         }
       },
 
+      getCeoById: async (req,res) => {
+        try {
+          const ceo = await Ceo.findById(req.params.id).populate('notifications.agency_id');
+          res.status(200).json(ceo);
+        } catch (error) {
+          res.status(500).json(error);
+        }
+      },
+
       getStats : async(req,res) => {
         try {
           const allAgencies = await Agency.find({}).sort({totalSales: -1}).limit(3);
@@ -124,5 +133,34 @@ module.exports = {
           res.status(500).json("error -> " + error);
         }
       },
+
+        confirmDebtPayment: async (req, res) => {
+          try {
+            const { debt } = req.body;
+            const debtValue = parseFloat(debt);
+            const agency = await Agency.findById(req.params.id);
+            const ceo = await Ceo.find({});
+
+            const paidDebt = await Agency.findByIdAndUpdate(req.params.id, { $inc: { debt: -debtValue } });
+        
+            if (paidDebt) {
+              const notificationIndex = ceo[0].notifications.findIndex(notification => notification._id.toString() === req.params.notificationId);
+        
+              if (notificationIndex !== -1) {
+                ceo[0].notifications[notificationIndex].confirmed = true;
+                await ceo[0].save();
+                console.log("saved")
+              } else {
+                return res.status(404).json('Notification not found.');
+              }
+            } else {
+              return res.status(404).json('Agency not found.');
+            }
+        
+            res.status(200).json(`Pagesa e borxhit per ${agency.name} me vlere ${debtValue} € u konfirmua me sukses.`);
+          } catch (error) {
+            res.status(500).json(error);
+          }
+      }
 
 }

@@ -2,7 +2,8 @@ const Agency = require("../models/Agency");
 const Ticket = require("../models/Ticket");
 const Booking = require("../models/Booking");
 const bcrypt = require("bcrypt");
-const Token = require("../models/ScannerToken")
+const Token = require("../models/ScannerToken");
+const Ceo = require("../models/Ceo");
 
 module.exports = {
 
@@ -193,28 +194,41 @@ module.exports = {
       }
   },
 
-  payDebt: async (req,res) => {
+  payDebt: async (req, res) => {
     try {
         const { debt } = req.body;
-        debtValue = parseFloat(debt);
+        const debtValue = parseFloat(debt);
         const agency = await Agency.findById(req.params.id);
 
-        if(agency.debt < 1) {
-          return res.status(403).json("Agjencioni nuk ka borxhe!");
+        if (agency.debt < 1) {
+            return res.status(403).json("Agjencioni nuk ka borxhe!");
         }
-        if(debt < 1) {
-          return res.status(403).json("Ju lutemi shkruani nje numer valid");
+        if (debt < 1) {
+            return res.status(403).json("Ju lutemi shkruani nje numer valid");
         }
-        if(debt > agency.debt) {
-          return res.status(403).json("Shuma e pageses eshte me e madhe se borxhi!");
+        if (debt > agency.debt) {
+            return res.status(403).json("Shuma e pageses eshte me e madhe se borxhi!");
         }
+
+        // await Agency.findByIdAndUpdate(req.params.id, { $inc: { debt: -debtValue } });
+
+        const ceo = await Ceo.find({});
+
+        const newNotification = {
+            message: `${agency.name} po paguan borxh prej ${debt} €. Borxhi duhet te konfirmohet ne menyre qe te perditesohet ne dashboardin e agjencionit`,
+            title: `Pagese borxhi`,
+            agency_id: agency._id,
+            value: debtValue,
+            confirmed: false,
+        };
         
-        await Agency.findByIdAndUpdate(req.params.id, { $inc: { debt: -debtValue } });
-        res.status(200).json("Borxhi u pagua me sukses");
+        await Ceo.findByIdAndUpdate(ceo[0]._id, { $push: { notifications: newNotification } });
+        res.status(200).json("Kerkesa per pages te borxhit u dergua tek HakBus, konfirmimi do te behet nga ana e kompanise pasi qe ju ti dergoni parate. Ju faleminderit?");
 
     } catch (error) {
         res.status(500).json(error);
     }
+
   },
 
 }
