@@ -58,13 +58,23 @@ module.exports = {
     },
 
     getDriverById: async (req,res) => {
-        try {
-            const driver = await Driver.findById(req.params.id).populate('scannedBookings lines');
-            res.status(200).json(driver);
-        } catch (error) {
-            res.status(500).json(error)
-        }
-    },
+      try {
+        const driver = await Driver.findById(req.params.id)
+        .populate({
+          path: 'scannedBookings',
+          populate: {
+            path: 'ticket',
+            populate: {
+              path: 'lineCode',
+            },
+          },
+        })
+        .populate('lines');
+          res.status(200).json(driver);
+      } catch (error) {
+          res.status(500).json(error)
+      }
+  },
 
     deleteDriver: async (req,res) => {
         try {
