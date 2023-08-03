@@ -69,12 +69,42 @@ module.exports = {
     
     findTodaysLineTickets: async (req,res) => {
       try {
-        let todayDate = moment().format('DD-MM-YYYY');
-        const tickets = await Ticket.find({$or: [{ date: todayDate }, { returnDate: todayDate }]}).populate('lineCode');
-        res.status(200).json(tickets);
+        const lines = await Line.find({});
+        const bookingsForLine = await Booking.find({})
+          .populate({
+            path: 'ticket',
+            populate: { path: 'lineCode' },
+          })
+          .populate('buyer')
+          .sort({ createdAt: 'desc' });
+    
+        const lineBookings = lines.map((line) => {
+          const bookings = bookingsForLine.filter((booking) => line.code === booking.ticket.lineCode.code);
+          const todaysBookings = bookings.filter((b) => b?.ticket?.date === moment(new Date()).format('DD-MM-YYYY') || b?.ticket?.returnDate === moment().format('DD-MM-YYYY'))
+    
+          return {
+            line: line.code,
+            from: line.from,
+            to: line.to,
+            bookings: todaysBookings,
+          };
+        });
+    
+        res.status(200).json(lineBookings);
       } catch (error) {
-        res.status(500).json("error -> " + error)
+        res.status(500).json('error -> ' + error);
       }
+     
+     
+     
+      // try {
+      //   let todayDate = moment().format('DD-MM-YYYY');
+      //   console.log(todayDate)
+      //   const tickets = await Ticket.find({ date: { $gte: '02-08-2023', $lte: '02-08-2023' } }).populate('lineCode');
+      //   res.status(200).json(tickets);
+      // } catch (error) {
+      //   res.status(500).json("error -> " + error)
+      // }
     },
 
       getSingleLineBookings: async (req,res) =>{

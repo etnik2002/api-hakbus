@@ -27,6 +27,7 @@ module.exports = {
     getAllDrivers: async (req,res) => {
         try {
             const drivers = await Driver.find({}).populate('scannedBookings lines');
+           
             res.status(200).json(drivers);
         } catch (error) {
             res.status(500).json(error)

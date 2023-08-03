@@ -120,6 +120,7 @@ module.exports = {
           const allCities = await City.find({})
           res.status(200).json(allCities)
         } catch (error) {
+          console.log(error)
           res.status(500).send({ message: "Some error happened" + error });
         }
       },

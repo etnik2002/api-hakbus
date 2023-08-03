@@ -27,7 +27,6 @@
     "multer": "^1.4.5-lts.1",
     "node-fetch": "^2.6.12",
     "nodemailer": "^6.9.3",
-    "nodemon": "^2.0.22",
-    "stripe": "^12.11.0"
+    "nodemon": "^2.0.22"
   }
 }

@@ -7,7 +7,6 @@ const Ceo = require("../models/Ceo");
 const { sendOrderToUsersEmail } = require("../helpers/mail");
 const User = require("../models/User");
 const mongoose = require('mongoose');
-const stripe = require('stripe');
 require("dotenv").config();
 
 
@@ -179,23 +178,11 @@ module.exports = {
       
           const sendEmailNotification = req.body.sendEmailNotification;
           const sendSmsNotification = req.body.sendSmsNotification;
-          const stripeInstance = stripe(API_KEY);
           
           try {
             const { token } = req.body;
       
-            const customer = await stripeInstance.customers.create({
-              source: token.id,
-              email: token.email,
-            });
-      
-            const charge = await stripeInstance.charges.create({
-              amount: price,
-              currency: "eur",
-              customer: customer.id,
-              receipt_email: token.email,
-              description: "Hak Bus Ticket"
-            });
+           
       
       
           } catch (error) {
@@ -264,9 +251,12 @@ module.exports = {
               createdAt: { $gte: fromDate, $lte: toDate },
               seller: req.query.agency
             }).populate({
-              path: 'seller buyer ticket',
+              path: 'seller buyer',
               select: '-password' 
-            });
+            }).populate({
+              path: 'ticket',
+              populate: { path: 'lineCode' } 
+            })
       
             res.status(200).json(filteredBookings);
           }
@@ -281,11 +271,14 @@ module.exports = {
           if (req.query.from === "" && req.query.to === "") {
             const filteredBookings = await Booking.find()
               .populate({
-                path: 'buyer seller',
+                path: 'buyer',
                 select: '-password' 
               }).populate({
                 path: 'ticket',
                 populate: { path: 'lineCode' } 
+              }).populate({
+                path: 'seller',
+                select: '-password'
               })
               .sort({ createdAt: 'desc' });
             res.status(200).json(filteredBookings);
@@ -303,6 +296,9 @@ module.exports = {
               .populate({
                 path: 'ticket',
                 populate: { path: 'lineCode' } 
+              }).populate({
+                path: 'seller',
+                select: '-password'
               })
               .sort({ createdAt: 'desc' });
       

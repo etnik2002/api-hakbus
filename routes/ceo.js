@@ -5,6 +5,8 @@ router.post('/create', createCeo);
 
 router.post('/login', login);
 
+router.get('/all-cities', getAllCities);
+
 router.get('/stats', getStats);
 
 router.get('/:id', getCeoById);
@@ -16,8 +18,6 @@ router.post('/activate/:id',activateAgency);
 router.post ('/add-city', addCity)
 
 router.post('/confirm-debt/:id/:notificationId', confirmDebtPayment)
-
-router.get('/all-cities', getAllCities);
 
 router.post('/city/delete/:id', deleteCity);
 
