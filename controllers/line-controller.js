@@ -78,6 +78,8 @@ module.exports = {
           .populate('buyer')
           .sort({ createdAt: 'desc' });
     
+
+          console.log(moment(new Date())).format('DD-MM-YYYY')
         const lineBookings = lines.map((line) => {
           const bookings = bookingsForLine.filter((booking) => line.code === booking.ticket.lineCode.code);
           const todaysBookings = bookings.filter((b) => b?.ticket?.date === moment(new Date()).format('DD-MM-YYYY') || b?.ticket?.returnDate === moment().format('DD-MM-YYYY'))

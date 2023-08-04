@@ -18,7 +18,7 @@ require("dotenv").config();
       birthDateArray[1] - 1,
       birthDateArray[0]
     );
-  
+   
     let age = today.getFullYear() - birthDateObj.getFullYear();
     const monthDiff = today.getMonth() - birthDateObj.getMonth();
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDateObj.getDate())) {
@@ -146,7 +146,6 @@ module.exports = {
         await Ceo.findByIdAndUpdate('6498755c438b9ec3237688ca', { $inc: { totalProfit: ourEarnings } });
       });
   
-      // Send email notifications to passengers
       if (sendEmailNotification) {
         passengers.forEach(async (passenger) => {
           await sendOrderToUsersEmail(passenger.email || user.email, ticket, '6499b15485cb1e6f21a34a46', 'Test user', passenger.fullName);
@@ -393,7 +392,6 @@ module.exports = {
         app.post("/capture-paypal-order", async (req, res) => {
           const { orderID } = req.body;
           const captureData = await capturePayment(orderID);
-          // TODO: store payment information such as the transaction ID
           res.json(captureData);
         });
         
