@@ -48,6 +48,15 @@ app.use(function (req, res, next) {
     next();
   });
   
+  app.get('/', (req, res) => {
+    try {
+      res.status(200).json({message: "HakBus API"})
+    } catch (error) {
+      res.status(500).json({message: "Error"})
+    }
+  })
+
+
   // app.use(function (req, res, next) {
   //   const allowedOrigins = ['http://localhost:8100','http://localhost:8101', 'https://admin-hakbus-6ktvemx13-etnik2002.vercel.app/'];
   
