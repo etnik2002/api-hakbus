@@ -2,6 +2,7 @@ const Booking = require("../models/Booking");
 const Line = require("../models/Line");
 const Ticket = require("../models/Ticket");
 const moment = require('moment')
+const mongoose = require("mongoose")
 
 module.exports = {
 
@@ -27,30 +28,62 @@ module.exports = {
         }
     },    
 
-    getAllLines: async (req,res) => {
+    getAllLines: async (req, res) => {
       try {
-        const all = await Line.find({});
+        const all = await Line.aggregate([{ $match: {} }]).exec();
         res.status(200).json(all);
       } catch (error) {
-        res.status(500).json(error);
+        res.status(500).json("error " + error);
       }
-    },
+    },  
 
 
     getLineBookings: async (req, res) => {
       try {
-        const lines = await Line.find({});
-        const bookingsForLine = await Booking.find({})
-          .populate({
-            path: 'ticket',
-            populate: { path: 'lineCode' },
-          })
-          .populate('buyer')
-          .sort({ createdAt: 'desc' });
+        const lines = await Line.aggregate([{ $match: {} }])
+
+        const bookingsForLine = await Booking.aggregate([
+          {
+            $lookup: {
+              from: 'tickets',
+              localField: 'ticket',
+              foreignField: '_id',
+              as: 'ticket',
+            },
+          },
+          {
+            $unwind: '$ticket',
+          },
+          {
+            $lookup: {
+              from: 'lines',
+              localField: 'ticket.lineCode',
+              foreignField: '_id',
+              as: 'ticket.lineCode',
+            },
+          },
+          {
+            $unwind: '$ticket.lineCode',
+          },
+          {
+            $lookup: {
+              from: 'users',
+              localField: 'buyer',
+              foreignField: '_id',
+              as: 'buyer',
+            },
+          },
+          {
+            $unwind: '$buyer',
+          },
+          {
+            $sort: { createdAt: -1 },
+          },
+        ]).exec();
     
         const lineBookings = lines.map((line) => {
           const bookings = bookingsForLine.filter((booking) => line.code === booking.ticket.lineCode.code);
-          const todaysBookings = bookings.filter((b) => b.ticket.date === moment().format('DD-MM-YYYY') || b.ticket.returnDate === moment().format('DD-MM-YYYY'))
+          const todaysBookings = bookings.filter((b) => b.ticket.date === moment().format('DD-MM-YYYY') || b.ticket.returnDate === moment().format('DD-MM-YYYY'));
     
           return {
             line: line.code,
@@ -67,22 +100,54 @@ module.exports = {
     },
     
     
+    
     findTodaysLineTickets: async (req,res) => {
       try {
-        const lines = await Line.find({});
-        const bookingsForLine = await Booking.find({})
-          .populate({
-            path: 'ticket',
-            populate: { path: 'lineCode' },
-          })
-          .populate('buyer')
-          .sort({ createdAt: 'desc' });
-    
+        const lines = await Line.aggregate([{ $match: {} }])
 
-          console.log(moment(new Date())).format('DD-MM-YYYY')
+        const bookingsForLine = await Booking.aggregate([
+          {
+            $lookup: {
+              from: 'tickets',
+              localField: 'ticket',
+              foreignField: '_id',
+              as: 'ticket',
+            },
+          },
+          {
+            $unwind: '$ticket',
+          },
+          {
+            $lookup: {
+              from: 'lines',
+              localField: 'ticket.lineCode',
+              foreignField: '_id',
+              as: 'ticket.lineCode',
+            },
+          },
+          {
+            $unwind: '$ticket.lineCode',
+          },
+          {
+            $lookup: {
+              from: 'users',
+              localField: 'buyer',
+              foreignField: '_id',
+              as: 'buyer',
+            },
+          },
+          {
+            $unwind: '$buyer',
+          },
+          {
+            $sort: { createdAt: -1 },
+          },
+        ]).exec();
+    
+        const todaysDate = moment(new Date()).format('DD-MM-YYYY');
         const lineBookings = lines.map((line) => {
           const bookings = bookingsForLine.filter((booking) => line.code === booking.ticket.lineCode.code);
-          const todaysBookings = bookings.filter((b) => b?.ticket?.date === moment(new Date()).format('DD-MM-YYYY') || b?.ticket?.returnDate === moment().format('DD-MM-YYYY'))
+          const todaysBookings = bookings.filter((b) => b?.ticket?.date === todaysDate || b?.ticket?.returnDate === todaysDate);
     
           return {
             line: line.code,
@@ -96,44 +161,96 @@ module.exports = {
       } catch (error) {
         res.status(500).json('error -> ' + error);
       }
-     
-     
-     
-      // try {
-      //   let todayDate = moment().format('DD-MM-YYYY');
-      //   console.log(todayDate)
-      //   const tickets = await Ticket.find({ date: { $gte: '02-08-2023', $lte: '02-08-2023' } }).populate('lineCode');
-      //   res.status(200).json(tickets);
-      // } catch (error) {
-      //   res.status(500).json("error -> " + error)
-      // }
+
     },
 
       getSingleLineBookings: async (req,res) =>{
         try {
-          const bookingsForLine = await Booking.find({}).populate({
-            path: 'ticket',
-            populate: { path: 'lineCode' }
-          }).populate({
-            path: 'buyer',
-            select: '-password'
-          }).sort({createdAt: 'desc'})
-          
-          var bookings = [];
+          const bookingsForLine = await Booking.aggregate([
+            {
+              $lookup: {
+                from: 'tickets',
+                localField: 'ticket',
+                foreignField: '_id',
+                as: 'ticket',
+              },
+            },
+            {
+              $unwind: '$ticket',
+            },
+            {
+              $lookup: {
+                from: 'lines',
+                localField: 'ticket.lineCode',
+                foreignField: '_id',
+                as: 'ticket.lineCode',
+              },
+            },
+            {
+              $unwind: '$ticket.lineCode',
+            },
+            {
+              $lookup: {
+                from: 'users',
+                localField: 'buyer',
+                foreignField: '_id',
+                as: 'buyer',
+              },
+            },
+            {
+              $unwind: '$buyer',
+            },
+            {
+              $sort: { createdAt: -1 },
+            },
+            {
+              $match: {
+                'ticket.lineCode._id': new mongoose.Types.ObjectId(req.params.id),
+                $or: [
+                  { 'ticket.date': req.params.from },
+                  { 'ticket.returnDate': req.params.from },
+                ],
+              },
+            },
+            {
+              $project: {
+                'buyer.password': 0,
+              },
+            },
+          ]).exec();
       
-          for (const booking of bookingsForLine) {
-            if (booking.ticket.lineCode._id == req.params.id && (booking.ticket.date == req.params.from || booking.ticket.returnDate == req.params.from)) {
-              bookings.push(booking);
-              console.log(booking)
-            }
-          }
-
-          console.log(bookings)
-          res.status(200).json(bookings);
+          res.status(200).json(bookingsForLine);
         } catch (error) {
+          console.log(error)
           res.status(500).json(error);
         }
       },
+
+      // getSingleLineBookings: async (req,res) =>{
+      //   try {
+      //     const bookingsForLine = await Booking.find({}).populate({
+      //       path: 'ticket',
+      //       populate: { path: 'lineCode' }
+      //     }).populate({
+      //       path: 'buyer',
+      //       select: '-password'
+      //     }).sort({createdAt: 'desc'})
+          
+      //     var bookings = [];
+      
+      //     for (const booking of bookingsForLine) {
+      //       if (booking.ticket.lineCode._id == req.params.id && (booking.ticket.date == req.params.from || booking.ticket.returnDate == req.params.from)) {
+      //         bookings.push(booking);
+      //         console.log(booking)
+      //       }
+      //     }
+
+      //     console.log(bookings)
+      //     res.status(200).json(bookings);
+      //   } catch (error) {
+      //     res.status(500).json(error);
+      //   }
+      // },
 
       deleteLine: async (req,res) => {
         try {

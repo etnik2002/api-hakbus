@@ -64,19 +64,38 @@ module.exports = {
 
       getStats : async(req,res) => {
         try {
-          const allAgencies = await Agency.find({}).sort({totalSales: -1}).limit(3);
-          const totalAgencies = await Agency.find({}).sort({createdAt: 'desc'});
-          const allTickets = await Ticket.find({}).sort({createdAt: 'desc'});
-          const soldTickets = await Booking.countDocuments().populate({
-            path: 'seller buyer ticket',
-            select: '-password' 
-          }).sort({createdAt: 'desc'});
-          const activeCities = await City.find({});
-          const ceo = await Ceo.find({});
-         console.log(soldTickets)
-          res.status(200).json({allAgencies:allAgencies,allTickets:allTickets.length,soldTickets:soldTickets,totalProfit:ceo[0].totalProfit,activeCities:activeCities.length,totalAgencies:totalAgencies.length} )
+          const [allAgencies, allTickets, soldTicketsCount, activeCities, ceo] = await Promise.all([
+            Agency.aggregate([
+              { $sort: { totalSales: -1 } },
+              { $limit: 3 },
+            ]),
+            Ticket.aggregate([
+              { $count: 'totalTickets' },
+            ]),
+            Booking.aggregate([
+              { $count: 'totalSoldTickets' },
+            ]),
+            City.aggregate([
+              { $count: 'totalActiveCities' },
+            ]),
+            Ceo.findOne({}, { totalProfit: 1 }),
+          ]);
+      
+          const totalAgencies = allAgencies.length;
+          const totalTickets = allTickets.length > 0 ? allTickets[0].totalTickets : 0;
+          const soldTickets = soldTicketsCount.length > 0 ? soldTicketsCount[0].totalSoldTickets : 0;
+          const totalActiveCities = activeCities.length > 0 ? activeCities[0].totalActiveCities : 0;
+      
+          res.status(200).json({
+            allAgencies,
+            allTickets: totalTickets,
+            soldTickets,
+            totalProfit: ceo.totalProfit,
+            activeCities: totalActiveCities,
+            totalAgencies,
+          });
         } catch (error) {
-          res.status(500).send({ message: "Some error happened" + error });
+          res.status(500).send({ message: 'Some error happened ' + error });
         }
       },
 
@@ -117,7 +136,7 @@ module.exports = {
 
       getAllCities : async(req,res)=> {
         try {
-          const allCities = await City.find({})
+          const allCities = await City.aggregate([{ $match: {} }]).exec();
           res.status(200).json(allCities)
         } catch (error) {
           console.log(error)

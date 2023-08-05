@@ -38,21 +38,38 @@ module.exports = {
       }
     },
     
-      getSingleTicket: async (req, res)=>{ 
-        try {
-          const ticket = await Ticket.findById(req.params.id).populate([
-            // { path: 'agency', select: '-password' },
-            { path: 'lineCode' },
-          ]);
-            
-          if(!ticket) {
-                return res.status(404).json({ message: "Ticket not found" });
+    getSingleTicket: async (req, res)=>{ 
+      try {
+        const ticket = await Ticket.aggregate([
+          {
+            $match: {
+              _id: new mongoose.Types.ObjectId(req.params.id)
             }
-            res.status(200).json(ticket);
-        } catch (error) {
-          res.status(500).json({ message: "Internal error -> " + error });
-        }
-      },
+          },
+          {
+            $lookup: {
+              from: 'lines',
+              localField: 'lineCode',
+              foreignField: '_id',
+              as: 'lineCode'
+            }
+          },
+          {
+            $unwind: {
+              path: '$lineData',
+              preserveNullAndEmptyArrays: true
+            }
+          },
+        ])
+          
+        if(!ticket) {
+              return res.status(404).json({ message: "Ticket not found" });
+          }
+          res.status(200).json(ticket);
+      } catch (error) {
+        res.status(500).json({ message: "Internal error -> " + error });
+      }
+    },
       
       getAllTicket: async (req,res) => {
         try {

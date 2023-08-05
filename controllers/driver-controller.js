@@ -1,6 +1,7 @@
 const Driver = require('../models/Driver');
 const Booking = require('../models/Booking');
 const bcrypt = require('bcrypt')
+const mongoose = require("mongoose")
 
 module.exports = {
 
@@ -25,13 +26,30 @@ module.exports = {
     },
 
     getAllDrivers: async (req,res) => {
-        try {
-            const drivers = await Driver.find({}).populate('scannedBookings lines');
-           
-            res.status(200).json(drivers);
-        } catch (error) {
-            res.status(500).json(error)
-        }
+      try {
+        const drivers = await Driver.aggregate([
+          {
+            $lookup: {
+              from: 'bookings',
+              localField: 'scannedBookings',
+              foreignField: '_id',
+              as: 'scannedBookings',
+            },
+          },
+          {
+            $lookup: {
+              from: 'lines',
+              localField: 'lines',
+              foreignField: '_id',
+              as: 'lines',
+            },
+          },
+        ]).exec();
+
+        res.status(200).json(drivers);
+      } catch (error) {
+        res.status(500).json(error);
+      }
     },
 
     login: async (req, res) => {
@@ -58,24 +76,72 @@ module.exports = {
       }
     },
 
-    getDriverById: async (req,res) => {
+    getDriverById: async (req, res) => {
       try {
-        const driver = await Driver.findById(req.params.id)
-        .populate({
-          path: 'scannedBookings',
-          populate: {
-            path: 'ticket',
-            populate: {
-              path: 'lineCode',
+        const driver = await Driver.aggregate([
+          {
+            $match: {
+              _id: new mongoose.Types.ObjectId(req.params.id),
             },
           },
-        })
-        .populate('lines');
-          res.status(200).json(driver);
+          {
+            $lookup: {
+              from: 'bookings',
+              localField: 'scannedBookings',
+              foreignField: '_id',
+              as: 'scannedBookings',
+            },
+          },
+          {
+            $unwind: {
+              path: '$scannedBookings',
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+          {
+            $lookup: {
+              from: 'tickets',
+              localField: 'scannedBookings.ticket',
+              foreignField: '_id',
+              as: 'scannedBookings.ticket',
+            },
+          },
+          {
+            $unwind: {
+              path: '$scannedBookings.ticket',
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+          {
+            $lookup: {
+              from: 'lines',
+              localField: 'scannedBookings.ticket.lineCode',
+              foreignField: '_id',
+              as: 'scannedBookings.ticket.lineCode',
+            },
+          },
+          {
+            $unwind: {
+              path: '$scannedBookings.ticket.lineCode',
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+          {
+            $group: {
+              _id: '$_id',
+              scannedBookings: { $push: '$scannedBookings' },
+              lines: { $first: '$lines' },
+            },
+          },
+        ]).exec();
+
+        res.status(200).json(driver[0]); 
       } catch (error) {
-          res.status(500).json(error)
+        console.log(error)
+        res.status(500).json(error);
       }
-  },
+    },
+
 
     deleteDriver: async (req,res) => {
         try {
