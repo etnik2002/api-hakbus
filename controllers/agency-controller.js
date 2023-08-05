@@ -18,6 +18,7 @@ module.exports = {
                 password: hashedPassword,
                 phone: req.body.phone,
                 percentage: req.body.percentage,
+                city:req.body.city,
                 // idc: req.body.idc,
                 // scc: req.body.scc,
             })
