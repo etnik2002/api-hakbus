@@ -38,34 +38,45 @@ module.exports = {
       }
     },
     
+    getTicketById: async (req,res) => {
+      try {
+        console.log("i hini");
+        const ticket = await Ticket.findById(req.params.id);
+        res.status(200).json(ticket);
+      } catch (error) {
+        res.status(500).json(error)
+      }
+    },
+
     getSingleTicket: async (req, res)=>{ 
       try {
-        const ticket = await Ticket.aggregate([
-          {
-            $match: {
-              _id: new mongoose.Types.ObjectId(req.params.id)
-            }
-          },
-          {
-            $lookup: {
-              from: 'lines',
-              localField: 'lineCode',
-              foreignField: '_id',
-              as: 'lineCode'
-            }
-          },
-          {
-            $unwind: {
-              path: '$lineData',
-              preserveNullAndEmptyArrays: true
-            }
-          },
-        ])
+          const ticket = await Ticket.aggregate([
+            {
+              $match: {
+                _id: new mongoose.Types.ObjectId(req.params.id)
+              }
+            },
+            {
+              $lookup: {
+                from: 'lines',
+                localField: 'lineCode',
+                foreignField: '_id',
+                as: 'lineCode'
+              }
+            },
+            {
+              $unwind: {
+                path: '$lineCode',
+                preserveNullAndEmptyArrays: true
+              }
+            },
+          ])
+
           
         if(!ticket) {
               return res.status(404).json({ message: "Ticket not found" });
           }
-          res.status(200).json(ticket);
+          res.status(200).json(ticket[0]);
       } catch (error) {
         res.status(500).json({ message: "Internal error -> " + error });
       }
@@ -80,10 +91,22 @@ module.exports = {
         }
       },
 
+      getAll: async (req,res) => {
+        try {
+          const today = moment().format('DD-MM-YYYY');
+          const all = await Ticket.find({ date: { $gte: today } });
+  
+          res.status(200).json(all);
+        } catch (error) {
+          res.status(500).json({ message: "Internal error -> " + error });
+          
+        }
+      },
+
       getAllTicketPagination: async (req,res)=>{ 
         try {
-          const page= req.query.page || 0;
-          const size= req.query.size || 10;
+          const page = req.query.page || 0;
+          const size = req.query.size || 10;
           const all = await Ticket.find({})
           const today = moment().format('DD-MM-YYYY');
 

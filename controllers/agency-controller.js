@@ -126,7 +126,7 @@ module.exports = {
           const soldTickets = await Booking.find({seller:req.params.id}).populate({
             path: 'seller buyer ticket',
             select: '-password' 
-          });
+          }).sort({createdAt: 'desc'})
           res.status(200).json(soldTickets)
         } catch (error) {
           res.status(500).json("error -> " + error);
