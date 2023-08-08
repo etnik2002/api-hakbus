@@ -34,14 +34,14 @@ const bookingSchema = mongoose.Schema({
             price: {
                 type: Number,
             },
+            isScanned: {
+                type: Boolean,
+                default: false,
+            },
         }
     ],
     price: {
         type: Number
-    },
-    isScanned: {
-        type: Boolean,
-        default: false
     },
     type: {
         type: String,

@@ -35,7 +35,7 @@ module.exports = {
     try {
       const type = req.body.type;
       const onlyReturn = req.body.onlyReturn;
-      const numberOfPsg = req.body.passengers.length;
+      const numberOfPsg = req.body.passengers.length || 1;
       const user = await User.findById(req.query.buyerID);
       const ticket = await Ticket.findById(req.params.ticketID);
 

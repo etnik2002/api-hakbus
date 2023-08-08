@@ -169,7 +169,6 @@ module.exports = {
               if (notificationIndex !== -1) {
                 ceo[0].notifications[notificationIndex].confirmed = true;
                 await ceo[0].save();
-                console.log("saved")
               } else {
                 return res.status(404).json('Notification not found.');
               }
@@ -181,6 +180,8 @@ module.exports = {
           } catch (error) {
             res.status(500).json(error);
           }
-      }
+      },
+
+      
 
 }
