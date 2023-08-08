@@ -211,8 +211,7 @@ module.exports = {
         }
       },
       
-      
-      
+
       getNearestTicket: async (req, res) => {
         try {
           const dateNow = moment().format('DD-MM-YYYY');

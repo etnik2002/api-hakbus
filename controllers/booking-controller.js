@@ -102,7 +102,7 @@ module.exports = {
       }
 
       const newBooking = new Booking({
-        buyer: req.params.buyerID,
+        buyer: req.params.buyerID ? req.params.buyerID : null,
         seller: req.params.sellerID,
         ticket: req.params.ticketID,
         firstname: req.body.firstname,
