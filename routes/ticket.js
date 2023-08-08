@@ -1,5 +1,6 @@
 const router = require("express").Router();
 const { registerTicket, editTicket, deleteTicket, updateSeats,updateReturnSeats, stopSales, getSingleTicket, getAllTicket, getSearchedTickets, getNearestTicket, getAllTicketPagination, getTicketLinesBasedOnDate, allowSales, getTicketById, getAll} = require("../controllers/ticket-controller");
+router.get('/lines', getTicketLinesBasedOnDate);
 
 router.post('/create', registerTicket);
 
@@ -21,7 +22,6 @@ router.get('/nearest', getNearestTicket);
 
 router.get('/all', getAllTicketPagination);
 
-router.get('/lines', getTicketLinesBasedOnDate);
 
 router.get('/all-tickets', getAllTicket);
 

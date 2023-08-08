@@ -121,6 +121,7 @@ module.exports = {
 
       getTicketLinesBasedOnDate: async (req, res) => {
         try {
+          console.log('holl')
           const today = moment().format('DD-MM-YYYY');
           const tomorrow = moment().add(1, 'day').format('DD-MM-YYYY');
           const allBookings = await Booking.find({});
@@ -131,7 +132,8 @@ module.exports = {
           const ticketQuery = {
             date: { $gte: fromDate, $lte: fromDate }
           };
-      
+          
+          console.log(today,fromDate)
           const allTickets = await Ticket.find(ticketQuery)
             .populate('lineCode')
             .sort({ createdAt: 'desc' });
@@ -337,7 +339,7 @@ const generateTicketsForNextTwoYears = async (ticketData, selectedDayOfWeek, sel
 
   const tickets = [];
 
-  for (let i = 0; i < 2 ; i++) {
+  for (let i = 0; i < 2*52 ; i++) {
     const ticketDateString = moment(ticketDate).subtract(1, 'days').format('DD-MM-YYYY');
     const returnTicketDateString = moment(returnDate).subtract(1, 'days').format('DD-MM-YYYY');
 
