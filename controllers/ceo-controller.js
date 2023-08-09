@@ -14,6 +14,7 @@ module.exports = {
                 name: req.body.name,
                 email: req.body.email,
                 password: hashedPassword,
+                role: req.body.role,  
             })
 
             await newCeo.save();

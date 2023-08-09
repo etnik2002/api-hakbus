@@ -40,7 +40,12 @@ const ceoSchema = mongoose.Schema({
                 default: false,
             },
         },
-    ]
+    ],
+    role: {
+        type: String,
+        enum : ['admin','superAdmin', 'observer', 'ceo'],
+        default: 'admin',
+    }
 
 }, { timestamps: true })
 
