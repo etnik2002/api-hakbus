@@ -23,7 +23,12 @@ const driverSchema = mongoose.Schema({
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Booking',
           },
-    ]
+    ],
+    role: {
+      type: String,
+      default: "driver",
+    }
+
   });
 
   driverSchema.methods.generateAuthToken = function (data) {
