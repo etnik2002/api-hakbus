@@ -148,7 +148,7 @@ module.exports = {
   
       if (sendEmailNotification) {
         passengers.forEach(async (passenger) => {
-          await sendOrderToUsersEmail(passenger.email || user.email, ticket, '6499b15485cb1e6f21a34a46', 'Test user', passenger.fullName);
+          await sendOrderToUsersEmail(passenger.email || user.email, ticket, '6499b15485cb1e6f21a34a46', 'HakBus customer', passenger.fullName, totalPrice, bookingType);
         });
       }
   

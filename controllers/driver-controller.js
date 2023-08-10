@@ -200,6 +200,7 @@ module.exports = {
               return res.status(401).json("Rezervimi eshte anuluar ose nuk egziston!");
             }
       
+            console.log(booking)
             if (!driver) {
               return res.status(401).json("Ju nuk jeni i autorizuar për të skenuar këtë biletë.");
             }
@@ -225,10 +226,10 @@ module.exports = {
                 if(!hasScannedThis) {
                   await Driver.findByIdAndUpdate(driverID, { $push: { scannedBookings: bookingID } });
                 }
-      
+                
                 booking.passengers[passengerIndex].isScanned = true;
                 await booking.save();
-      
+                
                 return res.status(200).json("Ticket successfully scanned.");
               } catch (error) {
                 console.error("Error updating booking:", error);

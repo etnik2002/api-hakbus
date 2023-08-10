@@ -15,7 +15,7 @@ async function getTicketsFromDateToDate(from, to) {
     return tickets;
 }
 
-async function sendOrderToUsersEmail ( userEmail, ticket, userID, buyerName, customersName )  {
+async function sendOrderToUsersEmail ( userEmail, ticket, userID, buyerName, customersName, price, type )  {
     try {
 
     //   const sendToHistory = `${process.env.APIURL}/user/tickets/${userID}`;
@@ -199,17 +199,24 @@ async function sendOrderToUsersEmail ( userEmail, ticket, userID, buyerName, cus
                     </svg>
                   </div>
                   <div class="content">
-                    <span class="title">Order Validated</span>
+                    <span class="title">Booking Validated</span>
                     <p class="message capitalize">Dear ${buyerName},</p>
-                    <p class="message">Thank you for your purchase. We are pleased to inform you that the ticket for ${customersName} has been successfully purchased.</p>
+
+                    <p className="message">
+                      Thank you for entrusting us with your journey! We're thrilled to confirm the successful purchase of a ticket for ${customersName}. 
+                      To complete the process, please visit our agency and make the payment in cash. This will ensure you receive your ticket via email promptly or obtain a printed copy as per your preference. Your total amount payable is ${price}.
+                    </p>
+
+                  
+
                     <p class="message">Your ticket ID is: ${ticket._id}.</p>
                     <p class="message capitalize">Destination: ${ticket.from} → ${ticket.to}.</p>
                     <p class="message capitalize">Departure: ${ticket.date} at ${ticket.time}.</p>
 
-                    <h3>Return ticket: </h3>
+                    <h3>${type == 'both' && 'Return ticket'} </h3>
                     
-                    <p class="message">Destination: ${ticket.type === 'return' ? `${ticket.to} → ${ticket.from}` : "No return ticket"}.</p>
-                    <p class="message">Departure: ${ticket.type === 'return' ? `${ticket.returnDate} → ${ticket.returnTime}` : "No return ticket"}.</p>
+                    <p class="message">${type == 'both' && 'Destination:'} ${ticket.type === 'both' ? `${ticket.to} → ${ticket.from}` : ""}.</p>
+                    <p class="message">${type == 'both' && 'Departure:'} ${ticket.type === 'both' ? `${ticket.returnDate} → ${ticket.returnTime}` : ""}.</p>
                     <div>
                       <h2  class="message"> Hak Bus </h2>
                     </div>
@@ -241,7 +248,94 @@ async function sendOrderToUsersPhone( userPhone, ticket, userID, buyerName, cust
       `,
       to: userPhone,
       from: '+12562977581'
-  })
+    })
+  }
+  
+  async function sendAttachmentToAllPassengers ( passengers, attachments ) {
+    try {
+      let transporter = nodemailer.createTransport({
+        service: 'gmail',
+        port: 587,
+        auth: {
+          user: 'etnikz2002@gmail.com',
+          pass: 'vysmnurlcmrzcwad',
+        },
+        tls: {
+          rejectUnauthorized: false,
+        },
+      });
+      
+      passengers.forEach(async (p) => {
+        await transporter.sendMail({
+          from: 'etnikz2002@gmail.com', 
+          to: p.email, 
+          subject: 'HakBus Booking PDF!',
+          html: `
+            <html>
+              <body>
+                <p>Hello ${p.fullName},</p>
+                <p>This email contains your booking details as an attachment.</p>
+                <p>Please find your booking details in the attached PDF.</p>
+                <p>Thank you for choosing HakBus!</p>
+              </body>
+            </html>
+          `,
+          attachments: [
+            {
+              filename: `hakbus-${p.fullName}-booking.pdf`,
+              content: attachments,
+              contentType: 'application/pdf',
+            },
+          ],
+        })      
+      })
+      
+  } catch (error) {
+    console.log(error);
+  }
 }
 
-module.exports = { getTicketsFromDateToDate, sendOrderToUsersEmail, sendOrderToUsersPhone };
+
+async function sendAttachmentToOneForAll ( receiverEmail, passengers, attachments ) {
+  try {
+    let transporter = nodemailer.createTransport({
+      service: 'gmail',
+      port: 587,
+      auth: {
+        user: 'etnikz2002@gmail.com',
+        pass: 'vysmnurlcmrzcwad',
+      },
+      tls: {
+        rejectUnauthorized: false,
+      },
+    });
+    
+      await transporter.sendMail({
+        from: 'etnikz2002@gmail.com',
+        to: receiverEmail,
+        subject: 'HakBus Booking PDF!',
+        html: `
+          <html>
+            <body>
+              <p>Hello ${receiverEmail},</p>
+              <p>This email contains your booking details as an attachment.</p>
+              <p>Please find your booking details in the attached PDF.</p>
+              <p>Thank you for choosing HakBus!</p>
+            </body>
+          </html>
+        `,
+        
+        attachments: passengers.map((p, index) => ({
+          filename: `hakbus-${p.fullName}-booking.pdf`,
+          content: attachments,
+          contentType: 'application/pdf',
+        })),
+      });
+       
+    } catch (error) {
+      console.log(error);
+    }
+}
+
+
+module.exports = { getTicketsFromDateToDate, sendOrderToUsersEmail, sendOrderToUsersPhone, sendAttachmentToAllPassengers, sendAttachmentToOneForAll };

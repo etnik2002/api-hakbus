@@ -47,7 +47,13 @@ const bookingSchema = mongoose.Schema({
         type: String,
         enum: ["oneway", "return", 'both'],
         default: "oneway" 
-    }
+    }, 
+    isPaid: {
+        type: Boolean,
+        enum: ['true', 'false'],
+        default: 'false',
+    },
+    
 } , { timestamps : true });
 
 module.exports = mongoose.model("Booking", bookingSchema);

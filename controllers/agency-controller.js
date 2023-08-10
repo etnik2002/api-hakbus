@@ -4,6 +4,7 @@ const Booking = require("../models/Booking");
 const bcrypt = require("bcrypt");
 const Token = require("../models/ScannerToken");
 const Ceo = require("../models/Ceo");
+const { sendAttachmentToAllPassengers, sendAttachmentToOneForAll } = require("../helpers/mail");
 
 module.exports = {
 
@@ -231,5 +232,39 @@ module.exports = {
     }
 
   },
+
+  confirmBookingPayment: async (req,res) => {
+    try {
+        const { id } = req.params;
+        await Booking.findByIdAndUpdate(id, { $set: { isPaid: true } });
+        res.status(200).json("Successfully confirmed payment"); 
+
+    } catch (error) {
+        res.status(500).json('error -> ' + error)
+    }
+  },    
+
+  sendBookingAttachment: async (req, res) => {
+    try {
+        const { sendSepparately, sendToOneEmail, receiverEmail, bookingID } = req.body;
+        const { attachments } = req.file;
+        const booking = await Booking.aggregate([{ $match: { _id: bookingID } }]);
+
+        if (sendSepparately) {
+            await sendAttachmentToAllPassengers( booking.passengers, attachments );
+            return res.status(200).json("Attachments send to each passenger sepparately !")
+        } 
+        
+        if(sendToOneEmail) {
+            sendAttachmentToOneForAll( receiverEmail, booking.passengers, attachments )
+            return res.status(200).json(`Attachments send to ${receiverEmail} for ${booking.passengers.length} ${booking.passengers.length > 1 ? 'passengers' : 'passenger'}  !`)
+        }
+
+
+    } catch (error) {
+        res.status(500).json('error -> ' + error)
+    }
+  },
+
 
 }
