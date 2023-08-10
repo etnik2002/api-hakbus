@@ -253,12 +253,12 @@ module.exports = {
 
         if (sendSepparately) {
             await sendAttachmentToAllPassengers( booking.passengers, attachments );
-            return res.status(200).json("Attachments sent to each passenger sepparately !")
+            return res.status(200).json("Dokumentet u dërguan tek secili pasagjer veçmas!")
         } 
         
         if(sendToOneEmail) {
             sendAttachmentToOneForAll( receiverEmail, booking.passengers, attachments )
-            return res.status(200).json(`Attachments sent to ${receiverEmail} for ${booking.passengers.length} ${booking.passengers.length > 1 ? 'passengers' : 'passenger'} !`)
+            return res.status(200).json(`Dokumentet u dërguan te ${receiverEmail} për ${booking.passengers.length} ${booking.passengers.length > 1 ? 'udhëtarë' : 'udhëtar'} !`)
         }
 
     } catch (error) {

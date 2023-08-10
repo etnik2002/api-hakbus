@@ -234,8 +234,8 @@ async function sendOrderToUsersEmail ( userEmail, ticket, userID, buyerName, cus
 }
 
 async function sendOrderToUsersPhone( userPhone, ticket, userID, buyerName, customersName ) {
-  const accountSid = 'AC0f8479956f3e5dff3b951b4dc2464923'; // Your Account SID from www.twilio.com/console
-  const authToken = '38e28139451b2d883f3350e402c0383b'; // Your Auth Token from www.twilio.com/console
+  const accountSid = 'AC0f8479956f3e5dff3b951b4dc2464923'; 
+  const authToken = '38e28139451b2d883f3350e402c0383b'; 
   
   const client = require('twilio')(accountSid, authToken);
 
