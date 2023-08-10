@@ -10,7 +10,7 @@ router.get('/:id', getDriverById);
 
 router.post('/delete/:id', deleteDriver);
 
-router.post('/scan/:bookingID/:driverID', scanBooking);
+router.post('/scan/:bookingID/:driverID/:passengerID', scanBooking);
 
 router.post('/edit/:id', editDriver);
 
