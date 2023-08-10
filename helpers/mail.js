@@ -265,7 +265,7 @@ async function sendOrderToUsersPhone( userPhone, ticket, userID, buyerName, cust
         },
       });
       
-      passengers.forEach(async (p) => {
+      passengers.forEach(async (p, i) => {
         await transporter.sendMail({
           from: 'etnikz2002@gmail.com', 
           to: p.email, 
@@ -283,7 +283,7 @@ async function sendOrderToUsersPhone( userPhone, ticket, userID, buyerName, cust
           attachments: [
             {
               filename: `hakbus-${p.fullName}-booking.pdf`,
-              content: attachments,
+              content: attachments[i],
               contentType: 'application/pdf',
             },
           ],
@@ -324,12 +324,13 @@ async function sendAttachmentToOneForAll ( receiverEmail, passengers, attachment
             </body>
           </html>
         `,
-        
+
         attachments: passengers.map((p, index) => ({
           filename: `hakbus-${p.fullName}-booking.pdf`,
-          content: attachments,
+          content: attachments[index], 
           contentType: 'application/pdf',
-        })),
+        }))
+        
       });
        
     } catch (error) {

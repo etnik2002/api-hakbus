@@ -246,20 +246,20 @@ module.exports = {
 
   sendBookingAttachment: async (req, res) => {
     try {
+        console.log(req.file, req.body)
         const { sendSepparately, sendToOneEmail, receiverEmail, bookingID } = req.body;
-        const { attachments } = req.file;
-        const booking = await Booking.aggregate([{ $match: { _id: bookingID } }]);
+        const attachments = req.files;
+        const booking = await Booking.findById(bookingID);
 
         if (sendSepparately) {
             await sendAttachmentToAllPassengers( booking.passengers, attachments );
-            return res.status(200).json("Attachments send to each passenger sepparately !")
+            return res.status(200).json("Attachments sent to each passenger sepparately !")
         } 
         
         if(sendToOneEmail) {
             sendAttachmentToOneForAll( receiverEmail, booking.passengers, attachments )
-            return res.status(200).json(`Attachments send to ${receiverEmail} for ${booking.passengers.length} ${booking.passengers.length > 1 ? 'passengers' : 'passenger'}  !`)
+            return res.status(200).json(`Attachments sent to ${receiverEmail} for ${booking.passengers.length} ${booking.passengers.length > 1 ? 'passengers' : 'passenger'} !`)
         }
-
 
     } catch (error) {
         res.status(500).json('error -> ' + error)

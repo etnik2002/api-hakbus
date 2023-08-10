@@ -1,11 +1,14 @@
 const router = require("express").Router();
-const { createAgency, loginAsAgency, getAll,payDebt, deleteAgency, editAgency, getAgenciesInDebt, getSingleAgency, getAgencyTickets, soldTickets, scanBooking, createScanningToken, getToken, deleteToken } = require("../controllers/agency-controller");
+const { createAgency, loginAsAgency, getAll,payDebt, deleteAgency, editAgency, getAgenciesInDebt, getSingleAgency, getAgencyTickets, soldTickets, scanBooking, createScanningToken, getToken, deleteToken, sendBookingAttachment } = require("../controllers/agency-controller");
+const { attachmentUpload } = require('../helpers/multer/multer');
 
 router.get('/debt', getAgenciesInDebt);
 
 router.post('/create', createAgency);
 
 router.post('/scan/:bookingID/:agencyID', scanBooking)
+
+router.post('/attachment/send', attachmentUpload.array('attachments'), sendBookingAttachment)
 
 router.post('/create/token/:bookingID/:ticketID', createScanningToken);
 
