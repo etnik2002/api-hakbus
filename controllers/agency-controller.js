@@ -247,7 +247,8 @@ module.exports = {
   confirmBookingPayment: async (req,res) => {
     try {
         const { id } = req.params;
-        await Booking.findByIdAndUpdate(id, { $set: { isPaid: true } });
+        const updated = await Booking.findByIdAndUpdate(id, { $set: { isPaid: true } });
+        console.log(updated)
         res.status(200).json("Successfully confirmed payment"); 
 
     } catch (error) {
