@@ -10,6 +10,7 @@ if (cluster.isMaster) {
 
   cluster.on("exit", (worker, code, signal) => {
     console.log(`Worker ${worker.process.pid} died`);
+    cluster.fork(); 
   });
   
 } else {
@@ -87,9 +88,9 @@ if (cluster.isMaster) {
   app.use('/notification', notificationRoutes);
 
   app.get('/', (req,res) => {
-    for(let i=0; i<100000000; i++) {
-      console.log(i)
-    }
+    // for(let i=0; i<100000000; i++) {
+    //   console.log(i)
+    // }
       res.json({message: "HakBus API"})
   })
 
