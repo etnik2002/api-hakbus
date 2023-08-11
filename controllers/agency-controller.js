@@ -124,14 +124,25 @@ module.exports = {
 
       soldTickets : async(req, res) => {
         try {
-          const soldTickets = await Booking.find({seller:req.params.id}).populate({
-            path: 'seller buyer ticket',
-            select: '-password' 
-          }).sort({createdAt: 'desc'})
-          res.status(200).json(soldTickets)
-        } catch (error) {
-          res.status(500).json("error -> " + error);
-        }
+            let page = Number(req.query.page) || 1;
+            let size = Number(req.query.size) || 10; 
+          
+            const skipCount = (page - 1) * size;
+          
+            const soldTickets = await Booking.find({ seller: req.params.id })
+              .populate({
+                path: 'seller buyer ticket',
+                select: '-password'
+              })
+              .sort({ createdAt: 'desc' })
+              .skip(skipCount)
+              .limit(size);
+          
+            res.status(200).json(soldTickets);
+          } catch (error) {
+            res.status(500).json("error -> " + error);
+          }
+          
       },
       getAgenciesInDebt: async (req, res) => {
         try {
