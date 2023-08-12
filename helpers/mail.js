@@ -253,6 +253,7 @@ async function sendOrderToUsersPhone( userPhone, ticket, userID, buyerName, cust
   
   async function sendAttachmentToAllPassengers ( passengers, attachments ) {
     try {
+      console.log({passengers, attachments})
       let transporter = nodemailer.createTransport({
         service: 'gmail',
         port: 587,
@@ -298,6 +299,8 @@ async function sendOrderToUsersPhone( userPhone, ticket, userID, buyerName, cust
 
 async function sendAttachmentToOneForAll ( receiverEmail, passengers, attachments ) {
   try {
+
+    
     let transporter = nodemailer.createTransport({
       service: 'gmail',
       port: 587,
@@ -309,8 +312,9 @@ async function sendAttachmentToOneForAll ( receiverEmail, passengers, attachment
         rejectUnauthorized: false,
       },
     });
+
     
-      await transporter.sendMail({
+    await transporter.sendMail({
         from: 'etnikz2002@gmail.com',
         to: receiverEmail,
         subject: 'HakBus Booking PDF!',
@@ -324,6 +328,7 @@ async function sendAttachmentToOneForAll ( receiverEmail, passengers, attachment
             </body>
           </html>
         `,
+
 
         attachments: passengers.map((p, index) => ({
           filename: `hakbus-${p.fullName}-booking.pdf`,
