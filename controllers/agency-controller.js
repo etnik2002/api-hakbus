@@ -1,4 +1,5 @@
 const Agency = require("../models/Agency");
+const moment = require('moment')
 const Ticket = require("../models/Ticket");
 const Booking = require("../models/Booking");
 const bcrypt = require("bcrypt");
@@ -84,22 +85,27 @@ module.exports = {
         }
       },
 
-      
-      getAgencySales: async(req,res) => {
+      getAgencySales: async (req, res) => {
         try {
             const { id } = req.params;
-            const { fromDate, toDate } = req.body;
-          
+            const { fromDate, toDate } = req.params;
+    
+            // Parse the fromDate and toDate using Moment.js
+            const parsedFromDate = moment(fromDate).format('YYYY-MM-DDTHH:mm:ss.SSSZ');
+            const parsedToDate = moment(toDate).format('YYYY-MM-DDTHH:mm:ss.SSSZ');
+    
+    
             const bookings = await Booking.find({
-              seller: id,
-              createdAt: { $gte: fromDate, $lte: toDate }
-            });            
-            
+                seller: id,
+                createdAt: { $gte: parsedFromDate, $lte: parsedToDate }
+            });
+    
             return res.status(200).json(bookings);
         } catch (error) {
-            res.status(500).json(error)
+            console.log(error)
+            res.status(500).json(error);
         }
-      },
+    },
 
     getAll: async (req, res) => {
         try {
