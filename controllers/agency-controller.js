@@ -84,6 +84,7 @@ module.exports = {
         }
       },
 
+      
       getAgencySales: async(req,res) => {
         try {
             const { id } = req.params;
