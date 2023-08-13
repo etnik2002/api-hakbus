@@ -3,6 +3,7 @@ const Booking = require('../models/Booking');
 const bcrypt = require('bcrypt')
 const mongoose = require("mongoose")
 const { ObjectId } = require('mongodb');
+const moment = require('moment/moment');
 
 module.exports = {
 
@@ -183,6 +184,7 @@ module.exports = {
             const driverID = req.params.driverID;
             const bookingID = req.params.bookingID;
             const passengerID = req.params.passengerID;
+            var date = moment().format("DD-MM-YYYY");
       
             if (!mongoose.Types.ObjectId.isValid(bookingID)) {
               return res.status(404).json("Rezervimi nuk u gjet! Ju lutemi provoni perseri!");
@@ -200,7 +202,6 @@ module.exports = {
               return res.status(401).json("Rezervimi eshte anuluar ose nuk egziston!");
             }
       
-            console.log(booking)
             if (!driver) {
               return res.status(401).json("Ju nuk jeni i autorizuar për të skenuar këtë biletë.");
             }
@@ -209,8 +210,9 @@ module.exports = {
             if (passengerIndex === -1) {
               return res.status(404).json("Passenger not found.");
             }
-      
-            if (booking.passengers[passengerIndex].isScanned) {
+
+            if ((booking.ticket.date == date && booking.passengers[passengerIndex].isScanned) ||
+                (booking.ticket.returnDate == date && booking.passengers[passengerIndex].isScannedReturn)) {
               return res.status(410).json("Bileta është skenuar më parë.");
             }
       
@@ -224,10 +226,14 @@ module.exports = {
               try {
                 const hasScannedThis = driver.scannedBookings.some((passenger) => passenger._id.equals(new mongoose.Types.ObjectId(passengerID)))
                 if(!hasScannedThis) {
-                  await Driver.findByIdAndUpdate(driverID, { $push: { scannedBookings: bookingID } });
+                  await Driver.findByIdAndUpdate(driverID, { $push: { scannedBookings: booking.passengers[passengerIndex]._id } });
                 }
                 
-                booking.passengers[passengerIndex].isScanned = true;
+                if(booking.ticket.date == date) {
+                  booking.passengers[passengerIndex].isScanned = true;                  
+                }
+                
+                booking.passengers[passengerIndex].isScannedReturn = true;
                 await booking.save();
                 
                 return res.status(200).json("Ticket successfully scanned.");

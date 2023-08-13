@@ -38,6 +38,10 @@ const bookingSchema = mongoose.Schema({
                 type: Boolean,
                 default: false,
             },
+            isScannedReturn: {
+                type: Boolean,
+                default: false,    
+            },
         }
     ],
     price: {
