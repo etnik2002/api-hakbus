@@ -84,6 +84,15 @@ module.exports = {
         }
       },
 
+      getAgencySales: async(req,res) => {
+        try {
+            const bookings = await Booking.find({seller: req.params.id})
+            return res.status(200).json(bookings);
+        } catch (error) {
+            res.status(500).json(error)
+        }
+      },
+
     getAll: async (req, res) => {
         try {
             const all = await Agency.find({}, "-password").sort({createdAt:'desc'});
