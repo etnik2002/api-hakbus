@@ -86,7 +86,14 @@ module.exports = {
 
       getAgencySales: async(req,res) => {
         try {
-            const bookings = await Booking.find({seller: req.params.id})
+            const { id } = req.params;
+            const { fromDate, toDate } = req.body;
+          
+            const bookings = await Booking.find({
+              seller: id,
+              createdAt: { $gte: fromDate, $lte: toDate }
+            });            
+            
             return res.status(200).json(bookings);
         } catch (error) {
             res.status(500).json(error)
