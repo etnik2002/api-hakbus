@@ -278,14 +278,13 @@ module.exports = {
         const attachments = req.files;
         const booking = await Booking.findById(bookingID);
 
-        // console.log({sendToOneEmail, sendSepparately, attachments: attachments})
-        console.log({sendSepparately, sendToOneEmail})
-        if (sendSepparately) {
+        console.log({body:req.body})
+        if (sendSepparately==='true') {
             await sendAttachmentToAllPassengers( booking.passengers, attachments );
             return res.status(200).json("Dokumentet u dërguan tek secili pasagjer veçmas!")
         } 
         
-        if(sendToOneEmail) {
+        if(sendToOneEmail==='true') {
             const isArray = Array.isArray(attachments)
             await sendAttachmentToOneForAll(receiverEmail, booking.passengers, attachments);
             return res.status(200).json(`Dokumentet u dërguan te ${receiverEmail} për ${booking.passengers.length} ${booking.passengers.length > 1 ? 'udhëtarë' : 'udhëtar'} !`);
