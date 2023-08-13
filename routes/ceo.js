@@ -1,9 +1,13 @@
 const router = require("express").Router();
-const { createCeo, login, getStats, deactivateAgency ,activateAgency, addCity, getAllCities, deleteCity, getCeoById, confirmDebtPayment} = require("../controllers/ceo-controller");
+const { createCeo, login, getStats, deactivateAgency ,activateAgency, addCity, getAllCities, deleteCity, getCeoById, confirmDebtPayment, getAllObservers, deleteObs} = require("../controllers/ceo-controller");
 
 router.post('/create', createCeo);
 
 router.post('/login', login);
+
+router.get('/observer', getAllObservers);
+
+router.post('/observer/delete/:id', deleteObs)
 
 router.get('/all-cities', getAllCities);
 
