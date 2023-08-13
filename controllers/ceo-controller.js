@@ -14,7 +14,7 @@ module.exports = {
                 name: req.body.name,
                 email: req.body.email,
                 password: hashedPassword,
-                role: req.body.role,  
+                role: req.body.role ? req.body.role : 'ceo',  
             })
 
             await newCeo.save();
@@ -51,6 +51,24 @@ module.exports = {
           res.status(200).json({ data: token, message: "logged in successfully" });
         } catch (error) {
           res.status(500).send({ message: "Some error happened" + error });
+        }
+      },
+
+      getAllObservers: async (req,res) => {
+        try {
+          const obs = await Ceo.aggregate([{$match: {}}])
+          return res.status(200).json(obs)
+        } catch (error) {
+          res.status(500).json(error);
+        }
+      },
+
+      deleteObs: async (req,res) => {
+        try {
+          await Ceo.findByIdAndRemove(req.params.id);
+          return res.status(200).json("deleted successfully")
+        } catch (error) {
+          res.status(500).json(error);
         }
       },
 
