@@ -36,7 +36,7 @@ module.exports = {
       const type = req.body.type;
       const onlyReturn = req.body.onlyReturn;
       const numberOfPsg = req.body.passengers.length || 1;
-      const user = await User.findById(req.query.buyerID);
+      const user = req.params.buyerID != null ? await User.findById(req.query.buyerID) : null;
       const ticket = await Ticket.findById(req.params.ticketID);
 
       if(onlyReturn) {
@@ -101,8 +101,21 @@ module.exports = {
         bookingType = 'oneway'
       }
 
+      const buyerID = req.params.buyerID;
+      let buyerObjectId;
+
+      if (buyerID) {
+        try {
+          buyerObjectId = new mongoose.Types.ObjectId(buyerID);
+        } catch (error) {
+          console.error('Error creating ObjectId -> ', error);
+        }
+      } else {
+        buyerObjectId = undefined;
+      }
+
       const newBooking = new Booking({
-        buyer: req.params.buyerID ? req.params.buyerID : null,
+        buyer: buyerObjectId,
         seller: req.params.sellerID,
         ticket: req.params.ticketID,
         firstname: req.body.firstname,
@@ -113,7 +126,6 @@ module.exports = {
         price: totalPrice,
         passengers: passengers,
         type: bookingType, 
-
       });
   
       await newBooking.save().then(async () => {
@@ -148,11 +160,18 @@ module.exports = {
   
       if (sendEmailNotification) {
         passengers.forEach(async (passenger) => {
-          await sendOrderToUsersEmail(passenger.email || user.email, ticket, '6499b15485cb1e6f21a34a46', 'HakBus customer', passenger.fullName, totalPrice, bookingType);
-        });
+          await sendOrderToUsersEmail(passenger.email || user.email , ticket, '6499b15485cb1e6f21a34a46', 'HakBus customer', passenger.fullName, totalPrice, bookingType);
+        }).then((res) => {
+          console.log(res)
+        }).catch((err) => {
+          console.log(err)
+        })
       }
-  
-      res.status(200).json(newBooking);
+      
+      const createdBooking = await Booking.findById(newBooking._id).populate('ticket seller')
+      
+      console.log(createdBooking)
+      res.status(200).json(createdBooking);
     } catch (error) {
       console.log(error);
       res.status(500).json({ message: `Server error -> ${error}` });
@@ -180,9 +199,6 @@ module.exports = {
           
           try {
             const { token } = req.body;
-      
-           
-      
       
           } catch (error) {
             console.error(error);
@@ -218,6 +234,7 @@ module.exports = {
       
           res.status(200).json(newBooking);
         } catch (error) {
+          console.log(error)
           res.status(500).json({ message: `Server error -> ${error}` });
         }
       },

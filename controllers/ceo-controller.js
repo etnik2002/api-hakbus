@@ -56,7 +56,7 @@ module.exports = {
 
       getAllObservers: async (req,res) => {
         try {
-          const obs = await Ceo.aggregate([{$match: {}}])
+          const obs = await Ceo.aggregate([{$match: { role: 'observer' }}])
           return res.status(200).json(obs)
         } catch (error) {
           res.status(500).json(error);
