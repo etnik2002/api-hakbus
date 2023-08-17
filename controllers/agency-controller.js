@@ -93,7 +93,21 @@ module.exports = {
             const fromDate = moment(req.query.fromDate, 'DD-MM-YYYY').startOf('day').toDate(); 
             const toDate = moment(req.query.toDate, 'DD-MM-YYYY').endOf('day').toDate();     
     
-            const filteredBookings = await Booking.aggregate([{$match: { seller: new mongoose.Types.ObjectId(id), createdAt: { $gte: fromDate, $lte: toDate } }}]);
+            const filteredBookings = await Booking.find({
+                seller: new mongoose.Types.ObjectId(id),
+                createdAt: { $gte: fromDate, $lte: toDate }
+            })
+            .populate({
+                path: 'buyer',
+                select: '-password' 
+              }).populate({
+                path: 'ticket',
+                populate: { path: 'lineCode' } 
+              }).populate({
+                path: 'seller',
+                select: '-password'
+              })
+              .sort({ createdAt: 'desc' });
     
             return res.status(200).json(filteredBookings);
         } catch (error) {
