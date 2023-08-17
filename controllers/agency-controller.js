@@ -6,6 +6,7 @@ const bcrypt = require("bcrypt");
 const Token = require("../models/ScannerToken");
 const Ceo = require("../models/Ceo");
 const { sendAttachmentToAllPassengers, sendAttachmentToOneForAll } = require("../helpers/mail");
+const mongoose = require("mongoose")
 
 module.exports = {
 
@@ -88,21 +89,15 @@ module.exports = {
       getAgencySales: async (req, res) => {
         try {
             const { id } = req.params;
-            const { fromDate, toDate } = req.params;
     
-            // Parse the fromDate and toDate using Moment.js
-            const parsedFromDate = moment(fromDate).format('YYYY-MM-DDTHH:mm:ss.SSSZ');
-            const parsedToDate = moment(toDate).format('YYYY-MM-DDTHH:mm:ss.SSSZ');
+            const fromDate = moment(req.query.fromDate, 'DD-MM-YYYY').startOf('day').toDate(); 
+            const toDate = moment(req.query.toDate, 'DD-MM-YYYY').endOf('day').toDate();     
     
+            const filteredBookings = await Booking.aggregate([{$match: { seller: new mongoose.Types.ObjectId(id), createdAt: { $gte: fromDate, $lte: toDate } }}]);
     
-            const bookings = await Booking.find({
-                seller: id,
-                createdAt: { $gte: parsedFromDate, $lte: parsedToDate }
-            });
-    
-            return res.status(200).json(bookings);
+            return res.status(200).json(filteredBookings);
         } catch (error) {
-            console.log(error)
+            console.log(error);
             res.status(500).json(error);
         }
     },

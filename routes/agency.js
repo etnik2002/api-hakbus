@@ -14,7 +14,6 @@ router.post('/payment/confirm/:id', confirmBookingPayment);
 
 router.post('/attachment/send', attachmentUpload.array('attachments'), sendBookingAttachment)
 
-
 router.post('/create/token/:bookingID/:ticketID', createScanningToken);
 
 router.get('/get-token', getToken);
