@@ -83,7 +83,7 @@ module.exports = {
 
       getStats : async(req,res) => {
         try {
-          const [allAgencies, allTickets, soldTicketsCount, activeCities, ceo] = await Promise.all([
+          const [allAgencies, allTickets, soldTicketsCount, activeCities, ceo, numberOfAgencies] = await Promise.all([
             Agency.aggregate([
               { $sort: { totalSales: -1 } },
               { $limit: 3 },
@@ -98,8 +98,11 @@ module.exports = {
               { $count: 'totalActiveCities' },
             ]),
             Ceo.findOne({}, { totalProfit: 1 }),
+            Agency.countDocuments([{ $match: {} }])
           ]);
       
+          console.log(numberOfAgencies)
+
           const totalAgencies = allAgencies.length;
           const totalTickets = allTickets.length > 0 ? allTickets[0].totalTickets : 0;
           const soldTickets = soldTicketsCount.length > 0 ? soldTicketsCount[0].totalSoldTickets : 0;
@@ -112,6 +115,7 @@ module.exports = {
             totalProfit: ceo.totalProfit,
             activeCities: totalActiveCities,
             totalAgencies,
+            numberOfAgencies,
           });
         } catch (error) {
           res.status(500).send({ message: 'Some error happened ' + error });
