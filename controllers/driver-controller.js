@@ -201,20 +201,37 @@ module.exports = {
             if (!booking) {
               return res.status(401).json("Rezervimi eshte anuluar ose nuk egziston!");
             }
+            console.log(booking)
       
             if (!driver) {
               return res.status(401).json("Ju nuk jeni i autorizuar për të skenuar këtë biletë.");
             }
       
+            // if(booking.ticket.date != date || booking.ticket.returnDate != date) {
+            //   return res.status(400).json("Më vjen keq, por sot nuk është dita e lejuar për të bërë hyrjen në autobus.");
+            // }
+
             const passengerIndex = booking.passengers.findIndex(p => p._id.equals(new mongoose.Types.ObjectId(passengerID)));
             if (passengerIndex === -1) {
               return res.status(404).json("Passenger not found.");
             }
 
-            if ((booking.ticket.date == date && booking.passengers[passengerIndex].isScanned) ||
-                (booking.ticket.returnDate == date && booking.passengers[passengerIndex].isScannedReturn)) {
+            if(booking.ticket.date == date) {
+              if(booking.passengers[passengerIndex].isScanned) {   
+                return res.status(410).json("Bileta është skenuar më parë.");
+              }
+            }
+
+            
+
+            if(booking.ticket.returnDate == date && booking.passengers[passengerIndex].isScannedReturn){
               return res.status(410).json("Bileta është skenuar më parë.");
             }
+
+            // if ((booking.ticket.date == date && booking.passengers[passengerIndex].isScanned) ||
+            //     (booking.ticket.returnDate == date && booking.passengers[passengerIndex].isScannedReturn)) {
+            //   return res.status(410).json("Bileta është skenuar më parë.");
+            // }
       
             let isLineMatched = driver.lines.some(line => line._id.equals(booking.ticket.lineCode._id));
       
@@ -226,17 +243,26 @@ module.exports = {
               try {
                 const hasScannedThis = driver.scannedBookings.some((passenger) => passenger._id.equals(new mongoose.Types.ObjectId(passengerID)))
                 if(!hasScannedThis) {
+                  console.log({hasScannedThis})
                   await Driver.findByIdAndUpdate(driverID, { $push: { scannedBookings: booking.passengers[passengerIndex]._id } });
                 }
                 
                 if(booking.ticket.date == date) {
+                  console.log({date})
                   booking.passengers[passengerIndex].isScanned = true;                  
+                  await booking.save();
+                  return res.status(200).json("Ticket successfully scanned.");
                 }
                 
-                booking.passengers[passengerIndex].isScannedReturn = true;
-                await booking.save();
-                
-                return res.status(200).json("Ticket successfully scanned.");
+                if(booking.ticket.returnDate == date) {
+                  console.log({msg: "return scanning"})
+                  booking.passengers[passengerIndex].isScannedReturn = true;
+                  await booking.save();
+                  return res.status(200).json("Ticket successfully scanned.");
+                }
+
+                console.log({scanneD: booking.passengers[passengerIndex]})
+                return res.status(400).json("Më vjen keq, por sot nuk është dita e lejuar për të bërë hyrjen në autobus.")
               } catch (error) {
                 console.error("Error updating booking:", error);
                 return res.status(500).json("Internal server error.");
