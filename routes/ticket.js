@@ -22,7 +22,6 @@ router.get('/nearest', getNearestTicket);
 
 router.get('/all', getAllTicketPagination);
 
-
 router.get('/all-tickets', getAllTicket);
 
 router.post('/edit/:id', editTicket);

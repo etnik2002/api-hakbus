@@ -28,9 +28,16 @@ const ceoSchema = mongoose.Schema({
             title: {
                 type: String,
             },
+            link: {
+                type: String,
+            },
             agency_id: {
                 type: mongoose.Schema.Types.ObjectId,
                 ref: 'Agency',
+            },
+            ticket: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'Ticket',
             },
             value: {    
                 type: Number,

@@ -158,61 +158,40 @@ module.exports = {
           let from = req.query.from;
           let to = req.query.to;
           let date = req.query.date;
-          let returnDate = req.query.returnDate;
           let type = req.query.type;
           let price = req.body.price;
           let childrenPrice = req.body.childrenPrice;
-          
+          const todaysDate = moment(new Date()).format('DD-MM-YYYY');
+
+          // const pipeline = [
+          //   {
+          //     $match: {
+          //       $and: [
+          //         { $or: [{ 'from': from, 'to': to }, { 'from': to, 'to': from }] },
+          //         { 'date': { $gte: todaysDate } }
+          //       ]
+          //     }
+          //   },
+            
+          // ];
+
           const tickets = await Ticket.find({
-            $or: [
-              { from: from, to: to },
-              { from: to, to: from },
+            $and: [
+              { $or: [{ 'from': from, 'to': to }, { 'from': to, 'to': from }] },
+              { 'date': { $gte: todaysDate } }
             ]
-          }).populate('lineCode');
-
-          if(tickets) {
-            return res.status(200).json(tickets);
-          }
+          }).populate('lineCode')
           
-          const dateNow = moment().format('DD-MM-YYYY');
-      
-          const searchParams = {};
-      
-          if (date) searchParams.date = date;
-          if (returnDate) searchParams.returnDate = returnDate;
-          if (type) searchParams.type = type;
-          if (price) searchParams.price = price;
-          if (childrenPrice) searchParams.childrenPrice = childrenPrice;
-      
-          const searchFields = ['time'];
-          const textQuery = searchFields
-            .filter((field) => searchParams[field])
-            .map((field) => ({
-              [field]: { $regex: searchParams[field], $options: 'i' },
-            }));
-          const ticketQuery = textQuery.length > 0 ? { $or: textQuery } : {};
-      
-          const allTickets = await Ticket.find({
-            ...ticketQuery,
-            ...searchParams,
-            date: { $gte: dateNow },
-          })
-            .populate({
-              path: 'lineCode',
-              match: { 'from': { $regex: new RegExp('^' + from, 'i') }, 'to': { $regex: new RegExp('^' + to, 'i') } },
-            });
-      
+          
 
-          const filteredTickets = allTickets.filter((ticket) => ticket.lineCode);
-      
-          filteredTickets.sort((a, b) => new Date(a.date) - new Date(b.date));
+          // const all = await Ticket.aggregate(tickets);
       
           res.status(200).json(tickets);
         } catch (error) {
           res.status(500).json({ message: 'Internal server error -> ' + error });
         }
       },
-      
+  
 
       getNearestTicket: async (req, res) => {
         try {

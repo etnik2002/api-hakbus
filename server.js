@@ -88,11 +88,9 @@ if (cluster.isMaster) {
   app.use('/notification', notificationRoutes);
 
   app.get('/', (req,res) => {
-    // for(let i=0; i<100000000; i++) {
-    //   console.log(i)
-    // }
       res.json({message: "HakBus API"})
   })
+
 
   const PORT = process.env.PORT || 4462;
   app.listen(PORT, () => {

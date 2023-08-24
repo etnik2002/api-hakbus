@@ -33,6 +33,7 @@ module.exports = {
 
   placeBooking : async (req, res) => {
     try {
+      const ceo = await Ceo.aggregate([{$match: {}}]);
       const type = req.body.type;
       const onlyReturn = req.body.onlyReturn;
       const numberOfPsg = req.body.passengers.length || 1;
@@ -85,9 +86,10 @@ module.exports = {
       });
   
       const agencyPercentage = agency.percentage / 100;
-      const agencyEarnings = totalPrice - totalPrice * agencyPercentage;
+      const agencyEarnings = (totalPrice * agencyPercentage);
       const ourEarnings = totalPrice - agencyEarnings;
-  
+      console.log({totalPrice, agencyPercentage, agencyEarnings, ourEarnings})
+
       const sendEmailNotification = req.body.sendEmailNotification;
       const sendSmsNotification = req.body.sendSmsNotification;
 
@@ -155,30 +157,52 @@ module.exports = {
           $inc: { totalSales: 1, profit: agencyEarnings },
         });
   
-        await Ceo.findByIdAndUpdate('6498755c438b9ec3237688ca', { $inc: { totalProfit: ourEarnings } });
+        await Ceo.findByIdAndUpdate(ceo[0]._id, { $inc: { totalProfit: ourEarnings } });
       });
   
       if (sendEmailNotification) {
         passengers.forEach(async (passenger) => {
           await sendOrderToUsersEmail(passenger.email || user.email , ticket, '6499b15485cb1e6f21a34a46', 'HakBus customer', passenger.fullName, totalPrice, bookingType);
         }).then((res) => {
-          console.log(res)
+          // console.log(res)
         }).catch((err) => {
           console.log(err)
         })
       }
-      
+
+      var seatNotification = {};
+
+      if(ticket.numberOfReturnTickets <= 3) {
+        console.log("2 return")
+        seatNotification = {
+          message: `Kanë mbetur vetëm 2 vende të lira për linjën  (${ticket.to} / ${ticket.from}) me datë ${ticket.returnDate}`,
+          title: `2 ulëse të mbetura`,
+          ticket_id: ticket._id,
+          link: `${process.env.FRONTEND_URL}/ticket/edit/${ticket.id}`,
+          confirmed: false,
+        };
+      } else if (ticket.numberOfTickets <= 3) {
+        console.log("2 oneway")
+        seatNotification = {
+          message: `Kanë mbetur vetëm 2 vende të lira për linjën (${ticket.from} / ${ticket.to}) me datë ${ticket.date}`,
+          title: `2 ulëse të mbetura`,
+          ticket_id: ticket._id,
+          link: `${process.env.FRONTEND_URL}/ticket/edit/${ticket.id}`,
+          confirmed: false,
+        };
+      }
+
+        console.log({seatNotification})
+      await Ceo.findByIdAndUpdate(ceo[0]._id, { $push: { notifications: seatNotification } });
+
       const createdBooking = await Booking.findById(newBooking._id).populate('ticket seller')
       
-      console.log(createdBooking)
       res.status(200).json(createdBooking);
     } catch (error) {
       console.log(error);
       res.status(500).json({ message: `Server error -> ${error}` });
     }
   },
-
-      
 
       payBooking: async (req, res) => {
         try {
