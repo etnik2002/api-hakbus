@@ -89,18 +89,18 @@ module.exports = {
       getAgencySales: async (req, res) => {
         try {
             const { id } = req.params;
-    
-            const fromDate = moment(req.query.fromDate, 'DD-MM-YYYY').startOf('day').toDate(); 
-            const toDate = moment(req.query.toDate, 'DD-MM-YYYY').endOf('day').toDate();     
-    
+            const fromDate = req.query.fromDate;
+            const toDate = req.query.toDate;
+
             const filteredBookings = await Booking.find({
-                seller: new mongoose.Types.ObjectId(id),
+                seller: id,
                 createdAt: { $gte: fromDate, $lte: toDate }
             })
-            .populate({
+              .populate({
                 path: 'buyer',
                 select: '-password' 
-              }).populate({
+              })
+              .populate({
                 path: 'ticket',
                 populate: { path: 'lineCode' } 
               }).populate({
@@ -108,11 +108,11 @@ module.exports = {
                 select: '-password'
               })
               .sort({ createdAt: 'desc' });
-    
-            return res.status(200).json(filteredBookings);
+
+            res.status(200).json(filteredBookings);
         } catch (error) {
-            console.log(error);
-            res.status(500).json(error);
+            console.error(error); 
+            res.status(500).json({ error: 'An error occurred while fetching agency sales.' });
         }
     },
 
