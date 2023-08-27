@@ -32,7 +32,8 @@ if (cluster.isMaster) {
   const ceoRoutes = require("./routes/ceo");
   const notificationRoutes = require("./routes/notification");
   const axios = require("axios");
- 
+  var cookieParser = require('cookie-parser');
+
  
   
   app.use(function (req, res, next) {
@@ -55,7 +56,12 @@ if (cluster.isMaster) {
   app.use(express.json());
   app.use(bodyParser.json());
   app.use(cors());
+  app.use(cookieParser(process.env.OUR_SECRET));
   
+  // app.use(cors({
+  //   origin: ['http://localhost:4462', 'https://admin-hakbus.vercel.app']
+  // }))
+
   app.use(session({
     secret: process.env.OUR_SECRET,
     resave: false,

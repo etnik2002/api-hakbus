@@ -121,7 +121,6 @@ module.exports = {
 
       getTicketLinesBasedOnDate: async (req, res) => {
         try {
-          console.log('holl')
           const today = moment().format('DD-MM-YYYY');
           const tomorrow = moment().add(1, 'day').format('DD-MM-YYYY');
           const allBookings = await Booking.find({});
@@ -133,7 +132,6 @@ module.exports = {
             date: { $gte: fromDate, $lte: fromDate }
           };
           
-          console.log(today,fromDate)
           const allTickets = await Ticket.find(ticketQuery)
             .populate('lineCode')
             .sort({ createdAt: 'desc' });
