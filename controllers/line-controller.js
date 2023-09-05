@@ -41,7 +41,6 @@ module.exports = {
     getLineBookings: async (req, res) => {
       try {
         const lines = await Line.aggregate([{ $match: {} }])
-
         const bookingsForLine = await Booking.aggregate([
           {
             $lookup: {

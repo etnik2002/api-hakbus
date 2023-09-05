@@ -203,6 +203,10 @@ module.exports = {
             }
             console.log(booking)
       
+            if(!booking.isPaid) {
+              return res.status(401).json("Bileta nuk eshte paguar!");
+            }
+
             if (!driver) {
               return res.status(401).json("Ju nuk jeni i autorizuar për të skenuar këtë biletë.");
             }
@@ -221,8 +225,6 @@ module.exports = {
                 return res.status(410).json("Bileta është skenuar më parë.");
               }
             }
-
-            
 
             if(booking.ticket.returnDate == date && booking.passengers[passengerIndex].isScannedReturn){
               return res.status(410).json("Bileta është skenuar më parë.");

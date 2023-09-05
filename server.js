@@ -33,7 +33,8 @@ if (cluster.isMaster) {
   const ceoRoutes = require("./routes/ceo");
   const notificationRoutes = require("./routes/notification");
   const axios = require("axios");
- 
+  var cookieParser = require('cookie-parser');
+
  
   
   app.use(function (req, res, next) {
@@ -56,7 +57,12 @@ if (cluster.isMaster) {
   app.use(express.json());
   app.use(bodyParser.json());
   app.use(cors());
+  app.use(cookieParser(process.env.OUR_SECRET));
   
+  // app.use(cors({
+  //   origin: ['http://localhost:4462', 'https://admin-hakbus.vercel.app']
+  // }))
+
   app.use(session({
     secret: process.env.OUR_SECRET,
     resave: false,
@@ -92,45 +98,45 @@ if (cluster.isMaster) {
       res.json({message: "HakBus API"})
   })
 
-  setInterval(() => {
-    app.post('/check-tickets', async(req,res) => {
-      try {
-        const tickets = await Ticket.aggregate([{ $match: {} }]);
-        const dateMonth = new Date();
-        const date = moment(new Date()).format('DD-MM-YYYY');
-        for ( ticket of tickets ) {
-          const selectedDayOfTheWeek = Number(moment(ticket.date).day());
-          const selectedReturnDayOfWeek = Number(moment(ticket.returnDate).day());
+  // setInterval(() => {
+  //   app.post('/check-tickets', async(req,res) => {
+  //     try {
+  //       const tickets = await Ticket.aggregate([{ $match: {} }]);
+  //       const dateMonth = new Date();
+  //       const date = moment(new Date()).format('DD-MM-YYYY');
+  //       for ( ticket of tickets ) {
+  //         const selectedDayOfTheWeek = Number(moment(ticket.date).day());
+  //         const selectedReturnDayOfWeek = Number(moment(ticket.returnDate).day());
   
-          const ticketData = {
-            lineCode:ticket.lineCode,
-            time: ticket.time,
-            returnTime: ticket.returnTime,
-            numberOfTickets: 48,
-            numberOfReturnTickets: 48,
-            price: ticket.price,
-            childrenPrice: ticket.childrenPrice,
-            changes: ticket.changes,
-            from: ticket.from,
-            to: ticket.to,
-          };
+  //         const ticketData = {
+  //           lineCode:ticket.lineCode,
+  //           time: ticket.time,
+  //           returnTime: ticket.returnTime,
+  //           numberOfTickets: 48,
+  //           numberOfReturnTickets: 48,
+  //           price: ticket.price,
+  //           childrenPrice: ticket.childrenPrice,
+  //           changes: ticket.changes,
+  //           from: ticket.from,
+  //           to: ticket.to,
+  //         };
   
-          const ticketDayOnly = moment(ticket.date).days();
-          const ticketMonthOnly = moment(ticket.date).month();
-          if(moment(date).days() < ticketDayOnly && dateMonth.getMonth() > ticketMonthOnly) {
-            await axios.post(`${process.env.API_URL}/ticket/create`, {
-              ticketData: ticketData,
-              selectedDayOfTheWeek: selectedDayOfTheWeek,
-              selectedReturnDayOfWeek: selectedReturnDayOfWeek,
-            })
-          }
-        }
-      } catch (error) {
-        console.log(error)
-        return res.status(500).json(error)
-      }
-    })
-  }, 1000 * 60 * 60 * 24 * 30)
+  //         const ticketDayOnly = moment(ticket.date).days();
+  //         const ticketMonthOnly = moment(ticket.date).month();
+  //         if(moment(date).days() < ticketDayOnly && dateMonth.getMonth() > ticketMonthOnly) {
+  //           await axios.post(`${process.env.API_URL}/ticket/create`, {
+  //             ticketData: ticketData,
+  //             selectedDayOfTheWeek: selectedDayOfTheWeek,
+  //             selectedReturnDayOfWeek: selectedReturnDayOfWeek,
+  //           })
+  //         }
+  //       }
+  //     } catch (error) {
+  //       console.log(error)
+  //       return res.status(500).json(error)
+  //     }
+  //   })
+  // }, 1000 * 60 * 60 * 24 * 30)
 
   const PORT = process.env.PORT || 4462;
   app.listen(PORT, () => {
