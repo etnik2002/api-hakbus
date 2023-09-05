@@ -1,4 +1,4 @@
-const e = require("cors");
+require("dotenv").config();
 const Booking = require("../models/Booking");
 const Ticket = require("../models/Ticket");
 const moment = require("moment");
@@ -7,8 +7,12 @@ const Ceo = require("../models/Ceo");
 const { sendOrderToUsersEmail } = require("../helpers/mail");
 const User = require("../models/User");
 const mongoose = require('mongoose');
-require("dotenv").config();
+var admin = require("firebase-admin");
+var serviceAccount = require("../helpers/firebase/firebase-config.json");
 
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
 
   function calculateAge(birthDate) {
     const today = new Date();
@@ -108,7 +112,6 @@ module.exports = {
         try {
           buyerObjectId = new mongoose.Types.ObjectId(buyerID);
         } catch (error) {
-          console.error('Error creating ObjectId -> ', error);
         }
       } else {
         buyerObjectId = undefined;
@@ -170,6 +173,30 @@ module.exports = {
       
       const createdBooking = await Booking.findById(newBooking._id).populate('ticket seller')
       
+      if(user) {
+        const fcmToken = user.fcmToken;
+
+        const notificationPayload = {
+          notification: {
+            body: 'HakBus',
+            title: `You HakBus booking was successfull`,
+          },
+          token: fcmToken
+        };
+
+        await admin
+        .messaging()
+        .send(notificationPayload)
+        .then((response) => {
+          console.log('Notification sent successfully to device:', response);
+          res.status(200).json(response)
+      })
+        .catch((error) => {
+          console.log(`error while sending ntfc -> ${error}`);
+          res.status(500).json(error)
+      });
+      }
+
       console.log(createdBooking)
       res.status(200).json(createdBooking);
     } catch (error) {
@@ -405,18 +432,12 @@ module.exports = {
           res.json(order);
         });
         
-        // capture payment & store order information or fullfill order
         app.post("/capture-paypal-order", async (req, res) => {
           const { orderID } = req.body;
           const captureData = await capturePayment(orderID);
           res.json(captureData);
         });
         
-        //////////////////////
-        // PayPal API helpers
-        //////////////////////
-        
-        // use the orders api to create an order
         async function createOrder() {
           const accessToken = await generateAccessToken();
           const url = `${baseURL.sandbox}/v2/checkout/orders`;
@@ -442,7 +463,6 @@ module.exports = {
           return data;
         }
         
-        // use the orders api to capture payment for an order
         async function capturePayment(orderId) {
           const accessToken = await generateAccessToken();
           const url = `${baseURL.sandbox}/v2/checkout/orders/${orderId}/capture`;
@@ -457,7 +477,6 @@ module.exports = {
           return data;
         }
         
-        // generate an access token using client id and app secret
         async function generateAccessToken() {
           const auth = Buffer.from(CLIENT_ID + ":" + APP_SECRET).toString("base64")
           const response = await fetch(`${baseURL.sandbox}/v1/oauth2/token`, {

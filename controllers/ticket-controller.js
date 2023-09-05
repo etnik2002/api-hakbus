@@ -28,7 +28,7 @@ module.exports = {
           to: line.to,
         };
     
-        const generatedTickets = await generateTicketsForNextTwoYears(ticketData, selectedDayOfTheWeek, selectedReturnDayOfWeek);
+        const generatedTickets = await generateTicketsForNextTwoYears(ticketData || req.body.ticketData, selectedDayOfTheWeek || req.body.selectedDayOfTheWeek, selectedReturnDayOfWeek || req.body.selectedReturnDayOfWeek);
     
         res.status(200).json({
           generatedTickets,
@@ -155,59 +155,61 @@ module.exports = {
 
       getSearchedTickets: async (req, res) => {
         try {
-          let from = req.query.from;
-          let to = req.query.to;
-          let date = req.query.date;
-          let returnDate = req.query.returnDate;
-          let type = req.query.type;
-          let price = req.body.price;
-          let childrenPrice = req.body.childrenPrice;
-          
-          const tickets = await Ticket.find({
-            $or: [
-              { from: from, to: to },
-              { from: to, to: from },
-            ]
-          }).populate('lineCode');
+            let from = req.query.from;
+            let to = req.query.to;
+            let returnDate = req.query.returnDate;
+            let type = req.query.type;
+            let price = req.body.price;
+            let childrenPrice = req.body.childrenPrice;
+            const dateNow = moment().format('DD-MM-YYYY'); 
+            console.log(dateNow)
+            
+            // const tickets = await Ticket.find({
+            //   $or: [
+            //     { from: req.query.from, to: req.query.to, date: { $gte: dateNow } },
+            //     { from: req.query.to, to: req.query.from, date: { $gte: dateNow } }
+            //   ]
+            // }).populate('lineCode');
+            
 
-          if(tickets) {
-            return res.status(200).json(tickets);
-          }
-          
-          const dateNow = moment().format('DD-MM-YYYY');
-      
-          const searchParams = {};
-      
-          if (date) searchParams.date = date;
-          if (returnDate) searchParams.returnDate = returnDate;
-          if (type) searchParams.type = type;
-          if (price) searchParams.price = price;
-          if (childrenPrice) searchParams.childrenPrice = childrenPrice;
-      
-          const searchFields = ['time'];
-          const textQuery = searchFields
-            .filter((field) => searchParams[field])
-            .map((field) => ({
-              [field]: { $regex: searchParams[field], $options: 'i' },
-            }));
-          const ticketQuery = textQuery.length > 0 ? { $or: textQuery } : {};
-      
-          const allTickets = await Ticket.find({
-            ...ticketQuery,
-            ...searchParams,
-            date: { $gte: dateNow },
-          })
-            .populate({
-              path: 'lineCode',
-              match: { 'from': { $regex: new RegExp('^' + from, 'i') }, 'to': { $regex: new RegExp('^' + to, 'i') } },
-            });
-      
-
-          const filteredTickets = allTickets.filter((ticket) => ticket.lineCode);
-      
-          filteredTickets.sort((a, b) => new Date(a.date) - new Date(b.date));
-      
-          res.status(200).json(tickets);
+            // if(tickets) {
+            //   const found =tickets.filter((t) => t.date >= dateNow)
+            //   return res.status(200).json(found);
+            // }
+            
+        
+            const searchParams = {};
+        
+            if (type) searchParams.type = type;
+            if (price) searchParams.price = price;
+            if (childrenPrice) searchParams.childrenPrice = childrenPrice;
+            if (from) searchParams.from = from;
+            if (to) searchParams.to = to;
+        
+            const searchFields = ['date', 'from', 'to'];
+            const textQuery = searchFields
+              .filter((field) => searchParams[field])
+              .map((field) => ({
+                [field]: { $regex: searchParams[field], $options: 'i' },
+              }));
+            const ticketQuery = textQuery.length > 0 ? { $or: textQuery } : {};
+        
+            const allTickets = await Ticket.find({
+              ...ticketQuery,
+              ...searchParams,
+              date: { $gte: dateNow },
+            })
+              .populate({
+                path: 'lineCode',
+                match: { 'from': { $regex: new RegExp('^' + from, 'i') }, 'to': { $regex: new RegExp('^' + to, 'i') } },
+              });
+        
+              
+            const filteredTickets = allTickets.filter((ticket) => ticket.lineCode && ticket.date >= dateNow);
+            
+            filteredTickets.sort((a, b) => new Date(a.date) - new Date(b.date));
+        
+            res.status(200).json(filteredTickets);
         } catch (error) {
           res.status(500).json({ message: 'Internal server error -> ' + error });
         }

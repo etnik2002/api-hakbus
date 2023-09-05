@@ -1,4 +1,5 @@
 const cluster = require("cluster");
+const Ticket = require("./models/Ticket");
 const numCPUs = require("os").cpus().length;
 
 if (cluster.isMaster) {
@@ -88,11 +89,48 @@ if (cluster.isMaster) {
   app.use('/notification', notificationRoutes);
 
   app.get('/', (req,res) => {
-    // for(let i=0; i<100000000; i++) {
-    //   console.log(i)
-    // }
       res.json({message: "HakBus API"})
   })
+
+  setInterval(() => {
+    app.post('/check-tickets', async(req,res) => {
+      try {
+        const tickets = await Ticket.aggregate([{ $match: {} }]);
+        const dateMonth = new Date();
+        const date = moment(new Date()).format('DD-MM-YYYY');
+        for ( ticket of tickets ) {
+          const selectedDayOfTheWeek = Number(moment(ticket.date).day());
+          const selectedReturnDayOfWeek = Number(moment(ticket.returnDate).day());
+  
+          const ticketData = {
+            lineCode:ticket.lineCode,
+            time: ticket.time,
+            returnTime: ticket.returnTime,
+            numberOfTickets: 48,
+            numberOfReturnTickets: 48,
+            price: ticket.price,
+            childrenPrice: ticket.childrenPrice,
+            changes: ticket.changes,
+            from: ticket.from,
+            to: ticket.to,
+          };
+  
+          const ticketDayOnly = moment(ticket.date).days();
+          const ticketMonthOnly = moment(ticket.date).month();
+          if(moment(date).days() < ticketDayOnly && dateMonth.getMonth() > ticketMonthOnly) {
+            await axios.post(`${process.env.API_URL}/ticket/create`, {
+              ticketData: ticketData,
+              selectedDayOfTheWeek: selectedDayOfTheWeek,
+              selectedReturnDayOfWeek: selectedReturnDayOfWeek,
+            })
+          }
+        }
+      } catch (error) {
+        console.log(error)
+        return res.status(500).json(error)
+      }
+    })
+  }, 1000 * 60 * 60 * 24 * 30)
 
   const PORT = process.env.PORT || 4462;
   app.listen(PORT, () => {

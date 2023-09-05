@@ -1,12 +1,12 @@
 const Line = require('../models/Line');
-var admin = require("firebase-admin");
 
-var serviceAccount = require("../helpers/firebase/firebase-config.json");
 const Ceo = require('../models/Ceo');
+var admin = require("firebase-admin");
+var serviceAccount = require("../helpers/firebase/firebase-config.json");
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
-});
+// admin.initializeApp({
+//   credential: admin.credential.cert(serviceAccount)
+// });
 
 
 module.exports = {
