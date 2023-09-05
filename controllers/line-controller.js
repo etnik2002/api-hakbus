@@ -41,45 +41,22 @@ module.exports = {
     getLineBookings: async (req, res) => {
       try {
         const lines = await Line.aggregate([{ $match: {} }])
-        const bookingsForLine = await Booking.aggregate([
-          {
-            $lookup: {
-              from: 'tickets',
-              localField: 'ticket',
-              foreignField: '_id',
-              as: 'ticket',
-            },
+        console.log({lines})
+        const bookingsForLine = await Booking.find({})
+        .populate({
+          path: 'ticket',
+          model: 'Ticket', 
+          populate: {
+            path: 'lineCode',
+            model: 'Line', 
           },
-          {
-            $unwind: '$ticket',
-          },
-          {
-            $lookup: {
-              from: 'lines',
-              localField: 'ticket.lineCode',
-              foreignField: '_id',
-              as: 'ticket.lineCode',
-            },
-          },
-          {
-            $unwind: '$ticket.lineCode',
-          },
-          {
-            $lookup: {
-              from: 'users',
-              localField: 'buyer',
-              foreignField: '_id',
-              as: 'buyer',
-            },
-          },
-          {
-            $unwind: '$buyer',
-          },
-          {
-            $sort: { createdAt: -1 },
-          },
-        ]).exec();
-    
+        })
+        .populate({
+          path: 'buyer',
+          model: 'User', 
+        })
+        .sort({ createdAt: -1 })
+
         const lineBookings = lines.map((line) => {
           const bookings = bookingsForLine.filter((booking) => line.code === booking.ticket.lineCode.code);
           const todaysBookings = bookings.filter((b) => b.ticket.date === moment().format('DD-MM-YYYY') || b.ticket.returnDate === moment().format('DD-MM-YYYY'));
@@ -104,44 +81,60 @@ module.exports = {
       try {
         const lines = await Line.aggregate([{ $match: {} }])
 
-        const bookingsForLine = await Booking.aggregate([
-          {
-            $lookup: {
-              from: 'tickets',
-              localField: 'ticket',
-              foreignField: '_id',
-              as: 'ticket',
-            },
+
+        const bookingsForLine = await Booking.find({})
+        .populate({
+          path: 'ticket',
+          model: 'Ticket', 
+          populate: {
+            path: 'lineCode',
+            model: 'Line', 
           },
-          {
-            $unwind: '$ticket',
-          },
-          {
-            $lookup: {
-              from: 'lines',
-              localField: 'ticket.lineCode',
-              foreignField: '_id',
-              as: 'ticket.lineCode',
-            },
-          },
-          {
-            $unwind: '$ticket.lineCode',
-          },
-          {
-            $lookup: {
-              from: 'users',
-              localField: 'buyer',
-              foreignField: '_id',
-              as: 'buyer',
-            },
-          },
-          {
-            $unwind: '$buyer',
-          },
-          {
-            $sort: { createdAt: -1 },
-          },
-        ]).exec();
+        })
+        .populate({
+          path: 'buyer',
+          model: 'User', 
+        })
+        .sort({ createdAt: -1 })
+
+        // const bookingsForLine = await Booking.aggregate([
+        //   {
+        //     $lookup: {
+        //       from: 'tickets',
+        //       localField: 'ticket',
+        //       foreignField: '_id',
+        //       as: 'ticket',
+        //     },
+        //   },
+        //   {
+        //     $unwind: '$ticket',
+        //   },
+        //   {
+        //     $lookup: {
+        //       from: 'lines',
+        //       localField: 'ticket.lineCode',
+        //       foreignField: '_id',
+        //       as: 'ticket.lineCode',
+        //     },
+        //   },
+        //   {
+        //     $unwind: '$ticket.lineCode',
+        //   },
+        //   {
+        //     $lookup: {
+        //       from: 'users',
+        //       localField: 'buyer',
+        //       foreignField: '_id',
+        //       as: 'buyer',
+        //     },
+        //   },
+        //   {
+        //     $unwind: '$buyer',
+        //   },
+        //   {
+        //     $sort: { createdAt: -1 },
+        //   },
+        // ]).exec();
     
         const todaysDate = moment(new Date()).format('DD-MM-YYYY');
         const lineBookings = lines.map((line) => {
@@ -165,60 +158,64 @@ module.exports = {
 
       getSingleLineBookings: async (req,res) =>{
         try {
-          const bookingsForLine = await Booking.aggregate([
-            {
-              $lookup: {
-                from: 'tickets',
-                localField: 'ticket',
-                foreignField: '_id',
-                as: 'ticket',
-              },
-            },
-            {
-              $unwind: '$ticket',
-            },
-            {
-              $lookup: {
-                from: 'lines',
-                localField: 'ticket.lineCode',
-                foreignField: '_id',
-                as: 'ticket.lineCode',
-              },
-            },
-            {
-              $unwind: '$ticket.lineCode',
-            },
-            {
-              $lookup: {
-                from: 'users',
-                localField: 'buyer',
-                foreignField: '_id',
-                as: 'buyer',
-              },
-            },
-            {
-              $unwind: '$buyer',
-            },
-            {
-              $sort: { createdAt: -1 },
-            },
-            {
-              $match: {
-                'ticket.lineCode._id': new mongoose.Types.ObjectId(req.params.id),
-                $or: [
-                  { 'ticket.date': req.params.from },
-                  { 'ticket.returnDate': req.params.from },
-                ],
-              },
-            },
-            {
-              $project: {
-                'buyer.password': 0,
-              },
-            },
-          ]).exec();
+          const all = await Booking.find({}).populate('buyer seller ticket');
+          console.log(all.filter((b) => b.ticket.lineCode == req.params.id))
+          const filtered = all.filter((b) => b.ticket.lineCode == req.params.id || (b.ticket.date == req.params.from || b.ticket.returnDate == req.params.from));
+
+          // const bookingsForLine = await Booking.aggregate([
+          //   {
+          //     $lookup: {
+          //       from: 'tickets',
+          //       localField: 'ticket',
+          //       foreignField: '_id',
+          //       as: 'ticket',
+          //     },
+          //   },
+          //   {
+          //     $unwind: '$ticket',
+          //   },
+          //   {
+          //     $lookup: {
+          //       from: 'lines',
+          //       localField: 'ticket.lineCode',
+          //       foreignField: '_id',
+          //       as: 'ticket.lineCode',
+          //     },
+          //   },
+          //   {
+          //     $unwind: '$ticket.lineCode',
+          //   },
+          //   {
+          //     $lookup: {
+          //       from: 'users',
+          //       localField: 'buyer',
+          //       foreignField: '_id',
+          //       as: 'buyer',
+          //     },
+          //   },
+          //   {
+          //     $unwind: '$buyer',
+          //   },
+          //   {
+          //     $sort: { createdAt: -1 },
+          //   },
+          //   {
+          //     $match: {
+          //       'ticket.lineCode._id': new mongoose.Types.ObjectId(req.params.id),
+          //       $or: [
+          //         { 'ticket.date': req.params.from },
+          //         { 'ticket.returnDate': req.params.from },
+          //       ],
+          //     },
+          //   },
+          //   {
+          //     $project: {
+          //       'buyer.password': 0,
+          //     },
+          //   },
+          // ]).exec();
       
-          res.status(200).json(bookingsForLine);
+          res.status(200).json(filtered);
         } catch (error) {
           console.log(error)
           res.status(500).json(error);

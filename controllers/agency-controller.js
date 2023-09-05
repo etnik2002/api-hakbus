@@ -295,11 +295,13 @@ module.exports = {
 
         console.log({body:req.body})
         if (sendSepparately==='true') {
+          console.log({sendSepparately})
             await sendAttachmentToAllPassengers( booking.passengers, attachments );
             return res.status(200).json("Dokumentet u dërguan tek secili pasagjer veçmas!")
         } 
         
         if(sendToOneEmail==='true') {
+          console.log({sendToOneEmail})
             const isArray = Array.isArray(attachments)
             await sendAttachmentToOneForAll(receiverEmail, booking.passengers, attachments);
             return res.status(200).json(`Dokumentet u dërguan te ${receiverEmail} për ${booking.passengers.length} ${booking.passengers.length > 1 ? 'udhëtarë' : 'udhëtar'} !`);
@@ -308,6 +310,7 @@ module.exports = {
         return res.status(200).json("successfully sent attachments " + attachments)
 
     } catch (error) {
+        console.log(error)
         res.status(500).json('error -> ' + error)
     }
   },

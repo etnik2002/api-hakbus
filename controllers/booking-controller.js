@@ -157,8 +157,9 @@ module.exports = {
         }
   
         await Agency.findByIdAndUpdate(req.params.sellerID, {
-          $inc: { totalSales: 1, profit: agencyEarnings },
+          $inc: { totalSales: 1, profit: agencyEarnings, debt: ourEarnings },
         });
+  
   
         await Ceo.findByIdAndUpdate(ceo[0]._id, { $inc: { totalProfit: ourEarnings } });
       });
@@ -175,7 +176,7 @@ module.exports = {
 
       var seatNotification = {};
 
-      if(ticket.numberOfReturnTickets <= 3) {
+      if(ticket.numberOfReturnTickets <= 2) {
         console.log("2 return")
         seatNotification = {
           message: `Kanë mbetur vetëm 2 vende të lira për linjën  (${ticket.to} / ${ticket.from}) me datë ${ticket.returnDate}`,
@@ -184,7 +185,8 @@ module.exports = {
           link: `${process.env.FRONTEND_URL}/ticket/edit/${ticket.id}`,
           confirmed: false,
         };
-      } else if (ticket.numberOfTickets <= 3) {
+        await Ceo.findByIdAndUpdate(ceo[0]._id, { $push: { notifications: seatNotification } });
+      } else if (ticket.numberOfTickets <= 2) {
         console.log("2 oneway")
         seatNotification = {
           message: `Kanë mbetur vetëm 2 vende të lira për linjën (${ticket.from} / ${ticket.to}) me datë ${ticket.date}`,
@@ -193,10 +195,9 @@ module.exports = {
           link: `${process.env.FRONTEND_URL}/ticket/edit/${ticket.id}`,
           confirmed: false,
         };
+        await Ceo.findByIdAndUpdate(ceo[0]._id, { $push: { notifications: seatNotification } });
       }
 
-        console.log({seatNotification})
-      await Ceo.findByIdAndUpdate(ceo[0]._id, { $push: { notifications: seatNotification } });
 
       const createdBooking = await Booking.findById(newBooking._id).populate('ticket seller')
       
