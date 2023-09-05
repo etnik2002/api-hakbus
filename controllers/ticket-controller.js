@@ -162,7 +162,6 @@ module.exports = {
             let price = req.body.price;
             let childrenPrice = req.body.childrenPrice;
             const dateNow = moment().format('DD-MM-YYYY'); 
-            console.log(dateNow)
             
             // const tickets = await Ticket.find({
             //   $or: [
@@ -176,7 +175,6 @@ module.exports = {
             //   const found =tickets.filter((t) => t.date >= dateNow)
             //   return res.status(200).json(found);
             // }
-            
         
             const searchParams = {};
         

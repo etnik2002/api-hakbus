@@ -200,7 +200,6 @@ module.exports = {
 
       const createdBooking = await Booking.findById(newBooking._id).populate('ticket seller')
       
-<<<<<<< HEAD
       if(user) {
         const fcmToken = user.fcmToken;
 
@@ -226,8 +225,6 @@ module.exports = {
       }
 
       console.log(createdBooking)
-=======
->>>>>>> 8c3867bfc7ab275fcc970425cffba59f04cd2b29
       res.status(200).json(createdBooking);
     } catch (error) {
       console.log(error);
