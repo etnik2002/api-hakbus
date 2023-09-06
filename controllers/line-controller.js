@@ -160,7 +160,7 @@ module.exports = {
         try {
           const all = await Booking.find({}).populate('buyer seller ticket');
           console.log(all.filter((b) => b.ticket.lineCode == req.params.id))
-          const filtered = all.filter((b) => b.ticket.lineCode == req.params.id || (b.ticket.date == req.params.from || b.ticket.returnDate == req.params.from));
+          const filtered = all.filter((b) => b.ticket.lineCode == req.params.id && (b.ticket.date == req.params.from || b.ticket.returnDate == req.params.from));
 
           // const bookingsForLine = await Booking.aggregate([
           //   {
