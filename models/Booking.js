@@ -13,6 +13,8 @@ const bookingSchema = mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Ticket'
     },
+    from: { type: String },
+    to: { type: String },
     passengers: [
         {
             fullName: {

@@ -23,11 +23,11 @@ module.exports = {
           numberOfReturnTickets: req.body.numberOfReturnTickets,
           price: req.body.price,
           childrenPrice: req.body.childrenPrice,
-          changes: req.body.changes,
           from: line.from,
           to: line.to,
+          stops: req.body.stops,
         };
-    
+
         const generatedTickets = await generateTicketsForNextTwoYears(ticketData || req.body.ticketData, selectedDayOfTheWeek || req.body.selectedDayOfTheWeek, selectedReturnDayOfWeek || req.body.selectedReturnDayOfWeek);
     
         res.status(200).json({
@@ -153,37 +153,62 @@ module.exports = {
         }
       },
 
+
       getSearchedTickets: async (req, res) => {
         try {
           const fromDate = moment().format('DD-MM-YYYY'); 
-      
-          const pipeline = [
-            {
-              $match: {
-                $or: [
-                  { from: req.query.from, to: req.query.to },
-                  { from: req.query.to, to: req.query.from }
-                ],
+
+          const tickets = await Ticket.find({
+            $or: [
+              {
                 $and: [
-                  {date: { $gte: fromDate }}, 
+                  { from: req.query.from },
+                  { to: req.query.to },
+                  { date: { $gte: fromDate } }
                 ]
+              },
+              {
+                $and: [
+                  { from: req.query.to },
+                  { to: req.query.from },
+                  { date: { $gte: fromDate } }
+                ]
+              },
+              {
+                'stops.city': { $in: [req.query.from, req.query.to] }
               }
-            },
-            {
-              $lookup: {
-                from: 'lines', 
-                localField: 'lineCode',
-                foreignField: '_id',
-                as: 'lineCode'
-              }
-            },
-            {
-              $unwind: '$lineCode' 
-            }
-          ];
+            ]
+          }).populate('lineCode');
+          
+          // const pipeline = [
+          //   {
+          //     $match: {
+          //       $or: [
+          //         { from: req.query.from, to: req.query.to },
+          //         { from: req.query.to, to: req.query.from }
+          //       ],
+          //       $and: [
+          //         {date: { $gte: fromDate }}, 
+          //       ]
+          //     }
+          //   },
+          //   {
+          //     $lookup: {
+          //       from: 'lines', 
+          //       localField: 'lineCode',
+          //       foreignField: '_id',
+          //       as: 'lineCode'
+          //     }
+          //   },
+          //   {
+          //     $unwind: '$lineCode' 
+          //   },
+          // ];
+
+          
+          
       
-          const tickets = await Ticket.aggregate(pipeline);
-      
+          // const tickets = await Ticket.aggregate(pipeline);
           return res.status(200).json(tickets);
         } catch (error) {
           console.error(error);

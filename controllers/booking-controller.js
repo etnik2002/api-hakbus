@@ -72,7 +72,7 @@ module.exports = {
         }
       }
 
-      const agency = await Agency.findById(req.params.sellerID);
+      // const agency = await Agency.findById(req.params.sellerID);
       let totalPrice = 0;
   
       const passengers = req.body.passengers.map((passenger) => {
@@ -89,10 +89,10 @@ module.exports = {
         };
       });
   
-      const agencyPercentage = agency.percentage / 100;
-      const agencyEarnings = (totalPrice * agencyPercentage);
-      const ourEarnings = totalPrice - agencyEarnings;
-      console.log({totalPrice, agencyPercentage, agencyEarnings, ourEarnings})
+      // const agencyPercentage = agency.percentage / 100;
+      // const agencyEarnings = (totalPrice * agencyPercentage);
+      // const ourEarnings = totalPrice - agencyEarnings;
+      // console.log({totalPrice, agencyPercentage, agencyEarnings, ourEarnings})
 
       const sendEmailNotification = req.body.sendEmailNotification;
       const sendSmsNotification = req.body.sendSmsNotification;
@@ -124,6 +124,8 @@ module.exports = {
         seller: req.params.sellerID,
         ticket: req.params.ticketID,
         firstname: req.body.firstname,
+        from: req.body.from,
+        to: req.body.to,
         lastname: req.body.lastname,
         email: req.body.email,
         phone: req.body.phone,
@@ -156,12 +158,12 @@ module.exports = {
           });
         }
   
-        await Agency.findByIdAndUpdate(req.params.sellerID, {
-          $inc: { totalSales: 1, profit: agencyEarnings, debt: ourEarnings },
-        });
+        // await Agency.findByIdAndUpdate(req.params.sellerID, {
+        //   $inc: { totalSales: 1, profit: agencyEarnings, debt: ourEarnings },
+        // });
   
   
-        await Ceo.findByIdAndUpdate(ceo[0]._id, { $inc: { totalProfit: ourEarnings } });
+        await Ceo.findByIdAndUpdate(ceo[0]._id, { $inc: { totalProfit: totalPrice } });
       });
   
       if (sendEmailNotification) {

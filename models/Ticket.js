@@ -12,19 +12,25 @@ const ticketSchema = mongoose.Schema({
   to: {
     type: String,
   },
-  changes: 
+  // changes: 
+  //   {
+  //     city: {
+  //       type: String,
+  //     },
+  //     date: {
+  //       type: String,
+  //     },
+  //     time: {
+  //       type: String,
+  //     },
+  //   },
+  stops: [
     {
-      city: {
-        type: String,
-      },
-      date: {
-        type: String,
-      },
-      time: {
-        type: String,
-      },
-    },
-    
+      city: { type: String },
+      date:{ type: String },
+      price: { type: Number },
+    }
+  ],
   date: {
     type: String,
     required: true,
