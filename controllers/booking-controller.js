@@ -121,7 +121,6 @@ module.exports = {
 
       const newBooking = new Booking({
         buyer: buyerObjectId,
-        seller: req.params.sellerID,
         ticket: req.params.ticketID,
         firstname: req.body.firstname,
         from: req.body.from,
@@ -201,29 +200,29 @@ module.exports = {
 
       const createdBooking = await Booking.findById(newBooking._id).populate('ticket seller')
       
-      if(user) {
-        const fcmToken = user.fcmToken;
+      // if(user) {
+      //   const fcmToken = user.fcmToken;
 
-        const notificationPayload = {
-          notification: {
-            body: 'HakBus',
-            title: `You HakBus booking was successfull`,
-          },
-          token: fcmToken
-        };
+      //   const notificationPayload = {
+      //     notification: {
+      //       body: 'HakBus',
+      //       title: `You HakBus booking was successfull`,
+      //     },
+      //     token: fcmToken
+      //   };
 
-        await admin
-        .messaging()
-        .send(notificationPayload)
-        .then((response) => {
-          console.log('Notification sent successfully to device:', response);
-          res.status(200).json(response)
-      })
-        .catch((error) => {
-          console.log(`error while sending ntfc -> ${error}`);
-          res.status(500).json(error)
-      });
-      }
+      //   await admin
+      //   .messaging()
+      //   .send(notificationPayload)
+      //   .then((response) => {
+      //     console.log('Notification sent successfully to device:', response);
+      //     res.status(200).json(response)
+      // })
+      //   .catch((error) => {
+      //     console.log(`error while sending ntfc -> ${error}`);
+      //     res.status(500).json(error)
+      // });
+      // }
 
       console.log(createdBooking)
       res.status(200).json(createdBooking);
