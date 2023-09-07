@@ -7,6 +7,9 @@ const LineSchema = mongoose.Schema({
         type: String,
         required: true
     },
+    phone : {
+        type: String,
+    },
     from: {
         type: String
     },
