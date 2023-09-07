@@ -52,7 +52,10 @@ const ceoSchema = mongoose.Schema({
         type: String,
         enum : ['admin','superAdmin', 'observer', 'ceo'],
         default: 'admin',
-    }
+    },
+    nrOfSeatsNotification: {
+        type: Number,
+    },
 
 }, { timestamps: true })
 

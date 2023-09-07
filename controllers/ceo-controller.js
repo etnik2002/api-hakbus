@@ -201,10 +201,19 @@ module.exports = {
         
             res.status(200).json(`Pagesa e borxhit per ${agency.name} me vlere ${debtValue} € u konfirmua me sukses.`);
           } catch (error) {
-            res.status(500).json(error);
+            return res.status(500).json(error);
           }
       },
 
-      
+      setNrOfSeatsNotification: async (req,res) => {
+        try {
+          const ceo = await Ceo.find({});
+          await Ceo.findByIdAndUpdate(ceo[0]._id, { $set: { nrOfSeatsNotification: req.body.number } });
+          return res.status(200).json("U ruajt me sukses");
+        } catch (error) {
+          console.log(error)
+          return res.status(500).json(error);
+        }
+      }
 
 }
