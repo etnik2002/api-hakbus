@@ -321,61 +321,19 @@ module.exports = {
       const ceo = await Ceo.aggregate([{$match: {}}]);
       const type = req.body.type;
       const onlyReturn = req.body.onlyReturn;
-      const numberOfPsg = req.body.passengers.length || 1;
       const ticket = await Ticket.findById(req.params.ticketID);
 
       if(onlyReturn) {
-        if(ticket.numberOfReturnTickets < numberOfPsg) {
+        if(ticket.numberOfReturnTickets < 1) {
           res.status(400).json('Number of tickets requested is more than available for this return trip');     
         }
       }
 
-      if(numberOfPsg > ticket.numberOfTickets) {
-        res.status(400).json('Number of tickets requested is more than available');
-      }
-      
-      if(type){
-        if(numberOfPsg > ticket.numberOfReturnTickets) {
-          res.status(400).json('Number of tickets requested is more than available for both ways');
-        }
-      }
-
-      if(!type) {
-        if(ticket.numberOfTickets < 1){
-          return res.status(400).json("Not seats left");
-        } 
-      }
-
-      if(type) {
-        if(ticket.numberOfTickets < 1 || ticket.numberOfReturnTickets < 1 || (ticket.numberOfTickets < 1 && ticket.numberOfReturnTickets < 1)){
-          return res.status(400).json("Not seats left for both ways");
-        }
-      }
-
       // const agency = await Agency.findById(req.params.sellerID);
-      let totalPrice = 0;
-  
-      const passengers = req.body.passengers.map((passenger) => {
-        const age = calculateAge(passenger.birthDate);
-        const passengerPrice = age <= 10 ? ticket.childrenPrice : ticket.price;
-        totalPrice +=  type == true ? passengerPrice * 2 : passengerPrice;
-        return {
-          email: passenger.email,
-          phone: passenger.phone,
-          fullName: passenger.fullName,
-          birthDate: passenger.birthDate,
-          age: parseInt(age),
-          price: type == true ? passengerPrice * 2 : passengerPrice,
-        };
-      });
-  
       const agencyPercentage = agency.percentage / 100;
       const agencyEarnings = (totalPrice * agencyPercentage);
       const ourEarnings = totalPrice - agencyEarnings;
       console.log({totalPrice, agencyPercentage, agencyEarnings, ourEarnings})
-
-      const sendEmailNotification = req.body.sendEmailNotification;
-      const sendSmsNotification = req.body.sendSmsNotification;
 
       let bookingType;
 
@@ -387,19 +345,18 @@ module.exports = {
         bookingType = 'oneway'
       }
 
+      const age = calculateAge(req.body.birthdate);
 
       const newBooking = await new Booking({
         seller: req.params.id,
         ticket: req.params.ticketID,
-        firstname: req.body.firstname,
         from: req.body.from,
         to: req.body.to,
-        lastname: req.body.lastname,
+        fullName: req.body.fullName,
         email: req.body.email,
         phone: req.body.phone,
         age: req.body.age,
-        price: totalPrice,
-        passengers: passengers,
+        price: age <= 10 ? ticket.childrenPrice : ticket.price,
         type: bookingType, 
       })
 
@@ -475,4 +432,23 @@ module.exports = {
     }
   }
 
+}
+
+
+function calculateAge(birthDate) {
+  const today = new Date();
+  const birthDateArray = birthDate.split("-"); 
+  const birthDateObj = new Date(
+    birthDateArray[2],
+    birthDateArray[1] - 1,
+    birthDateArray[0]
+  );
+ 
+  let age = today.getFullYear() - birthDateObj.getFullYear();
+  const monthDiff = today.getMonth() - birthDateObj.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDateObj.getDate())) {
+    age -= 1;
+  }
+
+  return age;
 }

@@ -166,30 +166,51 @@ module.exports = {
 
       getSearchedTickets: async (req, res) => {
         try {
-          const fromDate = moment().format('DD-MM-YYYY'); 
-
-          const tickets = await Ticket.find({
+          const fromDate = moment();
+          console.log({ fromDate });
+          let tickets = [];
+          
+          tickets = await Ticket.find({
             $or: [
-              {
-                $and: [
-                  { from: req.query.from },
-                  { to: req.query.to },
-                  { date: { $gte: fromDate } }
-                ]
-              },
-              {
-                $and: [
-                  { from: req.query.to },
-                  { to: req.query.from },
-                  { date: { $gte: fromDate } }
-                ]
-              },
-              {
-                'stops.city': { $in: [req.query.from, req.query.to] }
-              },
-              { isActive: true }
-            ]
-          }).populate('lineCode');
+              { from: req.query.from, to: req.query.to },
+              { from: req.query.to, to: req.query.from },
+            ],
+          });
+          
+          if (!tickets.length) {
+            tickets = await Ticket.find({
+              $or: [
+                { 'stops.city': req.query.from },
+                { 'stops.city': req.query.to },
+              ],
+            });
+          }
+          
+          console.log(tickets);
+          
+
+          // const tickets = await Ticket.find({
+          //   $or: [
+          //     {
+          //       $and: [
+          //         { from: req.query.from },
+          //         { to: req.query.to },
+          //         { date: { $gte: fromDate } }
+          //       ]
+          //     },
+          //     {
+          //       $and: [
+          //         { from: req.query.to },
+          //         { to: req.query.from },
+          //         { date: { $gte: fromDate } }
+          //       ]
+          //     },
+          //     {
+          //       'stops.city': { $in: [req.query.from, req.query.to] }
+          //     },
+          //     { isActive: true }
+          //   ]
+          // }).populate('lineCode');
           
           // const pipeline = [
           //   {
