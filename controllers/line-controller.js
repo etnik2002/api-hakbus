@@ -81,7 +81,6 @@ module.exports = {
       try {
         const lines = await Line.aggregate([{ $match: {} }])
 
-
         const bookingsForLine = await Booking.find({})
         .populate({
           path: 'ticket',
@@ -139,7 +138,7 @@ module.exports = {
         const todaysDate = moment(new Date()).format('DD-MM-YYYY');
         const lineBookings = lines.map((line) => {
           const bookings = bookingsForLine.filter((booking) => line.code === booking.ticket.lineCode.code);
-          const todaysBookings = bookings.filter((b) => b?.ticket?.date === todaysDate || b?.ticket?.returnDate === todaysDate);
+          const todaysBookings = bookings.filter((b) => moment(b?.ticket?.date).format('DD-MM-YYYY') === todaysDate || moment(b?.ticket?.returnDate).format('DD-MM-YYYY') === todaysDate);
     
           return {
             line: line.code,

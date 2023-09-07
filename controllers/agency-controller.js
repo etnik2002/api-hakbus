@@ -315,5 +315,164 @@ module.exports = {
     }
   },
 
+  makeBookingForCustomers: async (req,res) => {
+    try {
+      const agency = await Agency.findById(req.params.id);
+      const ceo = await Ceo.aggregate([{$match: {}}]);
+      const type = req.body.type;
+      const onlyReturn = req.body.onlyReturn;
+      const numberOfPsg = req.body.passengers.length || 1;
+      const ticket = await Ticket.findById(req.params.ticketID);
+
+      if(onlyReturn) {
+        if(ticket.numberOfReturnTickets < numberOfPsg) {
+          res.status(400).json('Number of tickets requested is more than available for this return trip');     
+        }
+      }
+
+      if(numberOfPsg > ticket.numberOfTickets) {
+        res.status(400).json('Number of tickets requested is more than available');
+      }
+      
+      if(type){
+        if(numberOfPsg > ticket.numberOfReturnTickets) {
+          res.status(400).json('Number of tickets requested is more than available for both ways');
+        }
+      }
+
+      if(!type) {
+        if(ticket.numberOfTickets < 1){
+          return res.status(400).json("Not seats left");
+        } 
+      }
+
+      if(type) {
+        if(ticket.numberOfTickets < 1 || ticket.numberOfReturnTickets < 1 || (ticket.numberOfTickets < 1 && ticket.numberOfReturnTickets < 1)){
+          return res.status(400).json("Not seats left for both ways");
+        }
+      }
+
+      // const agency = await Agency.findById(req.params.sellerID);
+      let totalPrice = 0;
+  
+      const passengers = req.body.passengers.map((passenger) => {
+        const age = calculateAge(passenger.birthDate);
+        const passengerPrice = age <= 10 ? ticket.childrenPrice : ticket.price;
+        totalPrice +=  type == true ? passengerPrice * 2 : passengerPrice;
+        return {
+          email: passenger.email,
+          phone: passenger.phone,
+          fullName: passenger.fullName,
+          birthDate: passenger.birthDate,
+          age: parseInt(age),
+          price: type == true ? passengerPrice * 2 : passengerPrice,
+        };
+      });
+  
+      const agencyPercentage = agency.percentage / 100;
+      const agencyEarnings = (totalPrice * agencyPercentage);
+      const ourEarnings = totalPrice - agencyEarnings;
+      console.log({totalPrice, agencyPercentage, agencyEarnings, ourEarnings})
+
+      const sendEmailNotification = req.body.sendEmailNotification;
+      const sendSmsNotification = req.body.sendSmsNotification;
+
+      let bookingType;
+
+      if(type) {
+        bookingType = 'both'
+      } else if(onlyReturn) {
+        bookingType = 'return'
+      } else {
+        bookingType = 'oneway'
+      }
+
+
+      const newBooking = await new Booking({
+        seller: req.params.id,
+        ticket: req.params.ticketID,
+        firstname: req.body.firstname,
+        from: req.body.from,
+        to: req.body.to,
+        lastname: req.body.lastname,
+        email: req.body.email,
+        phone: req.body.phone,
+        age: req.body.age,
+        price: totalPrice,
+        passengers: passengers,
+        type: bookingType, 
+      })
+
+      await newBooking.save().then(async () => {
+        if (type) {
+          await Ticket.findByIdAndUpdate(req.params.ticketID, {
+            $inc: { numberOfTickets: -numberOfPsg },
+          });
+  
+          await Ticket.findByIdAndUpdate(req.params.ticketID, {
+            $inc: { numberOfReturnTickets: -numberOfPsg },
+          });
+        } 
+
+        if (onlyReturn) {
+          await Ticket.findByIdAndUpdate(req.params.ticketID, {
+            $inc: { numberOfReturnTickets: -numberOfPsg },
+          });
+        }
+        
+        else {
+          await Ticket.findByIdAndUpdate(req.params.ticketID, {
+            $inc: { numberOfTickets: -numberOfPsg },
+          });
+        }
+  
+        await Agency.findByIdAndUpdate(req.params.sellerID, {
+          $inc: { totalSales: 1, profit: agencyEarnings, debt: ourEarnings },
+        });
+  
+        await Ceo.findByIdAndUpdate(ceo[0]._id, { $inc: { totalProfit: ourEarnings } });
+      });
+  
+      if (sendEmailNotification) {
+        passengers.forEach(async (passenger) => {
+          await sendOrderToUsersEmail(passenger.email || user.email , ticket, '6499b15485cb1e6f21a34a46', 'HakBus customer', passenger.fullName, totalPrice, bookingType);
+        }).then((res) => {
+          // console.log(res)
+        }).catch((err) => {
+          console.log(err)
+        })
+      }
+
+      var seatNotification = {};
+
+      if(ticket.numberOfReturnTickets <= ceo[0].nrOfSeatsNotification + 1) {
+        seatNotification = {
+          message: `Kanë mbetur vetëm 2 vende të lira për linjën  (${ticket.to} / ${ticket.from}) me datë ${ticket.returnDate}`,
+          title: `2 ulëse të mbetura`,
+          ticket_id: ticket._id,
+          link: `${process.env.FRONTEND_URL}/ticket/edit/${ticket.id}`,
+          confirmed: false,
+        };
+        await Ceo.findByIdAndUpdate(ceo[0]._id, { $push: { notifications: seatNotification } });
+      } else if (ticket.numberOfTickets <= ceo[0].nrOfSeatsNotification + 1) {
+        seatNotification = {
+          message: `Kanë mbetur vetëm 2 vende të lira për linjën (${ticket.from} / ${ticket.to}) me datë ${ticket.date}`,
+          title: `2 ulëse të mbetura`,
+          ticket_id: ticket._id,
+          link: `${process.env.FRONTEND_URL}/ticket/edit/${ticket.id}`,
+          confirmed: false,
+        };
+        await Ceo.findByIdAndUpdate(ceo[0]._id, { $push: { notifications: seatNotification } });
+      }
+
+      const createdBooking = await Booking.findById(newBooking._id).populate('ticket seller')
+
+      console.log(createdBooking)
+      res.status(200).json(createdBooking);
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json(error);
+    }
+  }
 
 }

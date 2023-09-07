@@ -2,7 +2,6 @@ const { placeBooking, getSingleBooking, getWeeklyBookings, getAllBookings, getMo
 const router = require("express").Router()
 const paypal = require('../controllers/paypal-controller');
 
-// router.post('/create/:buyerID/:sellerID/:ticketID', placeBooking);
 router.post('/create/:buyerID/:ticketID', placeBooking);
 
 router.get('/', getAllBookings);

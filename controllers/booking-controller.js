@@ -177,7 +177,7 @@ module.exports = {
 
       var seatNotification = {};
 
-      if(ticket.numberOfReturnTickets <= 3) {
+      if(ticket.numberOfReturnTickets <= ceo[0].nrOfSeatsNotification + 1) {
         seatNotification = {
           message: `Kanë mbetur vetëm 2 vende të lira për linjën  (${ticket.to} / ${ticket.from}) me datë ${ticket.returnDate}`,
           title: `2 ulëse të mbetura`,
@@ -186,7 +186,7 @@ module.exports = {
           confirmed: false,
         };
         await Ceo.findByIdAndUpdate(ceo[0]._id, { $push: { notifications: seatNotification } });
-      } else if (ticket.numberOfTickets <= 3) {
+      } else if (ticket.numberOfTickets <= ceo[0].nrOfSeatsNotification + 1) {
         seatNotification = {
           message: `Kanë mbetur vetëm 2 vende të lira për linjën (${ticket.from} / ${ticket.to}) me datë ${ticket.date}`,
           title: `2 ulëse të mbetura`,
@@ -515,7 +515,5 @@ module.exports = {
           return data.access_token;
         }
       },
-
-
 
 }
