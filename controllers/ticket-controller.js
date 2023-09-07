@@ -121,25 +121,33 @@ module.exports = {
 
       getTicketLinesBasedOnDate: async (req, res) => {
         try {
-          console.log('holl')
-          const today = moment().format('DD-MM-YYYY');
-          const tomorrow = moment().add(1, 'day').format('DD-MM-YYYY');
+          const startDate = moment(req.query.startDate).format('DD-MM-YYYY');
+          const endDate = moment(req.query.endDate).format('DD-MM-YYYY');
           const allBookings = await Booking.find({});
-      
-          const fromDate = req.query.from || today;
-          const toDate = req.query.to || tomorrow;
-      
-          const ticketQuery = {
-            date: { $gte: fromDate, $lte: fromDate }
-          };
+          const line_id = new mongoose.Types.ObjectId(req.query.line);
+          let ticketQuery = { }
           
-          console.log(today,fromDate)
-          const allTickets = await Ticket.find(ticketQuery)
+          if(line_id != "") {
+            ticketQuery = {
+              date: { $gte: startDate, $lte: endDate },
+              lineCode: line_id
+            }
+          }
+          else {
+            ticketQuery = {
+              date: { $gte: startDate, $lte: endDate }
+            }
+          }
+
+          const tickets = await Ticket.find(ticketQuery)
             .populate('lineCode')
             .sort({ createdAt: 'desc' });
-      
-          const ticketsWithBookings = allTickets.map(ticket => {
-            const bookingsForTicket = allBookings.filter(booking => booking.ticket.toString() === ticket._id.toString());
+          console.log(req.query)
+
+          const ticketsWithBookings = tickets.map((ticket) => {
+            const bookingsForTicket = allBookings.filter(
+              (booking) => booking.ticket.toString() === ticket._id.toString()
+            );
             return {
               ticket: ticket,
               bookings: bookingsForTicket
@@ -148,10 +156,12 @@ module.exports = {
       
           res.status(200).json(ticketsWithBookings);
         } catch (error) {
-          console.log(error);
+          console.error(error);
           res.status(500).json({ message: "Internal error -> " + error });
         }
       },
+      
+      
 
 
       getSearchedTickets: async (req, res) => {
