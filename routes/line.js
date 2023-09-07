@@ -9,7 +9,7 @@ router.get('/today', findTodaysLineTickets)
 
 router.get('/line-bookings', getLineBookings);
 
-router.get('/line-bookings/:id/:from', getSingleLineBookings)
+router.get('/line-bookings/:id/:from/:to', getSingleLineBookings)
 
 router.post('/delete/:id', deleteLine)
 

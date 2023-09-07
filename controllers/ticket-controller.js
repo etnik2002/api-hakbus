@@ -121,8 +121,8 @@ module.exports = {
 
       getTicketLinesBasedOnDate: async (req, res) => {
         try {
-          const startDate = moment(req.query.startDate).format('DD-MM-YYYY');
-          const endDate = moment(req.query.endDate).format('DD-MM-YYYY');
+          const startDate = req.query.startDate
+          const endDate = req.query.endDate
           const allBookings = await Booking.find({});
           const line_id = new mongoose.Types.ObjectId(req.query.line);
           let ticketQuery = { }
@@ -143,7 +143,7 @@ module.exports = {
             .populate('lineCode')
             .sort({ createdAt: 'desc' });
           console.log(req.query)
-
+          
           const ticketsWithBookings = tickets.map((ticket) => {
             const bookingsForTicket = allBookings.filter(
               (booking) => booking.ticket.toString() === ticket._id.toString()
@@ -186,7 +186,8 @@ module.exports = {
               },
               {
                 'stops.city': { $in: [req.query.from, req.query.to] }
-              }
+              },
+              { isActive: true }
             ]
           }).populate('lineCode');
           
@@ -428,8 +429,9 @@ const generateTicketsForNextTwoYears = async (ticketData, selectedDayOfWeek, sel
   const tickets = [];
 
   for (let i = 0; i < 2*52 ; i++) {
-    const ticketDateString = moment(ticketDate).subtract(1, 'days').format('DD-MM-YYYY');
-    const returnTicketDateString = moment(returnDate).subtract(1, 'days').format('DD-MM-YYYY');
+    const ticketDateString = moment(ticketDate).subtract(1, 'days').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
+    const returnTicketDateString = moment(returnDate).subtract(1, 'days').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
+    console.log({ticketDateString, returnTicketDateString})
 
     const ticketDataWithDate = {
       ...ticketData,
@@ -448,7 +450,6 @@ const generateTicketsForNextTwoYears = async (ticketData, selectedDayOfWeek, sel
     returnDate.setDate(returnDate.getDate() + 7);
   }
 
-  console.log({ tickets });
   return tickets;
 };
 
