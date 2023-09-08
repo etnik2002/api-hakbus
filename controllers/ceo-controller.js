@@ -1,3 +1,4 @@
+const { sendAttachmentToOneForAll } = require("../helpers/mail");
 const Agency = require("../models/Agency");
 const Booking = require("../models/Booking");
 const Ceo = require("../models/Ceo");
@@ -214,6 +215,26 @@ module.exports = {
           console.log(error)
           return res.status(500).json(error);
         }
-      }
+      },
+
+      
+  sendBookingToEmail: async (req, res) => {
+    try {
+        const { receiverEmail, bookingID } = req.body;
+        const attachments = req.files;
+        const booking = await Booking.findById(bookingID);
+
+        console.log({body:req.body})
+        
+
+        await sendAttachmentToOneForAll(receiverEmail, booking.passengers, attachments);
+        return res.status(200).json(`Dokumentet u dërguan te ${receiverEmail} për ${booking.passengers.length} ${booking.passengers.length > 1 ? 'udhëtarë' : 'udhëtar'} !`);
+        
+
+    } catch (error) {
+        console.log(error)
+        res.status(500).json('error -> ' + error)
+    }
+  },
 
 }
