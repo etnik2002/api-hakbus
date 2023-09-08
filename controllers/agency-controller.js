@@ -8,6 +8,25 @@ const Ceo = require("../models/Ceo");
 const { sendAttachmentToAllPassengers, sendAttachmentToOneForAll } = require("../helpers/mail");
 const mongoose = require("mongoose")
 
+
+function calculateAge(birthDate) {
+  const today = new Date();
+  const birthDateArray = birthDate.split("-"); 
+  const birthDateObj = new Date(
+    birthDateArray[2],
+    birthDateArray[1] - 1,
+    birthDateArray[0]
+  );
+ 
+  let age = today.getFullYear() - birthDateObj.getFullYear();
+  const monthDiff = today.getMonth() - birthDateObj.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDateObj.getDate())) {
+    age -= 1;
+  }
+
+  return age;
+}
+
 module.exports = {
 
     createAgency :  async (req,res) => {
@@ -355,20 +374,21 @@ module.exports = {
 
       // const agency = await Agency.findById(req.params.sellerID);
       let totalPrice = 0;
-  
-      // const passengers = req.body.passengers.map((passenger) => {
-      //   const age = calculateAge(passenger.birthDate);
-      //   const passengerPrice = age <= 10 ? ticket.childrenPrice : ticket.price;
-      //   totalPrice +=  type == true ? passengerPrice * 2 : passengerPrice;
-      //   return {
-      //     email: passenger.email,
-      //     phone: passenger.phone,
-      //     fullName: passenger.fullName,
-      //     birthDate: passenger.birthDate,
-      //     age: parseInt(age),
-      //     price: type == true ? passengerPrice * 2 : passengerPrice,
-      //   };
-      // });
+      console.log(req.body)
+      const passengers = req.body.passengers?.map((passenger) => {
+        const age = calculateAge(passenger.birthdate);
+        const passengerPrice = age <= 10 ? ticket.childrenPrice : ticket.price;
+        totalPrice +=  type == true ? passengerPrice * 2 : passengerPrice;
+        return {
+          email: passenger.email,
+          phone: passenger.phone,
+          fullName: passenger.fullName,
+          birthDate: passenger.birthdate,
+          age: calculateAge(passenger.birthdate),
+          price: type == true ? passengerPrice * 2 : passengerPrice,
+        };
+      });
+
       console.log(agency)
       const agencyPercentage = agency.percentage / 100;
       const agencyEarnings = (totalPrice * agencyPercentage);
@@ -388,19 +408,25 @@ module.exports = {
         bookingType = 'oneway'
       }
 
+      // const passengers = [{
+      //   fullName: req.body.fullName,
+      //   email: req.body.email,
+      //   phone: req.body.phone,
+      //   birthDate: req.body.birthdate,
+      //   age: calculateAge(req.body.birthdate),
+      //   price: totalPrice,
+      //   isScanned: false,
+      //   isScannedReturn: false,
+      // }]
 
       const newBooking = await new Booking({
         seller: agency?._id,
         ticket: req.params.ticketID,
-        firstname: req.body.firstname,
         from: req.body.from,
         to: req.body.to,
-        lastname: req.body.lastname,
-        email: req.body.email,
-        phone: req.body.phone,
-        age: req.body.age,
         price: totalPrice,
         type: bookingType, 
+        passengers: passengers,
       })
 
       await newBooking.save().then(async () => {
@@ -471,7 +497,7 @@ module.exports = {
       res.status(200).json(createdBooking);
     } catch (error) {
       console.log(error);
-      return res.status(500).json(error);
+      return res.status(500).json(`error -> ${error}`);
     }
   }
 
