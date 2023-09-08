@@ -27,7 +27,8 @@ const ticketSchema = mongoose.Schema({
   stops: [
     {
       city: { type: String },
-      date:{ type: String },
+      // city: { type: mongoose.Schema.Types.ObjectId, ref: 'City' },
+      time: { type: String },
       price: { type: Number },
     }
   ],

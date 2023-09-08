@@ -34,6 +34,7 @@ module.exports = {
           generatedTickets,
         });
       } catch (error) {
+        console.log(error)
         res.status(500).json({ message: "Internal error -> " + error });
       }
     },
@@ -161,92 +162,85 @@ module.exports = {
         }
       },
       
+      // getSearchedTickets: async (req, res) => {
+      //   try {
+      //     const fromDate = moment();
+      //     console.log({ fromDate });
+      //     let tickets = [];
+      
+      //     tickets = await Ticket.find({
+      //       $or: [
+      //         { from: req.query.from, to: req.query.to },
+      //         { from: req.query.to, to: req.query.from },
+      //       ],
+      //     });
+      
+      //     if (!tickets.length) {
+      //       tickets = await Ticket.find({
+      //         'stops.city.name': { $in: [req.query.from, req.query.to] },
+      //       }).populate('stops.city', 'name'); 
+      //     }
+      
+      //     console.log(tickets);
+          
+      //     // Return the found tickets as a response
+      //     res.status(200).json({ tickets });
+      //   } catch (error) {
+      //     console.error(error);
+      //     res.status(500).json({ error: 'Internal Server Error' });
+      //   }
+      // },
       
 
 
       getSearchedTickets: async (req, res) => {
         try {
+          const from = req.query.from;
+          const to = req.query.to;
           const fromDate = moment();
           console.log({ fromDate });
-          let tickets = [];
-          
-          tickets = await Ticket.find({
-            $or: [
-              { from: req.query.from, to: req.query.to },
-              { from: req.query.to, to: req.query.from },
-            ],
-          });
-          
-          if (!tickets.length) {
-            tickets = await Ticket.find({
-              $or: [
-                { 'stops.city': req.query.from },
-                { 'stops.city': req.query.to },
-              ],
-            });
-          }
-          
-          console.log(tickets);
-          
 
-          // const tickets = await Ticket.find({
-          //   $or: [
-          //     {
-          //       $and: [
-          //         { from: req.query.from },
-          //         { to: req.query.to },
-          //         { date: { $gte: fromDate } }
-          //       ]
-          //     },
-          //     {
-          //       $and: [
-          //         { from: req.query.to },
-          //         { to: req.query.from },
-          //         { date: { $gte: fromDate } }
-          //       ]
-          //     },
-          //     {
-          //       'stops.city': { $in: [req.query.from, req.query.to] }
-          //     },
-          //     { isActive: true }
-          //   ]
-          // }).populate('lineCode');
-          
-          // const pipeline = [
-          //   {
-          //     $match: {
-          //       $or: [
-          //         { from: req.query.from, to: req.query.to },
-          //         { from: req.query.to, to: req.query.from }
-          //       ],
-          //       $and: [
-          //         {date: { $gte: fromDate }}, 
-          //       ]
-          //     }
-          //   },
-          //   {
-          //     $lookup: {
-          //       from: 'lines', 
-          //       localField: 'lineCode',
-          //       foreignField: '_id',
-          //       as: 'lineCode'
-          //     }
-          //   },
-          //   {
-          //     $unwind: '$lineCode' 
-          //   },
-          // ];
 
-          
-          
+          const pipeline = [
+            {
+              $match: {
+                $or: [
+                  { from: from, to: to },
+                  { from: to, to: from },
+                  { 'stops.city': from },
+                  { 'stops.city': to },
+                  { date: { $gte: fromDate, $lte: fromDate }}
+                ],
+              },
+            },
+            {
+              $lookup: {
+                from: 'lines',
+                localField: 'lineCode',
+                foreignField: '_id',
+                as: 'lineCode',
+              },
+            },
+            {
+              $unwind: '$lineCode',
+            },
+         
+          ];
       
-          // const tickets = await Ticket.aggregate(pipeline);
+          const tickets = await Ticket.aggregate(pipeline)
+      
           return res.status(200).json(tickets);
         } catch (error) {
           console.error(error);
-          return res.status(500).json({ error: 'Internal server error' });
+          return res.status(500).json({ error: 'Internal server error' + error });
         }
       },
+      
+      
+      
+      
+      
+      
       
 
       // getSearchedTickets: async (req, res) => {
@@ -452,7 +446,6 @@ const generateTicketsForNextTwoYears = async (ticketData, selectedDayOfWeek, sel
   for (let i = 0; i < 2*52 ; i++) {
     const ticketDateString = moment(ticketDate).subtract(1, 'days').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
     const returnTicketDateString = moment(returnDate).subtract(1, 'days').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
-    console.log({ticketDateString, returnTicketDateString})
 
     const ticketDataWithDate = {
       ...ticketData,
@@ -466,7 +459,7 @@ const generateTicketsForNextTwoYears = async (ticketData, selectedDayOfWeek, sel
 
     await ticket.save();
     tickets.push(ticket);
-
+    console.log(JSON.stringify(tickets, null, 2))
     ticketDate.setDate(ticketDate.getDate() + 7);
     returnDate.setDate(returnDate.getDate() + 7);
   }
@@ -475,3 +468,48 @@ const generateTicketsForNextTwoYears = async (ticketData, selectedDayOfWeek, sel
 };
 
 
+
+
+          // let tickets = [];
+          
+          // tickets = await Ticket.find({
+          //   $or: [
+          //     { from: req.query.from, to: req.query.to },
+          //     { from: req.query.to, to: req.query.from },
+          //   ],
+          // });
+          
+          // if (!tickets.length) {
+          //   tickets = await Ticket.find({
+          //     $or: [
+          //       { 'stops.city': req.query.from },
+          //       { 'stops.city': req.query.to },
+          //     ],
+          //   });
+          // }
+          
+          // console.log(tickets);
+          
+
+          // const tickets = await Ticket.find({
+          //   $or: [
+          //     {
+          //       $and: [
+          //         { from: req.query.from },
+          //         { to: req.query.to },
+          //         { date: { $gte: fromDate } }
+          //       ]
+          //     },
+          //     {
+          //       $and: [
+          //         { from: req.query.to },
+          //         { to: req.query.from },
+          //         { date: { $gte: fromDate } }
+          //       ]
+          //     },
+          //     {
+          //       'stops.city': { $in: [req.query.from, req.query.to] }
+          //     },
+          //     { isActive: true }
+          //   ]
+          // }).populate('lineCode');
