@@ -158,15 +158,39 @@ module.exports = {
         }
       },
 
-      getAllCities : async(req,res)=> {
+      getAllCitiesPagination: async (req, res) => {
         try {
-          const allCities = await City.aggregate([{ $match: {} }]).exec();
-          res.status(200).json(allCities)
+          const page = parseInt(req.query.page) || 0;
+          const size = parseInt(req.query.size) || 10;
+      
+          const pipeline = [
+            { $match: {} }, 
+            { $skip: (page) * size }, 
+            { $limit: size }, 
+          ];
+      
+          const allCities = await City.aggregate(pipeline);
+          res.status(200).json(allCities);
         } catch (error) {
-          console.log(error)
+          console.log(error);
           res.status(500).send({ message: "Some error happened" + error });
         }
       },
+
+      getAllCities: async (req,res) => {
+        try {
+          const pipeline = [
+            { $match: {} }, 
+          ];
+      
+          const allCities = await City.aggregate(pipeline);
+          res.status(200).json(allCities);
+        } catch (error) {
+          console.log(error);
+          res.status(500).send({ message: "Some error happened" + error });
+        }
+      },
+      
 
 
       deleteCity: async (req, res) => {
@@ -227,8 +251,9 @@ module.exports = {
         console.log({body:req.body})
         
 
-        await sendAttachmentToOneForAll(receiverEmail, booking.passengers, attachments);
-        return res.status(200).json(`Dokumentet u dërguan te ${receiverEmail} për ${booking.passengers.length} ${booking.passengers.length > 1 ? 'udhëtarë' : 'udhëtar'} !`);
+        const sentEmails = await sendAttachmentToOneForAll(receiverEmail, booking.passengers, attachments);
+        
+        return res.status(200).json(`Dokumentet u dërguan ne emailin: ${receiverEmail} për ${booking.passengers.length} ${booking.passengers.length > 1 ? 'udhëtarë' : 'udhëtar'} !`);
         
 
     } catch (error) {

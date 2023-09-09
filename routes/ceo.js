@@ -1,6 +1,6 @@
 const router = require("express").Router();
 const { ceoAccessToken } = require("../auth/auth");
-const { createCeo, login, getStats, deactivateAgency ,activateAgency, addCity, getAllCities, deleteCity, getCeoById, confirmDebtPayment, getAllObservers, deleteObs, setNrOfSeatsNotification, sendBookingToEmail} = require("../controllers/ceo-controller");
+const { createCeo, login, getStats, deactivateAgency ,activateAgency, addCity, getAllCities, deleteCity, getCeoById, confirmDebtPayment, getAllObservers, deleteObs, setNrOfSeatsNotification, sendBookingToEmail, getAllCitiesPagination} = require("../controllers/ceo-controller");
 const { attachmentUpload } = require('../helpers/multer/multer');
 
 router.post('/create', createCeo);
@@ -14,6 +14,8 @@ router.get('/observer', getAllObservers);
 router.post('/observer/delete/:id', deleteObs);
 
 router.get('/all-cities', getAllCities);
+
+router.get('/all-cities-pagination', getAllCitiesPagination);
 
 router.get('/stats', getStats);
 

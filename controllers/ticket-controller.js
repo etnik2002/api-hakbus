@@ -74,9 +74,10 @@ module.exports = {
           ])
 
           
-        if(!ticket) {
-              return res.status(404).json({ message: "Ticket not found" });
+          if(ticket.length < 1) {
+              return res.status(404).json("Bileta nuk u gjet. Provoni perseri!");
           }
+
           res.status(200).json(ticket[0]);
       } catch (error) {
         res.status(500).json({ message: "Internal error -> " + error });
