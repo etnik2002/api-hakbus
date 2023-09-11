@@ -6,6 +6,7 @@ const Line = require("../models/Line");
 const TicketService = require("../services/ticketService");
 const mongoose = require("mongoose");
 const Booking = require("../models/Booking");
+const City = require("../models/City");
 
 module.exports = {
 
@@ -199,50 +200,59 @@ module.exports = {
           const from = req.query.from;
           const to = req.query.to;
           const fromDate = moment();
-          console.log({ fromDate });
-
-
-          const pipeline = [
-            {
-              $match: {
-                $or: [
-                  { from: from, to: to },
-                  { from: to, to: from },
+      
+          const cities = await City.find({
+            $or: [
+              { name: from },
+              { name: to },
+            ],
+          });
+      
+      
+          const distinctTicketIds = await Ticket.distinct('_id', {
+            $or: [
+              {
+                $and: [{ from: from, to: to }],
+              },
+              {
+                $and: [{ from: to, to: from }],
+              },
+              {
+                $and: [{ from: req.query.from }, { 'stops.city': to }],
+              },
+              {
+                $and: [{ to: req.query.to }, { 'stops.city': from }],
+              },
+              {
+                $and: [
                   { 'stops.city': from },
                   { 'stops.city': to },
-                  { date: { $gte: fromDate, $lte: fromDate }}
                 ],
               },
-            },
-            {
-              $lookup: {
-                from: 'lines',
-                localField: 'lineCode',
-                foreignField: '_id',
-                as: 'lineCode',
+              {
+                $and: [
+                  { 'stops.city': to },
+                  { 'stops.city': from },
+                ],
               },
-            },
-            {
-              $unwind: '$lineCode',
-            },
-         
-          ];
+              {
+                $and: [{ from: req.query.from, to: req.query.to }],
+              },
+              {
+                $and: [{ from: req.query.to, to: req.query.from }],
+              },
+            ],
+          });
       
-          const tickets = await Ticket.aggregate(pipeline)
-      
-          return res.status(200).json(tickets);
+          const uniqueTickets = await Ticket.find({ _id: { $in: distinctTicketIds } }).populate('lineCode');
+          
+
+          return res.status(200).json(uniqueTickets);
         } catch (error) {
           console.error(error);
           return res.status(500).json({ error: 'Internal server error' + error });
         }
       },
-      
-      
-      
-      
-      
-      
-      
 
       // getSearchedTickets: async (req, res) => {
       //   try {
@@ -444,7 +454,7 @@ const generateTicketsForNextTwoYears = async (ticketData, selectedDayOfWeek, sel
 
   const tickets = [];
 
-  for (let i = 0; i < 2*52 ; i++) {
+  for (let i = 0; i < 2 * 52 ; i++) {
     const ticketDateString = moment(ticketDate).subtract(1, 'days').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
     const returnTicketDateString = moment(returnDate).subtract(1, 'days').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
 
@@ -460,6 +470,7 @@ const generateTicketsForNextTwoYears = async (ticketData, selectedDayOfWeek, sel
 
     await ticket.save();
     tickets.push(ticket);
+
     console.log(JSON.stringify(tickets, null, 2))
     ticketDate.setDate(ticketDate.getDate() + 7);
     returnDate.setDate(returnDate.getDate() + 7);

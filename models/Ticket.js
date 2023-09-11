@@ -12,24 +12,13 @@ const ticketSchema = mongoose.Schema({
   to: {
     type: String,
   },
-  // changes: 
-  //   {
-  //     city: {
-  //       type: String,
-  //     },
-  //     date: {
-  //       type: String,
-  //     },
-  //     time: {
-  //       type: String,
-  //     },
-  //   },
   stops: [
     {
       city: { type: String },
-      // city: { type: mongoose.Schema.Types.ObjectId, ref: 'City' },
       time: { type: String },
+      country: { type: String },
       price: { type: Number },
+      // city: { type: mongoose.Schema.Types.ObjectId, ref: 'City' },
     }
   ],
   date: {

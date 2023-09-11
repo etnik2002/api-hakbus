@@ -5,6 +5,9 @@ const citySchema = mongoose.Schema({
     name: {
         type: String,
     },
+    country: {
+        type :String ,
+    },
 })
 
 

@@ -148,9 +148,11 @@ module.exports = {
             return res.status(400).json('Qyteti egziston');
           }
           const newCity = new City({
-            name:req.body.name,
-
+            name: req.body.name,
+            country: req.body.country
           })
+          
+          // console.log(newCity)
           await newCity.save();
           res.status(200).json('New city created')
         } catch (error) {
