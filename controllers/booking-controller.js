@@ -179,8 +179,8 @@ module.exports = {
 
       if(ticket.numberOfReturnTickets <= ceo[0].nrOfSeatsNotification + 1) {
         seatNotification = {
-          message: `Kanë mbetur vetëm 2 vende të lira për linjën  (${ticket.to} / ${ticket.from}) me datë ${ticket.returnDate}`,
-          title: `2 ulëse të mbetura`,
+          message: `Kanë mbetur vetëm ${ceo[0].nrOfSeatsNotification} vende të lira për linjën  (${ticket.to} / ${ticket.from}) me datë ${moment(ticket.returnDate).format('DD-MM-YYYY')}`,
+          title: `${ceo[0].nrOfSeatsNotification} ulëse të mbetura`,
           ticket_id: ticket._id,
           link: `${process.env.FRONTEND_URL}/ticket/edit/${ticket.id}`,
           confirmed: false,
@@ -188,8 +188,8 @@ module.exports = {
         await Ceo.findByIdAndUpdate(ceo[0]._id, { $push: { notifications: seatNotification } });
       } else if (ticket.numberOfTickets <= ceo[0].nrOfSeatsNotification + 1) {
         seatNotification = {
-          message: `Kanë mbetur vetëm 2 vende të lira për linjën (${ticket.from} / ${ticket.to}) me datë ${ticket.date}`,
-          title: `2 ulëse të mbetura`,
+          message: `Kanë mbetur vetëm ${ceo[0].nrOfSeatsNotification} vende të lira për linjën (${ticket.from} / ${ticket.to}) me datë ${moment(ticket.date).format('DD-MM-YYYY')}`,
+          title: `${ceo[0].nrOfSeatsNotification} ulëse të mbetura`,
           ticket_id: ticket._id,
           link: `${process.env.FRONTEND_URL}/ticket/edit/${ticket.id}`,
           confirmed: false,
