@@ -124,38 +124,41 @@ module.exports = {
 
       getTicketLinesBasedOnDate: async (req, res) => {
         try {
-          const startDate = req.query.startDate
-          const endDate = req.query.endDate
+          const startDate = req.query.startDate;
+          const endDate = req.query.endDate;
           const allBookings = await Booking.find({});
-          const line_id = new mongoose.Types.ObjectId(req.query.line);
-          let ticketQuery = { }
+          const allLineIDS = req.query.line.split('/');
+          console.log({ line: allLineIDS[0] });
+      
+          let ticketsWithBookings = []; 
           
-          if(line_id != "") {
-            ticketQuery = {
-              date: { $gte: startDate, $lte: endDate },
-              lineCode: line_id
+          for (const line of allLineIDS) {
+            if (line !== "") {
+              const line_id = new mongoose.Types.ObjectId(line);
+              console.log(line_id);
+      
+              const ticketQuery = {
+                date: { $gte: startDate, $lte: endDate },
+                lineCode: line_id
+              };
+      
+              const ticketsForLine = await Ticket.find(ticketQuery)
+                .populate('lineCode')
+                .sort({ createdAt: 'desc' });
+      
+              const ticketsForLineWithBookings = ticketsForLine.map((ticket) => {
+                const bookingsForTicket = allBookings.filter(
+                  (booking) => booking.ticket.toString() === ticket._id.toString()
+                );
+                return {
+                  ticket: ticket,
+                  bookings: bookingsForTicket
+                };
+              });
+      
+              ticketsWithBookings.push(...ticketsForLineWithBookings);
             }
           }
-          else {
-            ticketQuery = {
-              date: { $gte: startDate, $lte: endDate }
-            }
-          }
-
-          const tickets = await Ticket.find(ticketQuery)
-            .populate('lineCode')
-            .sort({ createdAt: 'desc' });
-          console.log(req.query)
-          
-          const ticketsWithBookings = tickets.map((ticket) => {
-            const bookingsForTicket = allBookings.filter(
-              (booking) => booking.ticket.toString() === ticket._id.toString()
-            );
-            return {
-              ticket: ticket,
-              bookings: bookingsForTicket
-            };
-          });
       
           res.status(200).json(ticketsWithBookings);
         } catch (error) {
@@ -163,6 +166,8 @@ module.exports = {
           res.status(500).json({ message: "Internal error -> " + error });
         }
       },
+      
+      
       
       // getSearchedTickets: async (req, res) => {
       //   try {
