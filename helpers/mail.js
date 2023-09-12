@@ -15,7 +15,7 @@ async function getTicketsFromDateToDate(from, to) {
     return tickets;
 }
 
-async function sendOrderToUsersEmail ( userEmail, ticket, userID, buyerName, customersName, price, type )  {
+async function sendOrderToUsersEmail ( userEmail, ticket, buyerName, customersName, price, type )  {
     try {
 
     //   const sendToHistory = `${process.env.APIURL}/user/tickets/${userID}`;
