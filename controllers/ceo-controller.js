@@ -259,7 +259,7 @@ module.exports = {
         
 
     } catch (error) {
-        console.log(error)
+        console.log({"Erroriiii: ": error})
         res.status(500).json('error -> ' + error)
     }
   },

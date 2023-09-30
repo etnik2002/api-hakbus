@@ -297,51 +297,56 @@ async function sendOrderToUsersPhone( userPhone, ticket, userID, buyerName, cust
 }
 
 
-async function sendAttachmentToOneForAll ( receiverEmail, passengers, attachments ) {
+const sendAttachmentToOneForAll = async (receiverEmail, passengers, attachments) => {
   try {
-
-    
-    let transporter = nodemailer.createTransport({
-      service: 'gmail',
-      port: 587,
-      auth: {
-        user: 'etnikz2002@gmail.com',
-        pass: 'vysmnurlcmrzcwad',
-      },
-      tls: {
-        rejectUnauthorized: false,
-      },
-    });
-
-    
-    await transporter.sendMail({
-        from: 'etnikz2002@gmail.com',
-        to: receiverEmail,
-        subject: 'HakBus Booking PDF!',
-        html: `
-          <html>
-            <body>
-              <p>Hello ${receiverEmail},</p>
-              <p>This email contains your booking details as an attachment.</p>
-              <p>Please find your booking details in the attached PDF.</p>
-              <p>Thank you for choosing HakBus!</p>
-            </body>
-          </html>
-        `,
-
-
-        attachments: passengers.map((p, index) => ({
-          filename: `hakbus-${p.fullName}-booking.pdf`,
-          content: attachments[index], 
-          contentType: 'application/pdf',
-        }))
-        
+      console.log({ attachments });
+      let transporter = nodemailer.createTransport({
+          service: 'gmail',
+          port: 587,
+          auth: {
+              user: 'etnikz2002@gmail.com',
+              pass: 'vysmnurlcmrzcwad',
+          },
+          tls: {
+              rejectUnauthorized: false,
+          },
       });
-       
-    } catch (error) {
-      console.log(error);
-    }
-}
+
+      await transporter.sendMail({
+          from: 'etnikz2002@gmail.com',
+          to: receiverEmail,
+          subject: 'HakBus Booking PDF!',
+          html: `
+              <html>
+                  <body>
+                      <p>Hello ${receiverEmail},</p>
+                      <p>This email contains your booking details as an attachment.</p>
+                      <p>Please find your booking details in the attached PDF:</p>
+                      ${passengers.map((p, index) => `
+                          <p>
+                              <a href="${attachments[index]?.path}" target="_blank">
+                                  hakbus-${p.fullName}-booking.pdf
+                              </a>
+                          </p>
+                      `).join('')}
+                      <p>Thank you for choosing HakBus!</p>
+                  </body>
+              </html>
+          `,
+        //   attachments: passengers.map((p, index) => ({
+        //     filename: `hakbus-${p.fullName}-booking.pdf`,
+        //     content: attachments[index]?.path, 
+        //     encoding: 'base64', 
+        //     contentType: 'application/pdf',
+        //     disposition: 'inline', 
+        // })),
+      });
+  } catch (error) {
+      console.log({ error });
+  }
+};
+
+
 
 
 module.exports = { getTicketsFromDateToDate, sendOrderToUsersEmail, sendOrderToUsersPhone, sendAttachmentToAllPassengers, sendAttachmentToOneForAll };
