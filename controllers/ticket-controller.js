@@ -200,64 +200,40 @@ module.exports = {
       
 
 
-      getSearchedTickets: async (req, res) => {
+      getSearchedTickets : async (req, res) => {
         try {
           const from = req.query.from;
           const to = req.query.to;
-          const fromDate = moment();
-      
-          const cities = await City.find({
-            $or: [
-              { name: from },
-              { name: to },
-            ],
-          });
-      
-      
+          
+          const currentDateFormatted = moment(new Date()).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
+          
           const distinctTicketIds = await Ticket.distinct('_id', {
             $or: [
               {
-                $and: [{ from: from, to: to }],
-              },
-              {
-                $and: [{ from: to, to: from }],
-              },
-              {
-                $and: [{ from: req.query.from }, { 'stops.city': to }],
-              },
-              {
-                $and: [{ to: req.query.to }, { 'stops.city': from }],
-              },
-              {
-                $and: [
-                  { 'stops.city': from },
-                  { 'stops.city': to },
+                $or: [
+                  { $and: [{ from: from, to: to }] },
+                  { $and: [{ from: to, to: from }] },
+                  { $and: [{ from: req.query.from }, { 'stops.city': to }] },
+                  { $and: [{ to: req.query.to }, { 'stops.city': from }] },
+                  { $and: [{ 'stops.city': from }, { 'stops.city': to }] },
+                  { $and: [{ 'stops.city': to }, { 'stops.city': from }] },
+                  { $and: [{ from: req.query.from, to: req.query.to }] },
+                  { $and: [{ from: req.query.to, to: req.query.from }] },
                 ],
-              },
-              {
-                $and: [
-                  { 'stops.city': to },
-                  { 'stops.city': from },
-                ],
-              },
-              {
-                $and: [{ from: req.query.from, to: req.query.to }],
-              },
-              {
-                $and: [{ from: req.query.to, to: req.query.from }],
               },
             ],
           });
       
-          const uniqueTickets = await Ticket.find({ _id: { $in: distinctTicketIds } }).populate('lineCode');
-          
-
+          const uniqueTickets = await Ticket.find({ _id: { $in: distinctTicketIds }, date: { $gt: currentDateFormatted } }).populate('lineCode');
+          console.log({ currentDate: currentDateFormatted, ticketsdateformat: uniqueTickets[0].date });
+      
           return res.status(200).json(uniqueTickets);
         } catch (error) {
           console.error(error);
           return res.status(500).json({ error: 'Internal server error' + error });
         }
       },
+      
 
       // getSearchedTickets: async (req, res) => {
       //   try {
