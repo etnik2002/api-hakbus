@@ -295,6 +295,60 @@ module.exports = {
 
   },
 
+  getSearchedTickets : async (req, res) => {
+    try {
+      const fromDate =  moment(req.query.fromDate).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
+      const toDate = moment(req.query.toDate).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
+      const from = req.query.from;
+      const to = req.query.to;
+
+      const cities = await City.find({
+        $or: [
+          {
+            name: req.query.from,
+          },
+          {
+            name: req.query.to,
+          }
+        ]
+      })
+
+      
+      const haveCountries = cities[0]?.country == "" && cities[1]?.country == "";
+      
+      if(cities[0]?.country == cities[1]?.country) {
+        return res.status(404).json("No tickets found for your choosen locations!");
+      }
+      const currentDateFormatted = moment(new Date()).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
+      
+      const distinctTicketIds = await Ticket.distinct('_id', {
+        $or: [
+          {
+            $or: [
+              { $and: [{ from: from, to: to }] },
+              { $and: [{ from: to, to: from }] },
+              { $and: [{ from: req.query.from }, { 'stops.city': to }] },
+              { $and: [{ to: req.query.to }, { 'stops.city': from }] },
+              { $and: [{ 'stops.city': from }, { 'stops.city': to }] },
+              { $and: [{ 'stops.city': to }, { 'stops.city': from }] },
+              { $and: [{ from: req.query.from, to: req.query.to }] },
+              { $and: [{ from: req.query.to, to: req.query.from }] },
+            ],
+          },
+        ],
+      });
+      
+      console.log({fromDate, toDate})
+      // const uniqueTickets = await Ticket.find({ _id: { $in: distinctTicketIds }, date: { $gte: fromDate, $lte: toDate } }).populate('lineCode');
+      const uniqueTickets = await Ticket.find({ _id: { $in: distinctTicketIds }, date: { $gte: currentDateFormatted } }).populate('lineCode');
+      
+      return res.status(200).json(uniqueTickets);
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: 'Internal server error' + error });
+    }
+  },
+
   confirmBookingPayment: async (req,res) => {
     try {
         const { id } = req.params;

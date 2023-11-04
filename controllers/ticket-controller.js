@@ -202,9 +202,28 @@ module.exports = {
 
       getSearchedTickets : async (req, res) => {
         try {
+          let page = Number(req.query.page) || 1;
+          let size = Number(req.query.size) || 15; 
+          const skipCount = (page - 1) * size;
+
           const from = req.query.from;
           const to = req.query.to;
+          const cities = await City.find({
+            $or: [
+              {
+                name: req.query.from,
+              },
+              {
+                name: req.query.to,
+              }
+            ]
+          })
+             
+          const haveCountries = cities[0]?.country == "" && cities[1]?.country == "";
           
+          // if(cities[0]?.country == cities[1]?.country) {
+          //   return res.status(404).json("No tickets found for your choosen locations!");
+          // }
           const currentDateFormatted = moment(new Date()).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
           
           const distinctTicketIds = await Ticket.distinct('_id', {
@@ -224,7 +243,8 @@ module.exports = {
             ],
           });
       
-          const uniqueTickets = await Ticket.find({ _id: { $in: distinctTicketIds } }).populate('lineCode');
+          const uniqueTickets = await Ticket.find({ _id: { $in: distinctTicketIds }, date: { $gte: currentDateFormatted } }).populate('lineCode');
+      
           return res.status(200).json(uniqueTickets);
         } catch (error) {
           console.error(error);
@@ -457,50 +477,3 @@ const generateTicketsForNextTwoYears = async (ticketData, selectedDayOfWeek, sel
 
   return tickets;
 };
-
-
-
-
-          // let tickets = [];
-          
-          // tickets = await Ticket.find({
-          //   $or: [
-          //     { from: req.query.from, to: req.query.to },
-          //     { from: req.query.to, to: req.query.from },
-          //   ],
-          // });
-          
-          // if (!tickets.length) {
-          //   tickets = await Ticket.find({
-          //     $or: [
-          //       { 'stops.city': req.query.from },
-          //       { 'stops.city': req.query.to },
-          //     ],
-          //   });
-          // }
-          
-          // console.log(tickets);
-          
-
-          // const tickets = await Ticket.find({
-          //   $or: [
-          //     {
-          //       $and: [
-          //         { from: req.query.from },
-          //         { to: req.query.to },
-          //         { date: { $gte: fromDate } }
-          //       ]
-          //     },
-          //     {
-          //       $and: [
-          //         { from: req.query.to },
-          //         { to: req.query.from },
-          //         { date: { $gte: fromDate } }
-          //       ]
-          //     },
-          //     {
-          //       'stops.city': { $in: [req.query.from, req.query.to] }
-          //     },
-          //     { isActive: true }
-          //   ]
-          // }).populate('lineCode');

@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const { createAgency, loginAsAgency, getAll,payDebt, deleteAgency, editAgency, getAgenciesInDebt, confirmBookingPayment, getSingleAgency, getAgencyTickets, soldTickets, scanBooking, createScanningToken, getToken, deleteToken, sendBookingAttachment, getAgencySales, makeBookingForCustomers } = require("../controllers/agency-controller");
+const { createAgency, loginAsAgency, getAll,payDebt,getSearchedTickets, deleteAgency, editAgency, getAgenciesInDebt, confirmBookingPayment, getSingleAgency, getAgencyTickets, soldTickets, scanBooking, createScanningToken, getToken, deleteToken, sendBookingAttachment, getAgencySales, makeBookingForCustomers } = require("../controllers/agency-controller");
 const { attachmentUpload } = require('../helpers/multer/multer');
 
 router.get('/sales/:id', getAgencySales)
@@ -15,6 +15,8 @@ router.post('/booking/create/:sellerID/:ticketID', makeBookingForCustomers);
 router.post('/payment/confirm/:id', confirmBookingPayment);
 
 router.post('/attachment/send', attachmentUpload.array('attachments'), sendBookingAttachment)
+
+router.get('/ticket', getSearchedTickets)
 
 router.post('/create/token/:bookingID/:ticketID', createScanningToken);
 
