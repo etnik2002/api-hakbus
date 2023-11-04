@@ -18,6 +18,8 @@ const ticketSchema = mongoose.Schema({
       time: { type: String },
       country: { type: String },
       price: { type: Number },
+      lat: { type: Number },
+      lng: { type: Number },
       // city: { type: mongoose.Schema.Types.ObjectId, ref: 'City' },
     }
   ],

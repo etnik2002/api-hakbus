@@ -8,6 +8,12 @@ const citySchema = mongoose.Schema({
     country: {
         type :String ,
     },
+    lat: {
+        type: Number,
+    },
+    lng: {
+        type: Number,
+    },
 })
 
 

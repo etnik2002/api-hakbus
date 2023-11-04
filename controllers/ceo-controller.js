@@ -147,12 +147,32 @@ module.exports = {
           if (city.length>0){
             return res.status(400).json('Qyteti egziston');
           }
+          const googleMapsUrl = req.body.mapUrl;
+
+          const regex = /@(-?\d+\.\d+),(-?\d+\.\d+)/;
+          const match = googleMapsUrl.match(regex);
+
+          var latitude = 0;
+          var longitude = 0;
+          if (match) {
+            latitude = match[1];
+            longitude = match[2];
+
+            console.log("Latitude:", latitude);
+            console.log("Longitude:", longitude);
+          } else {
+            console.log("Coordinates not found in the URL");
+          }
+
+
           const newCity = new City({
             name: req.body.name,
-            country: req.body.country
+            country: req.body.country,
+            lat: latitude,
+            lng: longitude,
           })
           
-          // console.log(newCity)
+          console.log(newCity)
           await newCity.save();
           res.status(200).json('New city created')
         } catch (error) {
