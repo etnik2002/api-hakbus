@@ -224,9 +224,7 @@ module.exports = {
             ],
           });
       
-          const uniqueTickets = await Ticket.find({ _id: { $in: distinctTicketIds }, date: { $gt: currentDateFormatted } }).populate('lineCode');
-          console.log({ currentDate: currentDateFormatted, ticketsdateformat: uniqueTickets[0].date });
-      
+          const uniqueTickets = await Ticket.find({ _id: { $in: distinctTicketIds } }).populate('lineCode');
           return res.status(200).json(uniqueTickets);
         } catch (error) {
           console.error(error);

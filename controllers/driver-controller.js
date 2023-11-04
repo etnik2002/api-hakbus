@@ -245,7 +245,6 @@ module.exports = {
               try {
                 const hasScannedThis = driver.scannedBookings.some((passenger) => passenger._id.equals(new mongoose.Types.ObjectId(passengerID)))
                 if(!hasScannedThis) {
-                  console.log({hasScannedThis})
                   await Driver.findByIdAndUpdate(driverID, { $push: { scannedBookings: booking.passengers[passengerIndex]._id } });
                 }
                 
@@ -263,11 +262,9 @@ module.exports = {
                   return res.status(200).json("Ticket successfully scanned.");
                 }
 
-                console.log({scanneD: booking.passengers[passengerIndex]})
-                return res.status(400).json("Më vjen keq, por sot nuk është dita e lejuar për të bërë hyrjen në autobus.")
               } catch (error) {
-                console.error("Error updating booking:", error);
-                return res.status(500).json("Internal server error.");
+                console.error("Error updating booking: ", error);
+                return res.status(500).json("Internal server error -> " + error);
               }
             }
           } catch (error) {
