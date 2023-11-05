@@ -18,9 +18,6 @@ const ticketSchema = mongoose.Schema({
         {
           city: { type: String },
           country: { type: String },
-          price: { type: Number },
-          childrenPrice: { type: Number },
-          time: { type: String },
           lat: { type: Number },
           lng: { type: Number },
         }
@@ -29,13 +26,13 @@ const ticketSchema = mongoose.Schema({
         {
           city: { type: String },
           country: { type: String },
-          price: { type: Number },
-          childrenPrice: { type: Number },
-          time: { type: String },
           lat: { type: Number },
           lng: { type: Number },
         }
-      ]
+      ],
+      time: { type: String },
+      price: { type: Number },
+      childrenPrice: { type: Number },
     }
   ],
   date: {
