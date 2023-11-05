@@ -456,8 +456,9 @@ const generateTicketsForNextTwoYears = async (ticketData, selectedDayOfWeek) => 
       ticketDate.setDate(ticketDate.getDate() + 7);
   }
 
-  await Ticket.insertMany(tickets);
+  // await Ticket.insertMany(tickets);
 
+  console.log(tickets)
   return tickets;
 };
 
