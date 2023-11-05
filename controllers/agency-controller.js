@@ -41,6 +41,7 @@ module.exports = {
                 phone: req.body.phone,
                 percentage: req.body.percentage,
                 city:req.body.city,
+                country:req.body.country,
                 // idc: req.body.idc,
                 // scc: req.body.scc,
             })

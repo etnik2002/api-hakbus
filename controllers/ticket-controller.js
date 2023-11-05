@@ -19,11 +19,13 @@ module.exports = {
         const ticketData = {
           lineCode: req.body.lineCode,
           time: req.body.time,
-          numberOfTickets: req.body.numberOfTickets,
+          numberOfTickets: 48,
           from: line.from,
           to: line.to,
           stops: req.body.stops,
         };
+
+        console.log(req.body.stops)
 
         const generatedTickets = await generateTicketsForNextTwoYears(ticketData || req.body.ticketData, selectedDayOfTheWeek || req.body.selectedDayOfTheWeek);
     
@@ -217,30 +219,29 @@ module.exports = {
              
           const haveCountries = cities[0]?.country == "" && cities[1]?.country == "";
           
-          // if(cities[0]?.country == cities[1]?.country) {
-          //   return res.status(404).json("No tickets found for your choosen locations!");
-          // }
+          if(cities[0]?.country == cities[1]?.country) {
+            return res.status(404).json("No tickets found for your choosen locations!");
+          }
           const currentDateFormatted = moment(new Date()).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
           
           const distinctTicketIds = await Ticket.distinct('_id', {
             $or: [
               {
-                $or: [
-                  { $and: [{ from: from, to: to }] },
-                  { $and: [{ from: to, to: from }] },
-                  { $and: [{ from: req.query.from }, { 'stops.city': to }] },
-                  { $and: [{ to: req.query.to }, { 'stops.city': from }] },
-                  { $and: [{ 'stops.city': from }, { 'stops.city': to }] },
-                  { $and: [{ 'stops.city': to }, { 'stops.city': from }] },
-                  { $and: [{ from: req.query.from, to: req.query.to }] },
-                  { $and: [{ from: req.query.to, to: req.query.from }] },
-                ],
+                'stops.from.city': req.query.from,
+                'stops.to.city': req.query.to,
+              },
+              {
+                'stops.from.city': req.query.to,
+                'stops.to.city': req.query.from,
               },
             ],
           });
-      
-          const uniqueTickets = await Ticket.find({ _id: { $in: distinctTicketIds }, date: { $gte: currentDateFormatted } }).populate('lineCode');
-      
+          
+          const uniqueTickets = await Ticket.find({
+            _id: { $in: distinctTicketIds },
+            date: { $gte: currentDateFormatted },
+          }).populate('lineCode');
+          
           return res.status(200).json(uniqueTickets);
         } catch (error) {
           console.error(error);
@@ -456,9 +457,8 @@ const generateTicketsForNextTwoYears = async (ticketData, selectedDayOfWeek) => 
       ticketDate.setDate(ticketDate.getDate() + 7);
   }
 
-  // await Ticket.insertMany(tickets);
+  await Ticket.insertMany(tickets);
 
-  console.log(tickets)
   return tickets;
 };
 
