@@ -14,27 +14,24 @@ const ticketSchema = mongoose.Schema({
   },
   stops: [
     {
-      city: { type: String },
-      time: { type: String },
-      country: { type: String },
-      price: { type: Number },
-      lat: { type: Number },
-      lng: { type: Number },
-      // city: { type: mongoose.Schema.Types.ObjectId, ref: 'City' },
+      from: { type: String },
+      to: [
+        {
+          city: { type: String },
+          country: { type: String },
+          price: { type: Number },
+          childrenPrice: { type: Number },
+          time: { type: String },
+          lat: { type: Number },
+          lng: { type: Number },
+        }
+      ],
     }
   ],
   date: {
     type: String,
-    required: true,
-  },
-  returnDate: {
-    type: String,
   },
   time: {
-    type: String,
-    required: true,
-  },
-  returnTime: {
     type: String,
     required: true,
   },
@@ -46,18 +43,6 @@ const ticketSchema = mongoose.Schema({
   numberOfTickets: {
     type: Number,
     default: 48,
-  },
-  numberOfReturnTickets: {
-    type: Number,
-    default: 48,
-  },
-  price: {
-    type: Number,
-    required: true,
-  },
-  childrenPrice: {
-    type: Number,
-    required: true,
   },
   isActive: {
     type: Boolean,

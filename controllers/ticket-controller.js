@@ -19,17 +19,13 @@ module.exports = {
         const ticketData = {
           lineCode: req.body.lineCode,
           time: req.body.time,
-          returnTime: req.body.returnTime,
           numberOfTickets: req.body.numberOfTickets,
-          numberOfReturnTickets: req.body.numberOfReturnTickets,
-          price: req.body.price,
-          childrenPrice: req.body.childrenPrice,
           from: line.from,
           to: line.to,
           stops: req.body.stops,
         };
 
-        const generatedTickets = await generateTicketsForNextTwoYears(ticketData || req.body.ticketData, selectedDayOfTheWeek || req.body.selectedDayOfTheWeek, selectedReturnDayOfWeek || req.body.selectedReturnDayOfWeek);
+        const generatedTickets = await generateTicketsForNextTwoYears(ticketData || req.body.ticketData, selectedDayOfTheWeek || req.body.selectedDayOfTheWeek);
     
         res.status(200).json({
           generatedTickets,
@@ -433,47 +429,35 @@ module.exports = {
 }
 
 
-const generateTicketsForNextTwoYears = async (ticketData, selectedDayOfWeek, selectedReturnDayOfWeek) => {
+const generateTicketsForNextTwoYears = async (ticketData, selectedDayOfWeek) => {
   const adjustDayOfWeek = (startDate, dayOfWeek) => {
-    const adjustedDate = new Date(startDate);
-    adjustedDate.setDate(startDate.getDate() + ((dayOfWeek + 7 - startDate.getDay()) % 7));
-    return adjustedDate;
+      const adjustedDate = new Date(startDate);
+      adjustedDate.setDate(startDate.getDate() + ((dayOfWeek + 7 - startDate.getDay()) % 7));
+      return adjustedDate;
   };
-
-  if (selectedReturnDayOfWeek < selectedDayOfWeek) {
-    selectedReturnDayOfWeek = (selectedReturnDayOfWeek % 7) + 1;
-  }
 
   const startDate = new Date();
   const ticketDate = adjustDayOfWeek(startDate, selectedDayOfWeek);
   startDate.setDate(ticketDate.getDate());
   startDate.setHours(8, 0, 0, 0);
 
-  const returnDate = adjustDayOfWeek(ticketDate, selectedReturnDayOfWeek);
-
   const tickets = [];
 
-  for (let i = 0; i < 2 * 52 ; i++) {
-    const ticketDateString = moment(ticketDate).subtract(1, 'days').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
-    const returnTicketDateString = moment(returnDate).subtract(1, 'days').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
+  for (let i = 0; i < 2 * 52; i++) {
+      const ticketDateString = moment(ticketDate).subtract(1, 'days').toISOString();
 
-    const ticketDataWithDate = {
-      ...ticketData,
-      date: ticketDateString,
-      returnDate: returnTicketDateString,
-    };
+      const ticketDataWithDate = {
+          ...ticketData,
+          date: ticketDateString,
+      };
 
-    const ticket = new Ticket(ticketDataWithDate);
-    ticket.date = ticketDateString;
-    ticket.returnDate = returnTicketDateString;
+      tickets.push(ticketDataWithDate);
 
-    await ticket.save();
-    tickets.push(ticket);
-
-    console.log(JSON.stringify(tickets, null, 2))
-    ticketDate.setDate(ticketDate.getDate() + 7);
-    returnDate.setDate(returnDate.getDate() + 7);
+      ticketDate.setDate(ticketDate.getDate() + 7);
   }
+
+  await Ticket.insertMany(tickets);
 
   return tickets;
 };
+
