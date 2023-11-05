@@ -6,7 +6,8 @@ const bcrypt = require("bcrypt");
 const Token = require("../models/ScannerToken");
 const Ceo = require("../models/Ceo");
 const { sendAttachmentToAllPassengers, sendAttachmentToOneForAll } = require("../helpers/mail");
-const mongoose = require("mongoose")
+const mongoose = require("mongoose");
+const City = require("../models/City");
 
 
 function calculateAge(birthDate) {
@@ -26,6 +27,20 @@ function calculateAge(birthDate) {
 
   return age;
 }
+
+const findPrice = (ticket, from, to) => {
+  const stop = ticket?.stops.find(
+    (s) =>
+      (s.from[0]?.city === from && s.to.some((t) => t.city === to)) ||
+      (s.from[0]?.city === to && s.to.some((t) => t.city === from))
+  );
+
+  if (stop) {
+    return stop.price;
+  } else {
+    return "Price not found";
+  }
+};
 
 module.exports = {
 
@@ -300,8 +315,7 @@ module.exports = {
     try {
       const fromDate =  moment(req.query.fromDate).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
       const toDate = moment(req.query.toDate).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
-      const from = req.query.from;
-      const to = req.query.to;
+      
 
       const cities = await City.find({
         $or: [
@@ -314,34 +328,24 @@ module.exports = {
         ]
       })
 
-      
-      const haveCountries = cities[0]?.country == "" && cities[1]?.country == "";
-      
-      if(cities[0]?.country == cities[1]?.country) {
-        return res.status(404).json("No tickets found for your choosen locations!");
-      }
       const currentDateFormatted = moment(new Date()).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
       
       const distinctTicketIds = await Ticket.distinct('_id', {
         $or: [
           {
-            $or: [
-              { $and: [{ from: from, to: to }] },
-              { $and: [{ from: to, to: from }] },
-              { $and: [{ from: req.query.from }, { 'stops.city': to }] },
-              { $and: [{ to: req.query.to }, { 'stops.city': from }] },
-              { $and: [{ 'stops.city': from }, { 'stops.city': to }] },
-              { $and: [{ 'stops.city': to }, { 'stops.city': from }] },
-              { $and: [{ from: req.query.from, to: req.query.to }] },
-              { $and: [{ from: req.query.to, to: req.query.from }] },
-            ],
+            'stops.from.city': req.query.from,
+            'stops.to.city': req.query.to,
+          },
+          {
+            'stops.from.city': req.query.to,
+            'stops.to.city': req.query.from,
           },
         ],
       });
       
       console.log({fromDate, toDate})
-      // const uniqueTickets = await Ticket.find({ _id: { $in: distinctTicketIds }, date: { $gte: fromDate, $lte: toDate } }).populate('lineCode');
-      const uniqueTickets = await Ticket.find({ _id: { $in: distinctTicketIds }, date: { $gte: currentDateFormatted } }).populate('lineCode');
+      const uniqueTickets = await Ticket.find({ _id: { $in: distinctTicketIds }, date: { $gte: fromDate, $lte: toDate } }).populate('lineCode');
+      // const uniqueTickets = await Ticket.find({ _id: { $in: distinctTicketIds }, date: { $gte: currentDateFormatted } }).populate('lineCode');
       
       return res.status(200).json(uniqueTickets);
     } catch (error) {
@@ -395,118 +399,46 @@ module.exports = {
       const agency = await Agency.findById(req.params.sellerID);
       const ceo = await Ceo.aggregate([{$match: {}}]);
       const type = req.body.type;
-      const onlyReturn = req.body.onlyReturn;
-      const numberOfPsg = 1;
       const ticket = await Ticket.findById(req.params.ticketID);
-
-      if(onlyReturn) {
-        if(ticket.numberOfReturnTickets < numberOfPsg) {
-          res.status(400).json('Number of tickets requested is more than available for this return trip');     
-        }
-      }
-
-      if(numberOfPsg > ticket.numberOfTickets) {
-        res.status(400).json('Number of tickets requested is more than available');
-      }
       
-      if(type){
-        if(numberOfPsg > ticket.numberOfReturnTickets) {
-          res.status(400).json('Number of tickets requested is more than available for both ways');
-        }
-      }
-
-      if(!type) {
-        if(ticket.numberOfTickets < 1){
-          return res.status(400).json("Not seats left");
-        } 
-      }
-
-      if(type) {
-        if(ticket.numberOfTickets < 1 || ticket.numberOfReturnTickets < 1 || (ticket.numberOfTickets < 1 && ticket.numberOfReturnTickets < 1)){
-          return res.status(400).json("Not seats left for both ways");
-        }
-      }
-
+      
       // const agency = await Agency.findById(req.params.sellerID);
-      let totalPrice = 0;
-      console.log(req.body)
+      let totalPrice = req.body.ticketPrice;
       const passengers = req.body.passengers?.map((passenger) => {
         const age = calculateAge(passenger.birthdate);
         const passengerPrice = age <= 10 ? ticket.childrenPrice : ticket.price;
-        totalPrice +=  type == true ? passengerPrice * 2 : passengerPrice;
         return {
           email: passenger.email,
           phone: passenger.phone,
           fullName: passenger.fullName,
           birthDate: passenger.birthdate,
           age: calculateAge(passenger.birthdate),
-          price: type == true ? passengerPrice * 2 : passengerPrice,
+          price: passengerPrice,
         };
       });
 
-      console.log(agency)
       const agencyPercentage = agency.percentage / 100;
       const agencyEarnings = (totalPrice * agencyPercentage);
-      const ourEarnings = totalPrice - agencyEarnings;
-      console.log({totalPrice, agencyPercentage, agencyEarnings, ourEarnings})
-
+      const ourEarnings = req.body.ticketPrice - agencyEarnings;
+      console.log({pruice: req.body.ticketPrice})
       const sendEmailNotification = req.body.sendEmailNotification;
       const sendSmsNotification = req.body.sendSmsNotification;
-
-      let bookingType;
-
-      if(type) {
-        bookingType = 'both'
-      } else if(onlyReturn) {
-        bookingType = 'return'
-      } else {
-        bookingType = 'oneway'
-      }
-
-      // const passengers = [{
-      //   fullName: req.body.fullName,
-      //   email: req.body.email,
-      //   phone: req.body.phone,
-      //   birthDate: req.body.birthdate,
-      //   age: calculateAge(req.body.birthdate),
-      //   price: totalPrice,
-      //   isScanned: false,
-      //   isScannedReturn: false,
-      // }]
 
       const newBooking = await new Booking({
         seller: agency?._id,
         ticket: req.params.ticketID,
         from: req.body.from,
         to: req.body.to,
-        price: totalPrice,
-        type: bookingType, 
+        price: req.body.ticketPrice,
         passengers: passengers,
       })
 
       await newBooking.save().then(async () => {
-        if (type) {
           await Ticket.findByIdAndUpdate(req.params.ticketID, {
-            $inc: { numberOfTickets: -numberOfPsg },
+            $inc: { numberOfTickets: -1 },
           });
   
-          await Ticket.findByIdAndUpdate(req.params.ticketID, {
-            $inc: { numberOfReturnTickets: -numberOfPsg },
-          });
-        } 
-
-        if (onlyReturn) {
-          await Ticket.findByIdAndUpdate(req.params.ticketID, {
-            $inc: { numberOfReturnTickets: -numberOfPsg },
-          });
-        }
-        
-        else {
-          await Ticket.findByIdAndUpdate(req.params.ticketID, {
-            $inc: { numberOfTickets: -numberOfPsg },
-          });
-        }
-  
+          console.log({ourEarnings})
         await Agency.findByIdAndUpdate(req.params.sellerID, {
           $inc: { totalSales: 1, profit: agencyEarnings, debt: ourEarnings },
         });
@@ -551,7 +483,6 @@ module.exports = {
       console.log(createdBooking)
       res.status(200).json(createdBooking);
     } catch (error) {
-      console.log(error);
       return res.status(500).json(`error -> ${error}`);
     }
   }
