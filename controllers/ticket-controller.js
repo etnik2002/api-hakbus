@@ -125,8 +125,8 @@ module.exports = {
           const startDate = req.query.startDate;
           const endDate = req.query.endDate;
           const allBookings = await Booking.find({});
-          const allLineIDS = req.query.line.split('/');
-          console.log({ line: allLineIDS[0] });
+          console.log({ line: req.query.line });
+          const allLineIDS = req.query.line.split('-');
       
           let ticketsWithBookings = []; 
           
