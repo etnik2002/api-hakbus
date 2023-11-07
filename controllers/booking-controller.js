@@ -4,7 +4,7 @@ const Ticket = require("../models/Ticket");
 const moment = require("moment");
 const Agency = require("../models/Agency");
 const Ceo = require("../models/Ceo");
-const { sendOrderToUsersEmail } = require("../helpers/mail");
+const { sendOrderToUsersEmail, sendAttachmentToAllPassengers } = require("../helpers/mail");
 const User = require("../models/User");
 const mongoose = require('mongoose');
 var admin = require("firebase-admin");
@@ -193,9 +193,11 @@ module.exports = {
           console.log(err)
         })
       }
-
+      
+      await sendAttachmentToAllPassengers(req.body.passengers, newBooking._id);
+      
       var seatNotification = {};
-
+      
       if(ticket.numberOfReturnTickets <= ceo[0].nrOfSeatsNotification + 1) {
         seatNotification = {
           message: `Kanë mbetur vetëm ${ceo[0].nrOfSeatsNotification} vende të lira për linjën  (${ticket.to} / ${ticket.from}) me datë ${moment(ticket.returnDate).format('DD-MM-YYYY')}`,
@@ -215,8 +217,8 @@ module.exports = {
         };
         await Ceo.findByIdAndUpdate(ceo[0]._id, { $push: { notifications: seatNotification } });
       }
-
-
+      
+      
       const createdBooking = await Booking.findById(newBooking._id).populate('ticket seller')
       
       // if(user) {
