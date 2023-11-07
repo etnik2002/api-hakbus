@@ -33,6 +33,28 @@ admin.initializeApp({
   }
   
 
+  const findPrice = (ticket, from, to) => {
+    const stop = ticket?.stops.find(
+      (s) =>
+        (s.from[0]?.city === from && s.to.some((t) => t.city === to)) ||
+        (s.from[0]?.city === to && s.to.some((t) => t.city === from))
+    );
+  
+    return stop ? stop.price : null;
+  };
+  
+  const findChildrenPrice = (ticket, from, to) => {
+    const stop = ticket?.stops.find(
+      (s) =>
+        (s.from[0]?.city === from && s.to.some((t) => t.city === to)) ||
+        (s.from[0]?.city === to && s.to.some((t) => t.city === from))
+    );
+  
+    console.log({stop})
+    return stop ? stop.childrenPrice : null;
+  };
+  
+
 module.exports = {
 
   placeBooking : async (req, res) => {
@@ -71,28 +93,25 @@ module.exports = {
           return res.status(400).json("Not seats left for both ways");
         }
       }
-
-      // const agency = await Agency.findById(req.params.sellerID);
+      
+      console.log({passengers: req.body.passengers})
       let totalPrice = 0;
-  
       const passengers = req.body.passengers.map((passenger) => {
         const age = calculateAge(passenger.birthDate);
-        const passengerPrice = age <= 10 ? ticket.childrenPrice : ticket.price;
-        totalPrice +=  type == true ? passengerPrice * 2 : passengerPrice;
+        const passengerPrice = age <= 10 ? findChildrenPrice(ticket, req.body.from, req.body.to) : findPrice(ticket, req.body.from, req.body.to);
+        totalPrice += passengerPrice;
         return {
           email: passenger.email,
           phone: passenger.phone,
           fullName: passenger.fullName,
           birthDate: passenger.birthDate,
           age: parseInt(age),
-          price: type == true ? passengerPrice * 2 : passengerPrice,
+          price: type == true ? passengerPrice * 2 : passengerPrice || 0,
         };
       });
-  
-      // const agencyPercentage = agency.percentage / 100;
-      // const agencyEarnings = (totalPrice * agencyPercentage);
-      // const ourEarnings = totalPrice - agencyEarnings;
-      // console.log({totalPrice, agencyPercentage, agencyEarnings, ourEarnings})
+      
+
+      console.log({totalPrice})
 
       const sendEmailNotification = req.body.sendEmailNotification;
       const sendSmsNotification = req.body.sendSmsNotification;
@@ -224,7 +243,6 @@ module.exports = {
       // });
       // }
 
-      console.log(createdBooking)
       res.status(200).json(createdBooking);
     } catch (error) {
       console.log(error);
@@ -451,69 +469,6 @@ module.exports = {
         }
       },
       
-      payPalOrder: async (req,res) => {
-        app.post("/create-paypal-order", async (req, res) => {
-          const order = await createOrder();
-          res.json(order);
-        });
-        
-        app.post("/capture-paypal-order", async (req, res) => {
-          const { orderID } = req.body;
-          const captureData = await capturePayment(orderID);
-          res.json(captureData);
-        });
-        
-        async function createOrder() {
-          const accessToken = await generateAccessToken();
-          const url = `${baseURL.sandbox}/v2/checkout/orders`;
-          const response = await fetch(url, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${accessToken}`,
-            },
-            body: JSON.stringify({
-              intent: "CAPTURE",
-              purchase_units: [
-                {
-                  amount: {
-                    currency_code: "USD",
-                    value: "100.00",
-                  },
-                },
-              ],
-            }),
-          });
-          const data = await response.json();
-          return data;
-        }
-        
-        async function capturePayment(orderId) {
-          const accessToken = await generateAccessToken();
-          const url = `${baseURL.sandbox}/v2/checkout/orders/${orderId}/capture`;
-          const response = await fetch(url, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${accessToken}`,
-            },
-          });
-          const data = await response.json();
-          return data;
-        }
-        
-        async function generateAccessToken() {
-          const auth = Buffer.from(CLIENT_ID + ":" + APP_SECRET).toString("base64")
-          const response = await fetch(`${baseURL.sandbox}/v1/oauth2/token`, {
-            method: "POST",
-            body: "grant_type=client_credentials",
-            headers: {
-              Authorization: `Basic ${auth}`,
-            },
-          });
-          const data = await response.json();
-          return data.access_token;
-        }
-      },
+
 
 }

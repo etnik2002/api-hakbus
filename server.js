@@ -1,5 +1,6 @@
 const cluster = require("cluster");
 const Ticket = require("./models/Ticket");
+const { default: fetch } = require("node-fetch");
 const numCPUs = require("os").cpus().length;
 
 if (cluster.isMaster) {
@@ -98,6 +99,7 @@ if (cluster.isMaster) {
       res.json({message: "HakBus API"})
   })
 
+
   // setInterval(() => {
   //   app.post('/check-tickets', async(req,res) => {
   //     try {
@@ -137,6 +139,74 @@ if (cluster.isMaster) {
   //     }
   //   })
   // }, 1000 * 60 * 60 * 24 * 30)
+
+    app.post("/create-paypal-order/:price", async (req, res) => {
+      console.log(parseFloat(req.params.price))
+      const order = await createOrder();
+      res.json(order);
+    });
+    
+    app.post("/capture-paypal-order/:user_id/:ticket_id", async (req, res) => {
+      const { orderID } = req.body;
+      console.log(req.params.user_id, req.params.ticket_id)
+      const captureData = await capturePayment(orderID);
+      res.json(captureData);
+    });
+    
+    async function createOrder() {
+      const baseURL = "https://api-m.sandbox.paypal.com";
+      const accessToken = await generateAccessToken();
+      const url = `${baseURL}/v2/checkout/orders`;
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          intent: "CAPTURE",
+          purchase_units: [
+            {
+              amount: {
+                currency_code: "EUR",
+                value: "199.00",
+              },
+            },
+          ],
+        }),
+      });
+      const data = await response.json();
+      return data;
+    }
+    
+    async function capturePayment(orderId) {
+      const baseURL = "https://api-m.sandbox.paypal.com";
+      const accessToken = await generateAccessToken();
+      const url = `${baseURL}/v2/checkout/orders/${orderId}/capture`;
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      const data = await response.json();
+      return data;
+    }
+    
+    async function generateAccessToken() {
+      const baseURL = "https://api-m.sandbox.paypal.com";
+      const auth = Buffer.from(process.env.pci + ":" + process.env.pcs).toString("base64")
+      const response = await fetch(`${baseURL}/v1/oauth2/token`, {
+        method: "POST",
+        body: "grant_type=client_credentials",
+        headers: {
+          Authorization: `Basic ${auth}`,
+        },
+      });
+      const data = await response.json();
+      return data.access_token;
+    }
 
   const PORT = process.env.PORT || 4462;
   app.listen(PORT, () => {
