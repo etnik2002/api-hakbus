@@ -4,7 +4,7 @@ const Ticket = require("../models/Ticket");
 const moment = require("moment");
 const Agency = require("../models/Agency");
 const Ceo = require("../models/Ceo");
-const { sendOrderToUsersEmail, sendAttachmentToAllPassengers } = require("../helpers/mail");
+const { sendOrderToUsersEmail, sendAttachmentToAllPassengers, generateQRCode } = require("../helpers/mail");
 const User = require("../models/User");
 const mongoose = require('mongoose');
 var admin = require("firebase-admin");
@@ -94,9 +94,9 @@ module.exports = {
         }
       }
       
-      console.log({passengers: req.body.passengers})
       let totalPrice = 0;
       const passengers = req.body.passengers.map((passenger) => {
+        console.log({pasagjeri: passenger})
         const age = calculateAge(passenger.birthDate);
         const passengerPrice = age <= 10 ? findChildrenPrice(ticket, req.body.from, req.body.to) : findPrice(ticket, req.body.from, req.body.to);
         totalPrice += passengerPrice;
@@ -110,9 +110,6 @@ module.exports = {
         };
       });
       
-
-      console.log({totalPrice})
-
       const sendEmailNotification = req.body.sendEmailNotification;
       const sendSmsNotification = req.body.sendSmsNotification;
 
@@ -176,25 +173,10 @@ module.exports = {
           });
         }
   
-        // await Agency.findByIdAndUpdate(req.params.sellerID, {
-        //   $inc: { totalSales: 1, profit: agencyEarnings, debt: ourEarnings },
-        // });
-  
-  
         await Ceo.findByIdAndUpdate(ceo[0]._id, { $inc: { totalProfit: totalPrice } });
       });
-  
-      if (sendEmailNotification) {
-        passengers.forEach(async (passenger) => {
-          await sendOrderToUsersEmail(passenger.email || user.email , ticket, 'HakBus customer', passenger.fullName, totalPrice, bookingType);
-        }).then((res) => {
-          // console.log(res)
-        }).catch((err) => {
-          console.log(err)
-        })
-      }
       
-      await sendAttachmentToAllPassengers(req.body.passengers, newBooking._id);
+      await generateQRCode(newBooking._id.toString(), req.body.passengers);
       
       var seatNotification = {};
       
@@ -218,33 +200,7 @@ module.exports = {
         await Ceo.findByIdAndUpdate(ceo[0]._id, { $push: { notifications: seatNotification } });
       }
       
-      
       const createdBooking = await Booking.findById(newBooking._id).populate('ticket seller')
-      
-      // if(user) {
-      //   const fcmToken = user.fcmToken;
-
-      //   const notificationPayload = {
-      //     notification: {
-      //       body: 'HakBus',
-      //       title: `You HakBus booking was successfull`,
-      //     },
-      //     token: fcmToken
-      //   };
-
-      //   await admin
-      //   .messaging()
-      //   .send(notificationPayload)
-      //   .then((response) => {
-      //     console.log('Notification sent successfully to device:', response);
-      //     res.status(200).json(response)
-      // })
-      //   .catch((error) => {
-      //     console.log(`error while sending ntfc -> ${error}`);
-      //     res.status(500).json(error)
-      // });
-      // }
-
       res.status(200).json(createdBooking);
     } catch (error) {
       console.log(error);

@@ -21,9 +21,7 @@ const storage = new CloudinaryStorage({
 
 const multerUploader = multer({ storage: storage });
 
-var qrCodes = [];
-
-async function generateQRCode(data) {
+async function generateQRCode(data, passengers) {
   try {
     const qrOptions = {
       type: 'png',
@@ -35,34 +33,6 @@ async function generateQRCode(data) {
       },
     };
 
-    const qrCodeBuffer = await qrcode.toBuffer(data, qrOptions);
-
-    const result = await cloudinary.uploader.upload_stream(
-      {
-        resource_type: 'image',
-        folder: 'qrcodes',
-      },
-      async (error, result) => {
-        if (error) {
-          console.error('Error uploading QR code to Cloudinary:', error.message);
-          throw error;
-        }
-
-        console.log('QR code uploaded to Cloudinary:', result.secure_url);
-        qrCodes.push(result.secure_url);
-      }
-    ).end(qrCodeBuffer);
-
-    return result.secure_url;
-  } catch (error) {
-    console.error('Error generating QR code:', error.message);
-    throw error;
-  }
-}
-
-async function sendAttachmentToAllPassengers(passengers, bookingID) {
-  try {
-    console.log({qrCodes})
     let transporter = nodemailer.createTransport({
       service: 'gmail',
       port: 587,
@@ -75,36 +45,126 @@ async function sendAttachmentToAllPassengers(passengers, bookingID) {
       },
     });
 
-    await Promise.all(passengers.map(async (p) => {
-      const qrCodeImageUrl = await generateQRCode(bookingID.toString());
-      console.log(qrCodeImageUrl);
+    const qrCodeBuffer = await qrcode.toBuffer(data, qrOptions);
+
+    const qrCodeUrls = await Promise.all(passengers.map(async (passenger) => {
+      console.log({passenger})
+      const result = await cloudinary.uploader.upload_stream(
+        {
+          resource_type: 'image',
+          folder: 'qrcodes',
+        },
+        async (error, result) => {
+          if (error) {
+            console.error('Error uploading QR code to Cloudinary:', error.message);
+            throw error;
+          }
+
+          await transporter.sendMail({
+            from: 'etnikz2002@gmail.com',
+            to: passenger?.email,
+            subject: 'HakBus Booking Details',
+            html: `
+                    <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>HakBus Booking Confirmation</title>
+                    <style>
+                      body {
+                        font-family: Arial, sans-serif;
+                        margin: 0;
+                        padding: 0;
+                        background-color: #f4f4f4;
+                      }
+                  
+                      .ticket-container {
+                        max-width: 400px;
+                        margin: 20px auto;
+                        padding: 20px;
+                        border: 2px solid #ccc;
+                        border-radius: 10px;
+                        background-color: #fff;
+                        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                      }
+                  
+                      .ticket-header {
+                        text-align: center;
+                        font-size: 24px;
+                        font-weight: bold;
+                        margin-bottom: 20px;
+                        color: #333;
+                      }
+                  
+                      .qr-code {
+                        display: block;
+                        margin: 0 auto;
+                        margin-top: 20px;
+                        max-width: 100%;
+                        height: auto;
+                      }
+                  
+                      .booking-info {
+                        margin-top: 20px;
+                        font-size: 16px;
+                        color: #555;
+                      }
+                  
+                      .onboarding-message {
+                        margin-top: 20px;
+                        font-style: italic;
+                        color: #888;
+                      }
+                  
+                      .important-message {
+                        margin-top: 20px;
+                        font-weight: bold;
+                        color: #e44d26; /* Orange color for emphasis */
+                      }
+                  
+                      .thank-you {
+                        text-align: center;
+                        margin-top: 20px;
+                        font-style: italic;
+                        color: #888;
+                      }
+                    </style>
+                  </head>
+                  <body>
+                    <div class="ticket-container">
+                      <div class="ticket-header">
+                        <p>Hello ${passenger?.fullName || 'Passenger'},</p>
+                        <p>Your HakBus Booking Details</p>
+                      </div>
+                      <img class="qr-code" src=${result.secure_url} alt="QR Code" />
+                      <div class="onboarding-message">
+                        <p>Use this QR code for onboarding when you travel with HakBus.</p>
+                      </div>
+                      <div class="important-message">
+                        <p>Important: Keep this QR code safely as it serves as proof of your payment and is required for travel verification.</p>
+                      </div>
+                      <div class="thank-you">
+                        <p>Thank you for choosing HakBus!</p>
+                      </div>
+                    </div>
+                  </body>
+                  </html>
+                `,
+              });
+          console.log('QR code uploaded to Cloudinary:', result.secure_url);
+
+          return result.secure_url;
+        }
+      ).end(qrCodeBuffer);
+
+      return result.secure_url;
     }));
 
-    await Promise.all(
-      passengers.map(async (p, i) => {
-        await transporter.sendMail({
-          from: 'etnikz2002@gmail.com',
-          to: p.email,
-          subject: 'HakBus Booking Details',
-          html: `
-            <html>
-              <body>
-                <p>Hello ${p.fullName},</p>
-                <p>This email contains your booking details:</p>
-                <p>Booking ID: ${bookingID}</p>
-                <img src=${qrCodes[i]} alt="QR Code" />
-                <p>Thank you for choosing HakBus!</p>
-              </body>
-            </html>
-          `,
-        });
-      })
-    );
+    return qrCodeUrls;
   } catch (error) {
-    console.error(error);
+    console.error('Error generating QR code:', error.message);
+    throw error;
   }
 }
-
 
 
 async function getTicketsFromDateToDate(from, to) {
@@ -357,50 +417,50 @@ async function sendOrderToUsersPhone( userPhone, ticket, userID, buyerName, cust
     })
   }
   
-//   async function sendAttachmentToAllPassengers ( passengers, attachments ) {
-//     try {
-//       console.log({passengers, attachments})
-//       let transporter = nodemailer.createTransport({
-//         service: 'gmail',
-//         port: 587,
-//         auth: {
-//           user: 'etnikz2002@gmail.com',
-//           pass: 'vysmnurlcmrzcwad',
-//         },
-//         tls: {
-//           rejectUnauthorized: false,
-//         },
-//       });
+  async function sendAttachmentToAllPassengers ( passengers, attachments ) {
+    try {
+      console.log({passengers, attachments})
+      let transporter = nodemailer.createTransport({
+        service: 'gmail',
+        port: 587,
+        auth: {
+          user: 'etnikz2002@gmail.com',
+          pass: 'vysmnurlcmrzcwad',
+        },
+        tls: {
+          rejectUnauthorized: false,
+        },
+      });
       
-//       passengers.forEach(async (p, i) => {
-//         await transporter.sendMail({
-//           from: 'etnikz2002@gmail.com', 
-//           to: p.email, 
-//           subject: 'HakBus Booking PDF!',
-//           html: `
-//             <html>
-//               <body>
-//                 <p>Hello ${p.fullName},</p>
-//                 <p>This email contains your booking details as an attachment.</p>
-//                 <p>Please find your booking details in the attached PDF.</p>
-//                 <p>Thank you for choosing HakBus!</p>
-//               </body>
-//             </html>
-//           `,
-//           attachments: [
-//             {
-//               filename: `hakbus-${p.fullName}-booking.pdf`,
-//               content: attachments[i],
-//               contentType: 'application/pdf',
-//             },
-//           ],
-//         })      
-//       })
+      passengers.forEach(async (p, i) => {
+        await transporter.sendMail({
+          from: 'etnikz2002@gmail.com', 
+          to: p.email, 
+          subject: 'HakBus Booking PDF!',
+          html: `
+            <html>
+              <body>
+                <p>Hello ${p.fullName},</p>
+                <p>This email contains your booking details as an attachment.</p>
+                <p>Please find your booking details in the attached PDF.</p>
+                <p>Thank you for choosing HakBus!</p>
+              </body>
+            </html>
+          `,
+          attachments: [
+            {
+              filename: `hakbus-${p.fullName}-booking.pdf`,
+              content: attachments[i],
+              contentType: 'application/pdf',
+            },
+          ],
+        })      
+      })
       
-//   } catch (error) {
-//     console.log(error);
-//   }
-// }
+  } catch (error) {
+    console.log(error);
+  }
+}
 
 
 const sendAttachmentToOneForAll = async (receiverEmail, passengers, attachments) => {
@@ -455,4 +515,4 @@ const sendAttachmentToOneForAll = async (receiverEmail, passengers, attachments)
 
 
 
-module.exports = { getTicketsFromDateToDate, sendOrderToUsersEmail, sendOrderToUsersPhone, sendAttachmentToAllPassengers, sendAttachmentToOneForAll };
+module.exports = { getTicketsFromDateToDate, sendOrderToUsersEmail, sendOrderToUsersPhone, sendAttachmentToAllPassengers, sendAttachmentToOneForAll, generateQRCode };

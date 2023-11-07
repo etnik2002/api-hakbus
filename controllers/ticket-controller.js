@@ -240,6 +240,7 @@ module.exports = {
           const uniqueTickets = await Ticket.find({
             _id: { $in: distinctTicketIds },
             date: { $gte: currentDateFormatted },
+            numberOfTickets: { $gt: 0 },
           }).populate('lineCode');
           
           return res.status(200).json(uniqueTickets);
