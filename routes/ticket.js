@@ -2,7 +2,7 @@ const router = require("express").Router();
 const { registerTicket, editTicket, deleteTicket, updateSeats,updateReturnSeats, stopSales, getSingleTicket, getAllTicket, getSearchedTickets, getNearestTicket, getAllTicketPagination, getTicketLinesBasedOnDate, allowSales, getTicketById, getAll} = require("../controllers/ticket-controller");
 const { ceoAccessToken } = require("../auth/auth");
 
-router.get('/lines',ceoAccessToken, getTicketLinesBasedOnDate);
+router.get('/lines', getTicketLinesBasedOnDate);
 
 router.post('/create', registerTicket);
 
@@ -31,3 +31,4 @@ router.post('/edit/:id', editTicket);
 router.post('/delete/:id',deleteTicket);
 
 module.exports = router;
+

@@ -184,7 +184,7 @@ module.exports = {
             const bookingID = req.params.bookingID;
             const passengerID = req.params.passengerID;
             var date = moment().format("DD-MM-YYYY");
-      
+            
             if (!mongoose.Types.ObjectId.isValid(bookingID)) {
               return res.status(404).json("Rezervimi nuk u gjet! Ju lutemi provoni perseri!");
             }

@@ -5,7 +5,7 @@ const Booking = require("../models/Booking");
 const bcrypt = require("bcrypt");
 const Token = require("../models/ScannerToken");
 const Ceo = require("../models/Ceo");
-const { sendAttachmentToAllPassengers, sendAttachmentToOneForAll } = require("../helpers/mail");
+const { sendAttachmentToAllPassengers, sendAttachmentToOneForAll, generateQRCode } = require("../helpers/mail");
 const mongoose = require("mongoose");
 const City = require("../models/City");
 
@@ -344,8 +344,8 @@ module.exports = {
       });
       
       console.log({fromDate, toDate})
-      const uniqueTickets = await Ticket.find({ _id: { $in: distinctTicketIds }, date: { $gte: fromDate, $lte: toDate } }).populate('lineCode');
-      // const uniqueTickets = await Ticket.find({ _id: { $in: distinctTicketIds }, date: { $gte: currentDateFormatted } }).populate('lineCode');
+      // const uniqueTickets = await Ticket.find({ _id: { $in: distinctTicketIds }, date: { $gte: fromDate, $lte: toDate } }).populate('lineCode');
+      const uniqueTickets = await Ticket.find({_id: { $in: distinctTicketIds }, date: { $gte: currentDateFormatted }, numberOfTickets: { $gt: 0 }}).populate('lineCode');
       
       return res.status(200).json(uniqueTickets);
     } catch (error) {
@@ -402,7 +402,6 @@ module.exports = {
       const ticket = await Ticket.findById(req.params.ticketID);
       
       
-      // const agency = await Agency.findById(req.params.sellerID);
       let totalPrice = req.body.ticketPrice;
       const passengers = req.body.passengers?.map((passenger) => {
         const age = calculateAge(passenger.birthdate);
@@ -420,7 +419,6 @@ module.exports = {
       const agencyPercentage = agency.percentage / 100;
       const agencyEarnings = (totalPrice * agencyPercentage);
       const ourEarnings = req.body.ticketPrice - agencyEarnings;
-      console.log({pruice: req.body.ticketPrice})
       const sendEmailNotification = req.body.sendEmailNotification;
       const sendSmsNotification = req.body.sendSmsNotification;
 
@@ -431,6 +429,7 @@ module.exports = {
         to: req.body.to,
         price: req.body.ticketPrice,
         passengers: passengers,
+        isPaid: true
       })
 
       await newBooking.save().then(async () => {
@@ -446,6 +445,9 @@ module.exports = {
         await Ceo.findByIdAndUpdate(ceo[0]._id, { $inc: { totalProfit: ourEarnings } });
       });
   
+      await generateQRCode(newBooking._id.toString(), req.body.passengers);
+
+
       if (sendEmailNotification) {
         passengers.forEach(async (passenger) => {
           await sendOrderToUsersEmail(passenger.email || user.email , ticket, '6499b15485cb1e6f21a34a46', 'HakBus customer', passenger.fullName, totalPrice, bookingType);
