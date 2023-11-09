@@ -344,8 +344,8 @@ module.exports = {
       });
       
       console.log({fromDate, toDate})
-      const uniqueTickets = await Ticket.find({ _id: { $in: distinctTicketIds }, date: { $gte: fromDate, $lte: toDate } }).populate('lineCode');
-      // const uniqueTickets = await Ticket.find({ _id: { $in: distinctTicketIds }, date: { $gte: currentDateFormatted } }).populate('lineCode');
+      // const uniqueTickets = await Ticket.find({ _id: { $in: distinctTicketIds }, date: { $gte: fromDate, $lte: toDate } }).populate('lineCode');
+      const uniqueTickets = await Ticket.find({_id: { $in: distinctTicketIds }, date: { $gte: currentDateFormatted }, numberOfTickets: { $gt: 0 }}).populate('lineCode');
       
       return res.status(200).json(uniqueTickets);
     } catch (error) {
@@ -402,7 +402,6 @@ module.exports = {
       const ticket = await Ticket.findById(req.params.ticketID);
       
       
-      // const agency = await Agency.findById(req.params.sellerID);
       let totalPrice = req.body.ticketPrice;
       const passengers = req.body.passengers?.map((passenger) => {
         const age = calculateAge(passenger.birthdate);
@@ -420,7 +419,6 @@ module.exports = {
       const agencyPercentage = agency.percentage / 100;
       const agencyEarnings = (totalPrice * agencyPercentage);
       const ourEarnings = req.body.ticketPrice - agencyEarnings;
-      console.log({pruice: req.body.ticketPrice})
       const sendEmailNotification = req.body.sendEmailNotification;
       const sendSmsNotification = req.body.sendSmsNotification;
 
@@ -431,6 +429,7 @@ module.exports = {
         to: req.body.to,
         price: req.body.ticketPrice,
         passengers: passengers,
+        isPaid: true
       })
 
       await newBooking.save().then(async () => {

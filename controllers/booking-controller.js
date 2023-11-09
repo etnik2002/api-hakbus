@@ -106,7 +106,7 @@ module.exports = {
           fullName: passenger.fullName,
           birthDate: passenger.birthDate,
           age: parseInt(age),
-          price: type == true ? passengerPrice * 2 : passengerPrice || 0,
+          price: type == true ? passengerPrice * 2 : passengerPrice,
         };
       });
       
@@ -148,6 +148,7 @@ module.exports = {
         price: totalPrice,
         passengers: passengers,
         type: bookingType, 
+        isPaid: true
       });
   
       await newBooking.save().then(async () => {
@@ -179,27 +180,17 @@ module.exports = {
       await generateQRCode(newBooking._id.toString(), req.body.passengers);
       
       var seatNotification = {};
-      
-      if(ticket.numberOfReturnTickets <= ceo[0].nrOfSeatsNotification + 1) {
-        seatNotification = {
-          message: `Kanë mbetur vetëm ${ceo[0].nrOfSeatsNotification} vende të lira për linjën  (${ticket.to} / ${ticket.from}) me datë ${moment(ticket.returnDate).format('DD-MM-YYYY')}`,
-          title: `${ceo[0].nrOfSeatsNotification} ulëse të mbetura`,
-          ticket_id: ticket._id,
-          link: `${process.env.FRONTEND_URL}/ticket/edit/${ticket.id}`,
-          confirmed: false,
-        };
-        await Ceo.findByIdAndUpdate(ceo[0]._id, { $push: { notifications: seatNotification } });
-      } else if (ticket.numberOfTickets <= ceo[0].nrOfSeatsNotification + 1) {
+      if (ticket.numberOfTickets <= ceo[0].nrOfSeatsNotification + 1) {
         seatNotification = {
           message: `Kanë mbetur vetëm ${ceo[0].nrOfSeatsNotification} vende të lira për linjën (${ticket.from} / ${ticket.to}) me datë ${moment(ticket.date).format('DD-MM-YYYY')}`,
           title: `${ceo[0].nrOfSeatsNotification} ulëse të mbetura`,
           ticket_id: ticket._id,
-          link: `${process.env.FRONTEND_URL}/ticket/edit/${ticket.id}`,
+          link: `${process.env.FRONTEND_URL}/ticket/edit/${ticket._id}`,
           confirmed: false,
         };
         await Ceo.findByIdAndUpdate(ceo[0]._id, { $push: { notifications: seatNotification } });
       }
-      
+       
       const createdBooking = await Booking.findById(newBooking._id).populate('ticket seller')
       res.status(200).json(createdBooking);
     } catch (error) {

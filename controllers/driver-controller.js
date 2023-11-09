@@ -225,7 +225,7 @@ module.exports = {
               }
             }
 
-            if(booking.ticket.returnDate == date && booking.passengers[passengerIndex].isScannedReturn){
+            if(booking?.ticket?.returnDate == date && booking.passengers[passengerIndex].isScannedReturn){
               return res.status(410).json("Bileta është skenuar më parë.");
             }
 
@@ -254,7 +254,7 @@ module.exports = {
                   return res.status(200).json("Ticket successfully scanned.");
                 }
                 
-                if(booking.ticket.returnDate == date) {
+                if(booking?.ticket?.returnDate == date) {
                   console.log({msg: "return scanning"})
                   booking.passengers[passengerIndex].isScannedReturn = true;
                   await booking.save();
