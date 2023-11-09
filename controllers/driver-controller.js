@@ -184,7 +184,7 @@ module.exports = {
             const bookingID = req.params.bookingID;
             const passengerID = req.params.passengerID;
             var date = moment().format("DD-MM-YYYY");
-      
+            
             if (!mongoose.Types.ObjectId.isValid(bookingID)) {
               return res.status(404).json("Rezervimi nuk u gjet! Ju lutemi provoni perseri!");
             }
@@ -219,7 +219,7 @@ module.exports = {
               return res.status(404).json("Passenger not found.");
             }
 
-            if(booking.ticket.date == date) {
+            if(moment(booking.ticket.date).format("DD-MM-YYYY") == date) {
               if(booking.passengers[passengerIndex].isScanned) {   
                 return res.status(410).json("Bileta është skenuar më parë.");
               }
@@ -247,20 +247,13 @@ module.exports = {
                   await Driver.findByIdAndUpdate(driverID, { $push: { scannedBookings: booking.passengers[passengerIndex]._id } });
                 }
                 
-                if(booking.ticket.date == date) {
+                if(moment(booking.ticket.date).format("DD-MM-YYYY") == date) {
                   console.log({date})
                   booking.passengers[passengerIndex].isScanned = true;                  
                   await booking.save();
                   return res.status(200).json("Ticket successfully scanned.");
                 }
                 
-                if(booking?.ticket?.returnDate == date) {
-                  console.log({msg: "return scanning"})
-                  booking.passengers[passengerIndex].isScannedReturn = true;
-                  await booking.save();
-                  return res.status(200).json("Ticket successfully scanned.");
-                }
-
               } catch (error) {
                 console.error("Error updating booking: ", error);
                 return res.status(500).json("Internal server error -> " + error);
