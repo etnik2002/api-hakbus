@@ -96,7 +96,6 @@ module.exports = {
       
       let totalPrice = 0;
       const passengers = req.body.passengers.map((passenger) => {
-        console.log({pasagjeri: passenger})
         const age = calculateAge(passenger.birthDate);
         const passengerPrice = age <= 10 ? findChildrenPrice(ticket, req.body.from, req.body.to) : findPrice(ticket, req.body.from, req.body.to);
         totalPrice += passengerPrice;

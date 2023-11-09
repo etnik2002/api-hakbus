@@ -78,9 +78,6 @@ module.exports = {
             if (!agency) {
                 return res.status(401).json({ message: "Invalid Email " });
             }
-            if(!agency.isActive) {
-                return res.status(403).json('Your account is deactivated, please contact us')
-            }
                 
             const validPassword = await bcrypt.compare(
                 req.body.password,

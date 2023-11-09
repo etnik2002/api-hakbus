@@ -214,16 +214,13 @@ module.exports = {
             if (passengerIndex === -1) {
               return res.status(404).json("Passenger not found.");
             }
-            console.log({passengerIndex, bdate: moment(booking.ticket.date).format("DD-MM-YYYY"), date})
 
             const isScanned = booking.passengers[passengerIndex].isScanned;
-            console.log({psg: booking.passengers[passengerIndex]})
             if(isScanned) {   
               return res.status(410).json("Bileta është skenuar më parë.");
             }
 
             let isLineMatched = driver.lines.some(line => line._id.equals(booking.ticket.lineCode._id));
-            console.log({isLineMatched})
             if (!isLineMatched) {
               return res.status(400).json(
                 `Linja e biletës (${booking.ticket.lineCode.code}) nuk përputhet me linjën e shoferit. Ju lutemi verifikoni nëse keni hypur në autobusin e duhur.`,
@@ -234,11 +231,7 @@ module.exports = {
                 if(!hasScannedThis) {
                   await Driver.findByIdAndUpdate(driverID, { $push: { scannedBookings: booking.passengers[passengerIndex]._id } });
                 }
-                  console.log({hasScannedThis})
-                  console.log("HEREEEE")
-                  console.log({date})
                   booking.passengers[passengerIndex].isScanned = true;      
-                  console.log({now: booking.passengers[passengerIndex].isScanned})            
                   await booking.save();
                   return res.status(200).json("Ticket successfully scanned.");
               } catch (error) {
