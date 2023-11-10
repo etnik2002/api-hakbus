@@ -7,6 +7,7 @@ const TicketService = require("../services/ticketService");
 const mongoose = require("mongoose");
 const Booking = require("../models/Booking");
 const City = require("../models/City");
+const cron = require("cron");
 
 module.exports = {
 
@@ -165,39 +166,6 @@ module.exports = {
           res.status(500).json({ message: "Internal error -> " + error });
         }
       },
-      
-      
-      
-      // getSearchedTickets: async (req, res) => {
-      //   try {
-      //     const fromDate = moment();
-      //     console.log({ fromDate });
-      //     let tickets = [];
-      
-      //     tickets = await Ticket.find({
-      //       $or: [
-      //         { from: req.query.from, to: req.query.to },
-      //         { from: req.query.to, to: req.query.from },
-      //       ],
-      //     });
-      
-      //     if (!tickets.length) {
-      //       tickets = await Ticket.find({
-      //         'stops.city.name': { $in: [req.query.from, req.query.to] },
-      //       }).populate('stops.city', 'name'); 
-      //     }
-      
-      //     console.log(tickets);
-          
-      //     // Return the found tickets as a response
-      //     res.status(200).json({ tickets });
-      //   } catch (error) {
-      //     console.error(error);
-      //     res.status(500).json({ error: 'Internal Server Error' });
-      //   }
-      // },
-      
-
 
       getSearchedTickets : async (req, res) => {
         try {
@@ -386,6 +354,7 @@ const generateTicketsForNextTwoYears = async (ticketData, selectedDayOfWeek) => 
       ticketDate.setDate(ticketDate.getDate() + 7);
   }
 
+  // console.log(tickets.map((ticket) => ticket.date))
   await Ticket.insertMany(tickets);
 
   return tickets;

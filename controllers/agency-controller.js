@@ -325,8 +325,6 @@ module.exports = {
         ]
       })
 
-      const currentDateFormatted = moment(new Date()).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
-      
       const distinctTicketIds = await Ticket.distinct('_id', {
         $or: [
           {
@@ -340,9 +338,7 @@ module.exports = {
         ],
       });
       
-      console.log({fromDate, toDate})
-      // const uniqueTickets = await Ticket.find({ _id: { $in: distinctTicketIds }, date: { $gte: fromDate, $lte: toDate } }).populate('lineCode');
-      const uniqueTickets = await Ticket.find({_id: { $in: distinctTicketIds }, date: { $gte: currentDateFormatted }, numberOfTickets: { $gt: 0 }}).populate('lineCode');
+      const uniqueTickets = await Ticket.find({_id: { $in: distinctTicketIds }, date: { $gte: fromDate, $lte: toDate }, numberOfTickets: { $gt: 0 }}).populate('lineCode');
       
       return res.status(200).json(uniqueTickets);
     } catch (error) {

@@ -79,64 +79,86 @@ module.exports = {
 
     getDriverById: async (req, res) => {
       try {
-        const driver = await Driver.aggregate([
-          {
-            $match: {
-              _id: new mongoose.Types.ObjectId(req.params.id),
-            },
-          },
-          {
-            $lookup: {
-              from: 'bookings',
-              localField: 'scannedBookings',
-              foreignField: '_id',
-              as: 'scannedBookings',
-            },
-          },
-          {
-            $unwind: {
-              path: '$scannedBookings',
-              preserveNullAndEmptyArrays: true,
-            },
-          },
-          {
-            $lookup: {
-              from: 'tickets',
-              localField: 'scannedBookings.ticket',
-              foreignField: '_id',
-              as: 'scannedBookings.ticket',
-            },
-          },
-          {
-            $unwind: {
-              path: '$scannedBookings.ticket',
-              preserveNullAndEmptyArrays: true,
-            },
-          },
-          {
-            $lookup: {
-              from: 'lines',
-              localField: 'scannedBookings.ticket.lineCode',
-              foreignField: '_id',
-              as: 'scannedBookings.ticket.lineCode',
-            },
-          },
-          {
-            $unwind: {
-              path: '$scannedBookings.ticket.lineCode',
-              preserveNullAndEmptyArrays: true,
-            },
-          },
-          {
-            $group: {
-              _id: '$_id',
-              scannedBookings: { $push: '$scannedBookings' },
-              lines: { $first: '$lines' },
-            },
-          },
-        ]).exec();
+        // const driver = await Driver.aggregate([
+        //   {
+        //     $match: {
+        //       _id: new mongoose.Types.ObjectId(req.params.id),
+        //     },
+        //   },
+        //   {
+        //     $lookup: {
+        //       from: 'bookings',
+        //       localField: 'scannedBookings',
+        //       foreignField: '_id',
+        //       as: 'scannedBookings',
+        //     },
+        //   },
+        //   {
+        //     $unwind: {
+        //       path: '$scannedBookings',
+        //       preserveNullAndEmptyArrays: true,
+        //     },
+        //   },
+        //   {
+        //     $lookup: {
+        //       from: 'tickets',
+        //       localField: 'scannedBookings.ticket',
+        //       foreignField: '_id',
+        //       as: 'scannedBookings.ticket',
+        //     },
+        //   },
+        //   {
+        //     $unwind: {
+        //       path: '$scannedBookings.ticket',
+        //       preserveNullAndEmptyArrays: true,
+        //     },
+        //   },
+        //   {
+        //     $lookup: {
+        //       from: 'lines',
+        //       localField: 'scannedBookings.ticket.lineCode',
+        //       foreignField: '_id',
+        //       as: 'scannedBookings.ticket.lineCode',
+        //     },
+        //   },
+        //   {
+        //     $unwind: {
+        //       path: '$scannedBookings.ticket.lineCode',
+        //       preserveNullAndEmptyArrays: true,
+        //     },
+        //   },
+        //   {
+        //     $group: {
+        //       _id: '$_id',
+        //       scannedBookings: { $push: '$scannedBookings' },
+        //       lines: { $first: '$lines' },
+        //     },
+        //   },
+        // ]).exec();
+        const driver = await Driver.findById(req.params.id);
+        const bookings = [];
+        
+        await Promise.all(driver.scannedBookings.map(async (bookingId) => {
+          const b = await Booking.findOne({ 'passengers._id': bookingId }).populate('ticket seller');
+          if (b) {
+            bookings.push(b);
+          }
+        }));
+        
+        const scanned = bookings.filter((booking) => {
+          return booking.passengers.some((passenger) => {
+            console.log(passenger._id);
+            return driver.scannedBookings.includes(passenger._id.toString());
+          });
+        });
+        
+        console.log({ scanned });
+        
+        
+        console.log({ scanned });
+        
 
-        res.status(200).json(driver[0]); 
+        res.status(200).json(bookings); 
       } catch (error) {
         console.log(error)
         res.status(500).json(error);
