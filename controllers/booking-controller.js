@@ -54,6 +54,20 @@ admin.initializeApp({
     return stop ? stop.childrenPrice : null;
   };
   
+  const findTime = (ticket, from, to) => {
+    const stop = ticket?.stops.find(
+      (s) =>
+        (s.from[0]?.city === from && s.to.some((t) => t.city === to)) ||
+        (s.from[0]?.city === to && s.to.some((t) => t.city === from))
+    );
+  
+    if (stop) {
+      console.log({time: stop.time, stop})
+      return stop.time;
+    } else {
+      return "Price not found";
+    }
+  };
 
 module.exports = {
 
@@ -63,7 +77,6 @@ module.exports = {
       const type = req.body.type;
       const onlyReturn = req.body.onlyReturn;
       const numberOfPsg = req.body.passengers.length || 1;
-      const user = req.params.buyerID != null ? await User.findById(req.query.buyerID) : null;
       const ticket = await Ticket.findById(req.params.ticketID);
 
       if(onlyReturn) {
@@ -176,7 +189,10 @@ module.exports = {
         await Ceo.findByIdAndUpdate(ceo[0]._id, { $inc: { totalProfit: totalPrice } });
       });
       
-      await generateQRCode(newBooking._id.toString(), req.body.passengers);
+      const destination = { from: req.body.from, to: req.body.to };
+      const dateTime = { date: ticket.date, time: findTime(ticket, req.body.from, req.body.to) };
+
+      await generateQRCode(newBooking._id.toString(), req.body.passengers, destination, dateTime);
       
       var seatNotification = {};
       if (ticket.numberOfTickets <= ceo[0].nrOfSeatsNotification + 1) {

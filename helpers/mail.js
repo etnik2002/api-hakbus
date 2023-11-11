@@ -5,6 +5,7 @@ const fs = require('fs').promises;
 const multer = require('multer');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const cloudinary = require('cloudinary').v2;
+const moment = require("moment");
 
 cloudinary.config({
   cloud_name: process.env.cloud_name,
@@ -65,89 +66,98 @@ async function generateQRCode(data, passengers, destination, dateTime) {
             to: passenger?.email,
             subject: 'HakBus Booking Details',
             html: `
+                  <html lang="en">
                     <head>
-                    <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>HakBus Booking Confirmation</title>
-                    <style>
-                      body {
-                        font-family: Arial, sans-serif;
-                        margin: 0;
-                        padding: 0;
-                        background-color: #f4f4f4;
-                      }
-                  
-                      .ticket-container {
-                        max-width: 400px;
-                        margin: 20px auto;
-                        padding: 20px;
-                        border: 2px solid #ccc;
-                        border-radius: 10px;
-                        background-color: #fff;
-                        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-                      }
-                  
-                      .ticket-header {
-                        text-align: center;
-                        font-size: 24px;
-                        font-weight: bold;
-                        margin-bottom: 20px;
-                        color: #333;
-                      }
-                  
-                      .qr-code {
-                        display: block;
-                        margin: 0 auto;
-                        margin-top: 20px;
-                        max-width: 100%;
-                        height: auto;
-                      }
-                  
-                      .booking-info {
-                        margin-top: 20px;
-                        font-size: 16px;
-                        color: #555;
-                      }
-                  
-                      .onboarding-message {
-                        margin-top: 20px;
-                        font-style: italic;
-                        color: #888;
-                      }
-                  
-                      .important-message {
-                        margin-top: 20px;
-                        font-weight: bold;
-                        color: #e44d26; /* Orange color for emphasis */
-                      }
-                  
-                      .thank-you {
-                        text-align: center;
-                        margin-top: 20px;
-                        font-style: italic;
-                        color: #888;
-                      }
-                    </style>
-                  </head>
-                  <body>
-                    <div class="ticket-container">
-                      <div class="ticket-header">
-                        <p>Hello ${passenger?.fullName || 'Passenger'},</p>
-                        <p>Your HakBus Booking Details</p>
-                      </div>
-                      <img class="qr-code" src=${result.secure_url} alt="QR Code" />
-                      <div class="onboarding-message">
-                        <p>Use this QR code for onboarding when you travel with HakBus.</p>
-                      </div>
-                      <div class="important-message">
-                        <p>Important: Keep this QR code safely as it serves as proof of your payment and is required for travel verification.</p>
-                      </div>
-                      <div class="thank-you">
-                        <p>Thank you for choosing HakBus!</p>
-                      </div>
-                    </div>
-                  </body>
-                  </html>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <title>HakBus Booking Confirmation</title>
+                        <style>
+                            body {
+                                font-family: 'Arial', sans-serif;
+                                margin: 0;
+                                padding: 0;
+                                background-color: #f4f4f4;
+                            }
+
+                            .ticket-container {
+                                max-width: 600px;
+                                margin: 20px auto;
+                                padding: 30px;
+                                border: 2px solid #3498db;
+                                border-radius: 15px;
+                                background-color: #ffffff;
+                                box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+                            }
+
+                            .ticket-header {
+                                text-align: center;
+                                font-size: 28px;
+                                font-weight: bold;
+                                color: #333;
+                                margin-bottom: 30px;
+                            }
+
+                            .booking-details {
+                                font-size: 18px;
+                                color: #555;
+                                margin-bottom: 20px;
+                            }
+
+                            .qr-code {
+                                display: block;
+                                margin: 0 auto;
+                                margin-top: 20px;
+                                max-width: 100%;
+                                height: auto;
+                            }
+
+                            .onboarding-message {
+                                margin-top: 30px;
+                                font-style: italic;
+                                color: #888;
+                                text-align: center;
+                            }
+
+                            .important-message {
+                                margin-top: 30px;
+                                font-weight: bold;
+                                color: #e44d26;
+                                text-align: center;
+                            }
+
+                            .thank-you {
+                                text-align: center;
+                                margin-top: 30px;
+                                font-style: italic;
+                                color: #333;
+                            }
+                        </style>
+                    </head>
+
+                    <body>
+                        <div class="ticket-container">
+                            <div class="ticket-header">
+                                <p>Hello ${passenger?.fullName || 'Passenger'},</p>
+                                <p>Your HakBus Booking Details</p>
+                            </div>
+                            <div class="booking-details">
+                                <p><strong>Destination:</strong> ${destination.from} -> ${destination.to}</p>
+                                <p><strong>Date:</strong> ${moment(dateTime.date).format("DD-MM-YYYY")}, <strong>Time:</strong> ${dateTime.time}</p>
+                            </div>
+                            <img class="qr-code" src=${result.secure_url} alt="QR Code" />
+                            <div class="onboarding-message">
+                                <p>Use this QR code for onboarding when you travel with HakBus.</p>
+                            </div>
+                            <div class="important-message">
+                                <p>Important: Keep this QR code safely as it serves as proof of your payment and is required for travel verification.</p>
+                            </div>
+                            <div class="thank-you">
+                                <p>Thank you for choosing HakBus!</p>
+                            </div>
+                        </div>
+                    </body>
+
+                    </html>
                 `,
               });
           console.log('QR code uploaded to Cloudinary:', result.secure_url);
