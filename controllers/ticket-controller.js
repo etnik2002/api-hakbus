@@ -199,10 +199,10 @@ module.exports = {
                 'stops.from.city': req.query.from,
                 'stops.to.city': req.query.to,
               },
-              {
-                'stops.from.city': req.query.to,
-                'stops.to.city': req.query.from,
-              },
+              // {
+              //   'stops.from.city': req.query.to,
+              //   'stops.to.city': req.query.from,
+              // },
             ],
           });
           
