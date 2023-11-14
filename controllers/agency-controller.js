@@ -28,6 +28,7 @@ function calculateAge(birthDate) {
   return age;
 }
 
+
 const findPrice = (ticket, from, to) => {
   const stop = ticket?.stops.find(
     (s) =>
@@ -35,12 +36,19 @@ const findPrice = (ticket, from, to) => {
       (s.from[0]?.city === to && s.to.some((t) => t.city === from))
   );
 
-  if (stop) {
-    return stop.price;
-  } else {
-    return "Price not found";
-  }
+  return stop ? stop.price : null;
 };
+
+const findChildrenPrice = (ticket, from, to) => {
+  const stop = ticket?.stops.find(
+    (s) =>
+      (s.from[0]?.city === from && s.to.some((t) => t.city === to)) ||
+      (s.from[0]?.city === to && s.to.some((t) => t.city === from))
+  );
+
+  return stop ? stop.childrenPrice : null;
+};
+
 
 module.exports = {
 
@@ -398,7 +406,8 @@ module.exports = {
       let totalPrice = req.body.ticketPrice;
       const passengers = req.body.passengers?.map((passenger) => {
         const age = calculateAge(passenger.birthdate);
-        const passengerPrice = age <= 10 ? ticket.childrenPrice : ticket.price;
+        const passengerPrice = age <= 10 ? findChildrenPrice(ticket, req.body.from, req.body.to) : findPrice(ticket, req.body.from, req.body.to);
+        console.log({passenger, passengerPrice})
         return {
           email: passenger.email,
           phone: passenger.phone,
@@ -408,7 +417,7 @@ module.exports = {
           price: passengerPrice,
         };
       });
-
+      
       const agencyPercentage = agency.percentage / 100;
       const agencyEarnings = (totalPrice * agencyPercentage);
       const ourEarnings = req.body.ticketPrice - agencyEarnings;

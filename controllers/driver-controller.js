@@ -55,8 +55,8 @@ module.exports = {
 
     login: async (req, res) => {
       try {
-  
-        const driver = await Driver.findOne({ email: req.body.email });
+        const email = req.body.email.toLocaleLowerCase();
+        const driver = await Driver.findOne({ email: email });
         if (!driver) {
           return res.status(401).json({ message: "Invalid Email " });
         }

@@ -50,9 +50,9 @@ admin.initializeApp({
         (s.from[0]?.city === to && s.to.some((t) => t.city === from))
     );
   
-    console.log({stop})
     return stop ? stop.childrenPrice : null;
   };
+  
   
   const findTime = (ticket, from, to) => {
     const stop = ticket?.stops.find(

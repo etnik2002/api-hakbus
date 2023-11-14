@@ -201,7 +201,7 @@ module.exports = {
               },
             ],
           });
-          
+          console.log({currentDateFormatted})
           const uniqueTickets = await Ticket.find({
             _id: { $in: distinctTicketIds },
             date: { $gte: currentDateFormatted },
@@ -212,7 +212,6 @@ module.exports = {
           .populate('lineCode');
           
           if(uniqueTickets.length == 0) {
-            console.log({uniqueTickets})
             return res.status(204).json("No tickets found")
           }
 
