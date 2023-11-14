@@ -199,10 +199,6 @@ module.exports = {
                 'stops.from.city': req.query.from,
                 'stops.to.city': req.query.to,
               },
-              // {
-              //   'stops.from.city': req.query.to,
-              //   'stops.to.city': req.query.from,
-              // },
             ],
           });
           
@@ -215,6 +211,11 @@ module.exports = {
           .limit(size)
           .populate('lineCode');
           
+          if(uniqueTickets.length == 0) {
+            console.log({uniqueTickets})
+            return res.status(204).json("No tickets found")
+          }
+
           return res.status(200).json(uniqueTickets);
         } catch (error) {
           console.error(error);
