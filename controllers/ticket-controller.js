@@ -13,10 +13,9 @@ module.exports = {
 
     registerTicket: async (req, res) => {
       try {
-        const selectedDayOfTheWeek = Number(req.body.dayOfWeek);
-        const selectedReturnDayOfWeek = Number(req.body.returnDayOfWeek);
+        const selectedDayOfTheWeek = req.body.dayOfWeek;
         const line = await Line.findById(req.body.lineCode);
-
+        console.log({selectedDayOfTheWeek})
         const ticketData = {
           lineCode: req.body.lineCode,
           time: req.body.time,
@@ -26,7 +25,9 @@ module.exports = {
           stops: req.body.stops,
         };
 
-        console.log({body: JSON.stringify(req.body, null, 2)})
+
+        console.log({body: req.body})
+        console.log({stops: JSON.stringify(req.body.stops, null, 2)})
 
         const generatedTickets = await generateTicketsForNextTwoYears(ticketData || req.body.ticketData, selectedDayOfTheWeek || req.body.selectedDayOfTheWeek);
     
@@ -340,8 +341,7 @@ const generateTicketsForNextTwoYears = async (ticketData, selectedDayOfWeeks) =>
   for (let i = 0; i < 2 * 52; i++) {
     for (const selectedDayOfWeek of selectedDayOfWeeks) {
       const ticketDate = adjustDayOfWeek(startDate, selectedDayOfWeek);
-      startDate.setDate(ticketDate.getDate());
-      startDate.setHours(8, 0, 0, 0);
+      startDate.setDate(startDate.getDate() + 6);
 
       const ticketDateString = moment(ticketDate).subtract(1, 'days').toISOString();
 
@@ -365,15 +365,14 @@ const generateTicketsForNextTwoYears = async (ticketData, selectedDayOfWeeks) =>
 
       tickets.push(ticketDataWithDates);
     }
-
-    startDate.setDate(startDate.getDate() + 7);
   }
 
-  // console.log({ stops: JSON.stringify(tickets, null, 2) });
-  // await Ticket.insertMany(tickets);
+  console.log({ tickets: JSON.stringify(tickets) });
+  await Ticket.insertMany(tickets);
 
   return tickets;
 };
+
 
 
 

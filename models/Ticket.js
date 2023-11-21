@@ -33,7 +33,7 @@ const ticketSchema = mongoose.Schema({
       time: { type: String },
       price: { type: Number },
       childrenPrice: { type: Number },
-      date: { type: String },
+      dates: [],
     },
   ],
   date: {
