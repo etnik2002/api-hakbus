@@ -26,7 +26,7 @@ module.exports = {
           stops: req.body.stops,
         };
 
-        console.log(req.body.stops)
+        console.log({body: JSON.stringify(req.body, null, 2)})
 
         const generatedTickets = await generateTicketsForNextTwoYears(ticketData || req.body.ticketData, selectedDayOfTheWeek || req.body.selectedDayOfTheWeek);
     
@@ -327,36 +327,53 @@ module.exports = {
 }
 
 
-const generateTicketsForNextTwoYears = async (ticketData, selectedDayOfWeek) => {
+const generateTicketsForNextTwoYears = async (ticketData, selectedDayOfWeeks) => {
   const adjustDayOfWeek = (startDate, dayOfWeek) => {
-      const adjustedDate = new Date(startDate);
-      adjustedDate.setDate(startDate.getDate() + ((dayOfWeek + 7 - startDate.getDay()) % 7));
-      return adjustedDate;
+    const adjustedDate = new Date(startDate);
+    adjustedDate.setDate(startDate.getDate() + ((dayOfWeek + 7 - startDate.getDay()) % 7));
+    return adjustedDate;
   };
 
   const startDate = new Date();
-  const ticketDate = adjustDayOfWeek(startDate, selectedDayOfWeek);
-  startDate.setDate(ticketDate.getDate());
-  startDate.setHours(8, 0, 0, 0);
-
   const tickets = [];
 
   for (let i = 0; i < 2 * 52; i++) {
+    for (const selectedDayOfWeek of selectedDayOfWeeks) {
+      const ticketDate = adjustDayOfWeek(startDate, selectedDayOfWeek);
+      startDate.setDate(ticketDate.getDate());
+      startDate.setHours(8, 0, 0, 0);
+
       const ticketDateString = moment(ticketDate).subtract(1, 'days').toISOString();
 
-      const ticketDataWithDate = {
-          ...ticketData,
-          date: ticketDateString,
+      const stopsWithDates = ticketData.stops.map((stop) => {
+        const stopDates = stop.dayOfWeek.map((dayOfWeek) => {
+          const stopDate = adjustDayOfWeek(new Date(ticketDate), dayOfWeek);
+          return moment(stopDate).subtract(1, 'days').toISOString();
+        });
+
+        return {
+          ...stop,
+          dates: stopDates,
+        };
+      });
+
+      const ticketDataWithDates = {
+        ...ticketData,
+        date: ticketDateString,
+        stops: stopsWithDates,
       };
 
-      tickets.push(ticketDataWithDate);
+      tickets.push(ticketDataWithDates);
+    }
 
-      ticketDate.setDate(ticketDate.getDate() + 7);
+    startDate.setDate(startDate.getDate() + 7);
   }
 
-  // console.log(tickets.map((ticket) => ticket.date))
-  await Ticket.insertMany(tickets);
+  // console.log({ stops: JSON.stringify(tickets, null, 2) });
+  // await Ticket.insertMany(tickets);
 
   return tickets;
 };
+
+
 
