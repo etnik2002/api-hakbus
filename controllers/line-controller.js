@@ -260,5 +260,15 @@ module.exports = {
         }
       },
 
+      editLine: async (req,res) => {
+        try {
+            const editPayload = req.body;
+            await Line.findByIdAndUpdate(req.params.id, editPayload);
+            return res.status(200).json("edited");
+        } catch (error) {
+            res.status(500).json(error);
+        }
+      },
+
 
 }

@@ -187,8 +187,8 @@ module.exports = {
       
           const pipeline = [
             { $match: {} }, 
-            { $skip: (page) * size }, 
-            { $limit: size }, 
+            // { $skip: (page) * size }, 
+            // { $limit: size }, 
           ];
       
           const allCities = await City.aggregate(pipeline);
