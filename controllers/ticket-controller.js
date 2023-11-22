@@ -15,7 +15,6 @@ module.exports = {
       try {
         const selectedDayOfTheWeek = req.body.dayOfWeek;
         const line = await Line.findById(req.body.lineCode);
-        console.log({selectedDayOfTheWeek})
         const ticketData = {
           lineCode: req.body.lineCode,
           time: req.body.time,
@@ -26,8 +25,8 @@ module.exports = {
         };
 
 
-        console.log({body: req.body})
-        console.log({stops: JSON.stringify(req.body.stops, null, 2)})
+        console.log({body: JSON.stringify(req.body, null, 2)})
+        // console.log({stops: JSON.stringify(req.body.stops, null, 2)})
 
         const generatedTickets = await generateTicketsForNextTwoYears(ticketData || req.body.ticketData, selectedDayOfTheWeek || req.body.selectedDayOfTheWeek);
     
@@ -186,7 +185,7 @@ module.exports = {
               }
             ]
           })
-             
+             console.log({from, to})
           const haveCountries = cities[0]?.country == "" && cities[1]?.country == "";
           
           if(cities[0]?.country == cities[1]?.country) {
@@ -202,15 +201,64 @@ module.exports = {
               },
             ],
           });
-          console.log({currentDateFormatted})
-          const uniqueTickets = await Ticket.find({
-            _id: { $in: distinctTicketIds },
-            date: { $gte: currentDateFormatted },
-            numberOfTickets: { $gt: 0 },
-          })
-          .skip(skipCount)
-          .limit(size)
-          .populate('lineCode');
+      
+          const uniqueTickets = await Ticket.aggregate([
+            {
+              $match: {
+                _id: { $in: distinctTicketIds },
+                date: { $gte: currentDateFormatted },
+                numberOfTickets: { $gt: 0 },
+              },
+            },
+            {
+              $unwind: '$stops',
+            },
+            {
+              $unwind: '$stops.dates',
+            },
+            {
+              $unwind: '$stops.times',
+            },
+            {
+              $match: {
+                'stops.from.city': req.query.from,
+                'stops.to.city': req.query.to,
+              },
+            },
+            {
+              $group: {
+                _id: '$_id',
+                lineCode: { $first: '$lineCode' },
+                from: { $first: '$from' },
+                to: { $first: '$to' },
+                stops: { $push: '$stops' },
+                date: { $first: '$date' },
+                times: { $first: '$times' },
+                type: { $first: '$type' },
+                numberOfTickets: { $first: '$numberOfTickets' },
+                isActive: { $first: '$isActive' },
+                createdAt: { $first: '$createdAt' },
+                updatedAt: { $first: '$updatedAt' },
+              },
+            },
+            {
+              $sort: { date: 1 },
+            },
+            {
+              $skip: skipCount,
+            },
+            {
+              $limit: size,
+            },
+              {
+                $lookup: {
+                  from: 'Line', 
+                  localField: 'lineCode',
+                  foreignField: '_id',
+                  as: 'lineCode',
+                },
+              },
+          ])
           
           if(uniqueTickets.length == 0) {
             return res.status(204).json("No tickets found")
@@ -367,7 +415,7 @@ const generateTicketsForNextTwoYears = async (ticketData, selectedDayOfWeeks) =>
     }
   }
 
-  console.log({ tickets: JSON.stringify(tickets) });
+  // console.log({ tickets: JSON.stringify(tickets) });
   await Ticket.insertMany(tickets);
 
   return tickets;

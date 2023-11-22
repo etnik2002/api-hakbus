@@ -160,8 +160,7 @@ module.exports = {
         try {
           const all = await Booking.find({}).populate('buyer seller ticket');
           console.log(all)
-          console.log(req.params)
-          const filtered = all.filter((b) => b.ticket.lineCode == req.params.id && (moment(b.ticket.date).format('DD-MM-YYYY') == req.params.from || moment(b.ticket.returnDate).format('DD-MM-YYYY') == req.params.from));
+          const filtered = all.filter((b) => b?.ticket?.lineCode == req.params.id && (moment(b.ticket.date).format('DD-MM-YYYY') == req.params.from || moment(b.ticket.returnDate).format('DD-MM-YYYY') == req.params.from));
 
           // const filtered = all.filter((b) => b.ticket.lineCode == req.params.id && (moment(b.ticket.date).format('DD-MM-YYYY') == (moment(req.params.from).format('DD-MM-YYYY')) || moment(b.ticket.returnDate).format('DD-MM-YYYY') <= (moment(req.params.from).format('DD-MM-YYYY'))));
 
