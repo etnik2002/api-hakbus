@@ -489,6 +489,31 @@ module.exports = {
     } catch (error) {
       return res.status(500).json(`error -> ${error}`);
     }
+  },
+
+  applyForCollaboration: async (req,res) =>{
+    try {
+      console.log(req.body)
+      // const hashedPassword = await bcrypt.hashSync(req.body.password, 10);
+
+      const newAgency = new Agency({
+          name: req.body.name,
+          email: req.body.email,
+          company_id: req.body.company_id,
+          address: req.body.address,
+          vat: req.body.vat,
+          isApplicant: true,
+          isActive: false,
+      })
+
+      await newAgency.save();
+
+      res.status(200).json(newAgency);
+
+  } catch (error) {
+      console.error(error);
+      res.status(500).json(error)
   }
+  },
 
 }

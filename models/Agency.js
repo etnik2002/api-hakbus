@@ -13,7 +13,6 @@ const agencySchema = mongoose.Schema({
     },
     password: {
         type: String,
-        required: true
     },  
     city: {
         type: String,
@@ -26,7 +25,6 @@ const agencySchema = mongoose.Schema({
     },
     percentage: {
         type: Number,
-        required: true
     },
     totalSales: {
         type: Number,
@@ -41,6 +39,19 @@ const agencySchema = mongoose.Schema({
     debt: {
         type: Number,
     },
+    isApplicant: {
+        type: Boolean
+    },
+    vat: {
+        type: String,
+    },
+    address: {
+        type: String,
+    },
+    company_id: {
+        type: String,
+    },
+    
     // idc: {
     //     type: String,
     // },
