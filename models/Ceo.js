@@ -7,7 +7,6 @@ const ceoSchema = mongoose.Schema({
     },
     email: {
         type: String,
-        required: true,
         unique: true
     },
     password: {
@@ -53,6 +52,7 @@ const ceoSchema = mongoose.Schema({
         enum : ['admin','superAdmin', 'observer', 'ceo'],
         default: 'admin',
     },
+    access: [String],
     nrOfSeatsNotification: {
         type: Number,
     },

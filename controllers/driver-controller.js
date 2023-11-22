@@ -136,29 +136,29 @@ module.exports = {
         //   },
         // ]).exec();
         const driver = await Driver.findById(req.params.id);
-        const bookings = [];
+        // const bookings = [];
         
-        await Promise.all(driver.scannedBookings.map(async (bookingId) => {
-          const b = await Booking.findOne({ 'passengers._id': bookingId }).populate('ticket seller');
-          if (b) {
-            bookings.push(b);
-          }
-        }));
+        // await Promise.all(driver.scannedBookings.map(async (bookingId) => {
+        //   const b = await Booking.findOne({ 'passengers._id': bookingId }).populate('ticket seller');
+        //   if (b) {
+        //     bookings.push(b);
+        //   }
+        // }));
         
-        const scanned = bookings.filter((booking) => {
-          return booking.passengers.some((passenger) => {
-            console.log(passenger._id);
-            return driver.scannedBookings.includes(passenger._id.toString());
-          });
-        });
+        // const scanned = bookings.filter((booking) => {
+        //   return booking.passengers.some((passenger) => {
+        //     console.log(passenger._id);
+        //     return driver.scannedBookings.includes(passenger._id.toString());
+        //   });
+        // });
         
-        console.log({ scanned });
+        // console.log({ scanned });
         
         
-        console.log({ scanned });
+        // console.log({ scanned });
         
 
-        res.status(200).json(bookings); 
+        res.status(200).json(driver); 
       } catch (error) {
         console.log(error)
         res.status(500).json(error);

@@ -16,6 +16,7 @@ module.exports = {
                 email: req.body.email,
                 password: hashedPassword,
                 role: req.body.role ? req.body.role : 'ceo',  
+                access: req.body.access
             })
 
             await newCeo.save();
@@ -28,6 +29,35 @@ module.exports = {
         }
     },
 
+    getObserverById: async (req,res) => {
+      try {
+        const observer = await Ceo.findById(req.params.id);
+        return res.status(200).json(observer);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json(error)
+      }
+    },
+
+    editObserver: async (req,res) => {
+      try {
+        console.log({body:req.body})
+        const hashedPassword = await bcrypt.hashSync(req.body.password, 10);
+        const observer = await Ceo.findById(req.params.id);
+        const editPayload = {
+          name: req.body.name || observer.name,
+          email: req.body.email ||observer.email,
+          password:hashedPassword || observer.password,
+          access:req.body.access || observer.access
+        }
+        
+        const updated = await Ceo.findByIdAndUpdate(observer._id, editPayload);
+        return res.status(200).json(updated);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json(error)
+      }
+    },
 
     login: async (req, res) => {
         try {
