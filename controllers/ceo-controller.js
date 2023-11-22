@@ -134,7 +134,7 @@ module.exports = {
 
       activateAgency : async(req,res) => {
           try {
-            await Agency.findByIdAndUpdate(req.params.id,{$set:{isActive:true}})
+            await Agency.findByIdAndUpdate(req.params.id,{$set:{isActive:true, isApplicant: false}})
             res.status(200).json({message: "Succesfully activated"})
           } catch (error) {
             res.status(500).send({ message: "Some error happened" + error });
