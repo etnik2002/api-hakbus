@@ -173,6 +173,8 @@ module.exports = {
           let size = Number(15);
           const skipCount = (page - 1) * size;
       
+          console.log({page, size, skipCount})
+
           const from = req.query.from;
           const to = req.query.to;
           const cities = await City.find({
@@ -209,7 +211,7 @@ module.exports = {
               $group: {
                 _id: '$_id',
                 lineCode: { $first: '$lineCode' },
-                from: { $first: '$stops.from' },  // Corrected this line
+                from: { $first: '$stops.from' }, 
                 to: { $last: '$stops.to' },
                 dates: { $first: '$stops.dates' },
                 times: { $first: '$stops.times' },
@@ -238,7 +240,6 @@ module.exports = {
             },
           ]);
       
-          console.log('Distinct Stops:', JSON.stringify(distinctStops, null, 2));
       
           if (distinctStops.length == 0) {
             return res.status(204).json('No stops found');
@@ -266,7 +267,7 @@ module.exports = {
         }
       },
       
-      
+ 
 
 
       getNearestTicket: async (req, res) => {
