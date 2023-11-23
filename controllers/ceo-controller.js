@@ -1,3 +1,4 @@
+require("dotenv").config()
 const { sendAttachmentToOneForAll } = require("../helpers/mail");
 const Agency = require("../models/Agency");
 const Booking = require("../models/Booking");
@@ -5,11 +6,14 @@ const Ceo = require("../models/Ceo");
 const City = require("../models/City");
 const Ticket = require("../models/Ticket");
 const bcrypt = require('bcrypt')
+const jwt = require("jsonwebtoken")
 
 module.exports = {
     createCeo :  async (req,res) => {
         try {
-            const hashedPassword = await bcrypt.hashSync(req.body.password, 10);
+          console.log(req.body);
+          const salt = bcrypt.genSaltSync(10);
+          const hashedPassword = bcrypt.hashSync(req.body.password, salt);        
 
             const newCeo = new Ceo({
                 name: req.body.name,
@@ -282,11 +286,66 @@ module.exports = {
           }
       },
 
+      changeEmail: async (req,res) => {
+        try {
+          console.log(req.params);
+          const ceo = await Ceo.findById(req.params.id);
+          ceo.email = req.body.email;
+          await ceo.save();
+          ceo.password = undefined;
+          const ceoPayload = {
+            ...ceo,
+            password: undefined,
+          }
+          console.log(ceoPayload);
+
+          const token = jwt.sign(ceoPayload, process.env.OUR_SECRET);
+          return res.status(200).json(token);
+        } catch (error) {
+          console.log(error);
+          return res.status(500).json(error);
+        }
+      },
+
+      changePassword: async (req,res) => {
+        try {
+          const ceo = await Ceo.findById(req.params.id);
+          const { oldPassword, newPassword } = req.body;
+          const passwordMatches = await bcrypt.compare(oldPassword, ceo.password);
+          console.log(passwordMatches);
+          if(!passwordMatches) return res.status(401).json("wrong old password");
+          const salt = await bcrypt.genSaltSync(10);
+          const hashedPassword = await bcrypt.hashSync(newPassword, salt);
+          console.log(hashedPassword);
+          ceo.email = req.body.email;
+          ceo.password = hashedPassword;
+          await ceo.save();
+          const ceoPayload = {
+            ...ceo,
+            password: undefined,
+          }
+
+          const token = jwt.sign(ceoPayload, process.env.OUR_SECRET);
+          return res.status(200).json(token);
+        } catch (error) {
+          console.log(error);
+          return res.status(500).json(error);
+        }
+      },
+
       setNrOfSeatsNotification: async (req,res) => {
         try {
-          const ceo = await Ceo.find({});
-          await Ceo.findByIdAndUpdate(ceo[0]._id, { $set: { nrOfSeatsNotification: req.body.number } });
-          return res.status(200).json("U ruajt me sukses");
+          const ceo = await Ceo.find({}).limit(1);
+          ceo[0].nrOfSeatsNotification = req.body.number;
+          await ceo[0].save();
+          ceo[0].password = undefined;
+          const ceoPayload = {
+            ...ceo[0],
+            password: undefined,
+          }
+          console.log(ceoPayload);
+          const token = jwt.sign(ceoPayload, process.env.OUR_SECRET);
+          return res.status(200).json(token);
         } catch (error) {
           console.log(error)
           return res.status(500).json(error);

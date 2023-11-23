@@ -1,11 +1,12 @@
 const router = require("express").Router();
 const { ceoAccessToken } = require("../auth/auth");
-const { createCeo, login, getStats, deactivateAgency ,activateAgency,editObserver,getObserverById, addCity, getAllCities, deleteCity, getCeoById, confirmDebtPayment, getAllObservers, deleteObs, setNrOfSeatsNotification, sendBookingToEmail, getAllCitiesPagination} = require("../controllers/ceo-controller");
+const { createCeo, login, getStats, deactivateAgency ,activateAgency,editObserver,getObserverById, addCity, getAllCities, deleteCity, getCeoById, confirmDebtPayment, getAllObservers, deleteObs, setNrOfSeatsNotification, sendBookingToEmail, getAllCitiesPagination, changePassword, changeEmail} = require("../controllers/ceo-controller");
 const { attachmentUpload } = require('../helpers/multer/multer');
 
-router.post('/create', createCeo);
 
 router.post('/attachment/send', attachmentUpload.array('attachments'), sendBookingToEmail)
+
+router.post('/create', createCeo);
 
 router.post('/login', login);
 
@@ -34,6 +35,10 @@ router.post ('/add-city', addCity);
 router.post('/confirm-debt/:id/:notificationId', confirmDebtPayment);
 
 router.post('/seat-notificaiton', setNrOfSeatsNotification)
+
+router.post('/change-password/:id', changePassword)
+
+router.post('/change-email/:id', changeEmail)
 
 router.post('/city/delete/:id', deleteCity);
 
