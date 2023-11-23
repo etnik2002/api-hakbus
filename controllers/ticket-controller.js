@@ -388,7 +388,7 @@ const generateTicketsForNextTwoYears = async (ticketData, selectedDayOfWeeks) =>
   for (let i = 0; i < 2 * 52; i++) {
     for (const selectedDayOfWeek of selectedDayOfWeeks) {
       const ticketDate = adjustDayOfWeek(startDate, selectedDayOfWeek);
-      startDate.setDate(ticketDate.getDate() + 7);
+      startDate.setDate(ticketDate.getDate() + 6);
 
       const ticketDateString = ticketDate.toISOString();
 
