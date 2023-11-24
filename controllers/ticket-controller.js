@@ -129,43 +129,86 @@ module.exports = {
           console.log({ line: req.query.line });
           const allLineIDS = req.query.line.split('-');
       
-          let ticketsWithBookings = []; 
-          
+          let ticketsWithStops = [];
+      
           for (const line of allLineIDS) {
             if (line !== "") {
               const line_id = new mongoose.Types.ObjectId(line);
               console.log(line_id);
       
               const ticketQuery = {
-                date: { $gte: startDate, $lte: endDate },
-                lineCode: line_id
+                'stops.dates': { $gte: startDate, $lte: endDate },
+                lineCode: line_id,
               };
       
               const ticketsForLine = await Ticket.find(ticketQuery)
                 .populate('lineCode')
                 .sort({ date: 'asc' });
       
-              const ticketsForLineWithBookings = ticketsForLine.map((ticket) => {
-                const bookingsForTicket = allBookings.filter(
-                  (booking) => booking.ticket.toString() === ticket._id.toString()
-                );
-                return {
-                  ticket: ticket,
-                  bookings: bookingsForTicket
-                };
-              });
+              const ticketsForLineWithStops = await Promise.all(ticketsForLine.map(async (ticket) => {
+                const stopsForTicket = await Promise.all(ticket.stops.map(async (stop) => {
+                  const fromCity = ticket.from;
+                  const toCity = ticket.to;
+                  const times = stop.times;
+                  const dates = stop.dates;
       
-              ticketsWithBookings.push(...ticketsForLineWithBookings);
+                  // Create a separate ticket for each date and time
+                  const ticketsForDateAndTime = await Promise.all(dates.map(async (date) => {
+                    const bookingsForTicket = allBookings.filter((booking) =>
+                      booking.ticket.toString() === ticket._id.toString() &&
+                      booking.from === fromCity && booking.to === toCity &&
+                      booking.date === date && times.includes(booking.time)
+                    );
+      
+                    const passengersForBookings = bookingsForTicket.map((booking) => booking.passengers.length);
+      
+                    return {
+                      ticket: {
+                        ...ticket.toObject(),
+                        date: date,
+                        time: times,
+                      },
+                      stop: {
+                        from: fromCity,
+                        to: toCity,
+                        time: times,
+                        date: date,
+                        price: stop.price,
+                        lineCode: ticket?.lineCode?.code,
+                      },
+                      numberOfBookings: bookingsForTicket.length,
+                      totalPassengers: passengersForBookings.reduce((acc, curr) => acc + curr, 0),
+                    };
+                  }));
+      
+                  // Flatten the array of arrays into a single array
+                  return [].concat(...ticketsForDateAndTime);
+                }));
+      
+                // Flatten the array of arrays into a single array
+                return [].concat(...stopsForTicket);
+              }));
+      
+              ticketsWithStops.push(...ticketsForLineWithStops);
             }
           }
       
-          ticketsWithBookings.sort((a, b) => new Date(a.ticket.date) - new Date(b.ticket.date));
-          res.status(200).json(ticketsWithBookings);
+          // Flatten the array of arrays into a single array
+          ticketsWithStops = [].concat(...ticketsWithStops);
+      
+          // Sort the tickets by stops.date
+          // ticketsWithStops.sort((a, b) => new Date(a.stop.date) - new Date(b.stop.date) || a.ticket.time.localeCompare(b.ticket.time));
+      
+          res.status(200).json(ticketsWithStops);
         } catch (error) {
           console.error(error);
           res.status(500).json({ message: "Internal error -> " + error });
         }
       },
+      
+      
+      
+      
 
       getSearchedTickets: async (req, res) => {
         try {
@@ -378,7 +421,7 @@ module.exports = {
 const generateTicketsForNextTwoYears = async (ticketData, selectedDayOfWeeks) => {
   const adjustDayOfWeek = (startDate, dayOfWeek) => {
     const adjustedDate = new Date(startDate);
-    adjustedDate.setDate(startDate.getDate() + ((dayOfWeek + 7 - startDate.getDay()) % 7));
+    adjustedDate.setDate(startDate.getDate() + ((dayOfWeek + 6 - startDate.getDay()) % 7));
     return adjustedDate;
   };
 
@@ -386,32 +429,30 @@ const generateTicketsForNextTwoYears = async (ticketData, selectedDayOfWeeks) =>
   const tickets = [];
 
   for (let i = 0; i < 2 * 52; i++) {
-    for (const selectedDayOfWeek of selectedDayOfWeeks) {
-      const ticketDate = adjustDayOfWeek(startDate, selectedDayOfWeek);
-      startDate.setDate(ticketDate.getDate() + 6);
+    const ticketDate = new Date(startDate);
+    startDate.setDate(startDate.getDate() + 6);
 
-      const ticketDateString = ticketDate.toISOString();
+    const ticketDateString = ticketDate.toISOString();
 
-      const stopsWithDates = ticketData.stops.map((stop) => {
-        const stopDates = stop.dayOfWeek.map((dayOfWeek) => {
-          const stopDate = adjustDayOfWeek(new Date(ticketDate), dayOfWeek);
-          return stopDate.toISOString();
-        });
-
-        return {
-          ...stop,
-          dates: stopDates,
-        };
+    const stopsWithDates = ticketData.stops.map((stop) => {
+      const stopDates = stop.dayOfWeek.map((dayOfWeek) => {
+        const stopDate = adjustDayOfWeek(new Date(ticketDate), dayOfWeek);
+        return stopDate.toISOString();
       });
 
-      const ticketDataWithDates = {
-        ...ticketData,
-        date: ticketDateString,
-        stops: stopsWithDates,
+      return {
+        ...stop,
+        dates: stopDates,
       };
+    });
 
-      tickets.push(ticketDataWithDates);
-    }
+    const ticketDataWithDates = {
+      ...ticketData,
+      date: ticketDateString,
+      stops: stopsWithDates,
+    };
+
+    tickets.push(ticketDataWithDates);
   }
 
   await Ticket.insertMany(tickets);
