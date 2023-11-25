@@ -25,7 +25,6 @@ module.exports = {
         stops: req.body.stops,
       };
   
-      console.log({ body: JSON.stringify(req.body, null, 2) })
       // console.log({stops: JSON.stringify(req.body.stops, null, 2)})
   
       const generatedTickets = await generateTicketsForNextTwoYears(ticketData || req.body.ticketData, selectedDayOfTheWeek || req.body.selectedDayOfTheWeek);
@@ -129,88 +128,45 @@ module.exports = {
           console.log({ line: req.query.line });
           const allLineIDS = req.query.line.split('-');
       
-          let ticketsWithStops = [];
-      
+          let ticketsWithBookings = []; 
+          
           for (const line of allLineIDS) {
             if (line !== "") {
               const line_id = new mongoose.Types.ObjectId(line);
               console.log(line_id);
       
               const ticketQuery = {
-                'stops.dates': { $gte: startDate, $lte: endDate },
-                lineCode: line_id,
+                date: { $gte: startDate, $lte: endDate },
+                lineCode: line_id
               };
       
               const ticketsForLine = await Ticket.find(ticketQuery)
                 .populate('lineCode')
                 .sort({ date: 'asc' });
       
-              const ticketsForLineWithStops = await Promise.all(ticketsForLine.map(async (ticket) => {
-                const stopsForTicket = await Promise.all(ticket.stops.map(async (stop) => {
-                  const fromCity = ticket.from;
-                  const toCity = ticket.to;
-                  const times = stop.times;
-                  const dates = stop.dates;
+              const ticketsForLineWithBookings = ticketsForLine.map((ticket) => {
+                const bookingsForTicket = allBookings.filter(
+                  (booking) => booking.ticket.toString() === ticket._id.toString()
+                );
+                return {
+                  ticket: ticket,
+                  bookings: bookingsForTicket
+                };
+              });
       
-                  // Create a separate ticket for each date and time
-                  const ticketsForDateAndTime = await Promise.all(dates.map(async (date) => {
-                    const bookingsForTicket = allBookings.filter((booking) =>
-                      booking.ticket.toString() === ticket._id.toString() &&
-                      booking.from === fromCity && booking.to === toCity &&
-                      booking.date === date && times.includes(booking.time)
-                    );
-      
-                    const passengersForBookings = bookingsForTicket.map((booking) => booking.passengers.length);
-      
-                    return {
-                      ticket: {
-                        ...ticket.toObject(),
-                        date: date,
-                        time: times,
-                      },
-                      stop: {
-                        from: fromCity,
-                        to: toCity,
-                        time: times,
-                        date: date,
-                        price: stop.price,
-                        lineCode: ticket?.lineCode?.code,
-                      },
-                      numberOfBookings: bookingsForTicket.length,
-                      totalPassengers: passengersForBookings.reduce((acc, curr) => acc + curr, 0),
-                    };
-                  }));
-      
-                  // Flatten the array of arrays into a single array
-                  return [].concat(...ticketsForDateAndTime);
-                }));
-      
-                // Flatten the array of arrays into a single array
-                return [].concat(...stopsForTicket);
-              }));
-      
-              ticketsWithStops.push(...ticketsForLineWithStops);
+              ticketsWithBookings.push(...ticketsForLineWithBookings);
             }
           }
       
-          // Flatten the array of arrays into a single array
-          ticketsWithStops = [].concat(...ticketsWithStops);
-      
-          // Sort the tickets by stops.date
-          // ticketsWithStops.sort((a, b) => new Date(a.stop.date) - new Date(b.stop.date) || a.ticket.time.localeCompare(b.ticket.time));
-      
-          res.status(200).json(ticketsWithStops);
+          // ticketsWithBookings.sort((a, b) => new Date(a.ticket.date) - new Date(b.ticket.date));
+          res.status(200).json(ticketsWithBookings);
         } catch (error) {
           console.error(error);
           res.status(500).json({ message: "Internal error -> " + error });
         }
       },
-      
-      
-      
-      
 
-      getSearchedTickets: async (req, res) => {
+      getSearchedTickets: async (req,res) => {
         try {
           let page = Number(req.query.page) || 1;
           let size = Number(15);
@@ -237,43 +193,56 @@ module.exports = {
             return res.status(404).json('No tickets found for your chosen locations!');
           }
           const currentDateFormatted = moment(new Date()).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
-      
-          const distinctStops = await Ticket.aggregate([
-            {
-              $match: {
-                date: { $gte: currentDateFormatted },
-                numberOfTickets: { $gt: 0 },
+          const distinctTicketIds = await Ticket.distinct('_id', {
+            $or: [
+              {
                 'stops.from.city': req.query.from,
                 'stops.to.city': req.query.to,
-              },
-            },
+              }
+            ]
+          });
+
+          const uniqueTickets = await Ticket.aggregate([
             {
-              $unwind: '$stops',
+              $match: {
+                _id: { $in: distinctTicketIds },
+                date: { $gte: currentDateFormatted },
+                numberOfTickets: { $gt: 0 },
+                isActive: true
+              }
             },
+            // {
+            //   $unwind: '$stops',
+            // },
+            // {
+            //   $unwind: '$stops.dates',
+            // },
+            // {
+            //   $unwind: '$stops.times'
+            // },
+            // {
+            //   $match: {
+            //     'stops.from.city': req.query.from,
+            //     'stops.to.city': req.query.to,
+            //   },
+            // },
+            // {
+            //   $group: {
+            //     _id: '$_id',
+            //     lineCode: { $first: '$lineCode' },
+            //     from: { $first: '$from' },
+            //     to: { $first: '$to' },
+            //     stops: { $first: '$stops' },
+            //     date: { $first: '$date' },
+            //     times: { $first: '$times' },
+            //     numberOfTickets: { $first: '$numberOfTickets' },
+            //     isActive: { $first: '$isActive' },
+            //     createdAt: { $first: '$createdAt' },
+            //     updatedAt: { $first: '$updatedAt' },
+            //   }
+            // },
             {
-              $group: {
-                _id: '$_id',
-                lineCode: { $first: '$lineCode' },
-                from: { $first: '$stops.from' }, 
-                to: { $last: '$stops.to' },
-                dates: { $first: '$stops.dates' },
-                times: { $first: '$stops.times' },
-                price: { $first: '$stops.price' },
-                childrenPrice: { $first: '$stops.childrenPrice' },
-                numberOfTickets: { $first: '$numberOfTickets' },
-                isActive: { $first: '$isActive' },
-                createdAt: { $first: '$createdAt' },
-                updatedAt: { $first: '$updatedAt' },
-              },
-            },
-            {
-              $unwind: '$dates',
-            },
-            {
-              $unwind: '$times',
-            },
-            {
-              $sort: { dates: 1, times: 1 },
+              $sort: { date: 1 },
             },
             {
               $skip: skipCount,
@@ -281,34 +250,126 @@ module.exports = {
             {
               $limit: size,
             },
-          ]);
-      
-      
-          if (distinctStops.length == 0) {
-            return res.status(204).json('No stops found');
+            {
+              $lookup: {
+                from: "Line",
+                localField: "lineCode",
+                foreignField: "_id",
+                as: "lineCode"
+              }
+            },
+          ])
+
+          if(uniqueTickets.length == 0) {
+            return res.status(204).json("no routes found");
           }
-      
-          const formattedStops = distinctStops.map(stop => ({
-            _id: stop._id,
-            lineCode: stop.lineCode,
-            from: stop.from,
-            price: stop.price,
-            childrenPrice: stop.childrenPrice,
-            to: stop.to,
-            dates: stop.dates,
-            times: stop.times,
-            numberOfTickets: stop.numberOfTickets,
-            isActive: stop.isActive,
-            createdAt: stop.createdAt,
-            updatedAt: stop.updatedAt,
-          }));
-      
-          return res.status(200).json(formattedStops);
-        } catch (error) {
+
+            return res.status(200).json(uniqueTickets);
+          } catch (error) {
           console.error(error);
-          return res.status(500).json({ error: 'Internal server error' + error });
+          res.status(500).json({ message: "Internal error -> " + error });
         }
       },
+
+      // getSearchedTickets: async (req, res) => {
+      //   try {
+      //     let page = Number(req.query.page) || 1;
+      //     let size = Number(15);
+      //     const skipCount = (page - 1) * size;
+      
+      //     console.log({page, size, skipCount})
+
+      //     const from = req.query.from;
+      //     const to = req.query.to;
+      //     const cities = await City.find({
+      //       $or: [
+      //         {
+      //           name: req.query.from,
+      //         },
+      //         {
+      //           name: req.query.to,
+      //         },
+      //       ],
+      //     });
+      //     console.log({ from, to });
+      //     const haveCountries = cities[0]?.country == '' && cities[1]?.country == '';
+      
+      //     if (cities[0]?.country == cities[1]?.country) {
+      //       return res.status(404).json('No tickets found for your chosen locations!');
+      //     }
+      //     const currentDateFormatted = moment(new Date()).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
+      
+      //     const distinctStops = await Ticket.aggregate([
+      //       {
+      //         $match: {
+      //           date: { $gte: currentDateFormatted },
+      //           numberOfTickets: { $gt: 0 },
+      //           'stops.from.city': req.query.from,
+      //           'stops.to.city': req.query.to,
+      //         },
+      //       },
+      //       {
+      //         $unwind: '$stops',
+      //       },
+      //       {
+      //         $group: {
+      //           _id: '$_id',
+      //           lineCode: { $first: '$lineCode' },
+      //           from: { $first: '$stops.from' }, 
+      //           to: { $last: '$stops.to' },
+      //           dates: { $first: '$stops.dates' },
+      //           times: { $first: '$stops.times' },
+      //           price: { $first: '$stops.price' },
+      //           childrenPrice: { $first: '$stops.childrenPrice' },
+      //           numberOfTickets: { $first: '$numberOfTickets' },
+      //           isActive: { $first: '$isActive' },
+      //           createdAt: { $first: '$createdAt' },
+      //           updatedAt: { $first: '$updatedAt' },
+      //         },
+      //       },
+      //       {
+      //         $unwind: '$dates',
+      //       },
+      //       {
+      //         $unwind: '$times',
+      //       },
+      //       {
+      //         $sort: { dates: 1, times: 1 },
+      //       },
+      //       {
+      //         $skip: skipCount,
+      //       },
+      //       {
+      //         $limit: size,
+      //       },
+      //     ]);
+      
+      
+      //     if (distinctStops.length == 0) {
+      //       return res.status(204).json('No stops found');
+      //     }
+      
+      //     const formattedStops = distinctStops.map(stop => ({
+      //       _id: stop._id,
+      //       lineCode: stop.lineCode,
+      //       from: stop.from,
+      //       price: stop.price,
+      //       childrenPrice: stop.childrenPrice,
+      //       to: stop.to,
+      //       dates: stop.dates,
+      //       times: stop.times,
+      //       numberOfTickets: stop.numberOfTickets,
+      //       isActive: stop.isActive,
+      //       createdAt: stop.createdAt,
+      //       updatedAt: stop.updatedAt,
+      //     }));
+      
+      //     return res.status(200).json(formattedStops);
+      //   } catch (error) {
+      //     console.error(error);
+      //     return res.status(500).json({ error: 'Internal server error' + error });
+      //   }
+      // },
       
  
 
@@ -417,8 +478,7 @@ module.exports = {
 
 }
 
-
-const generateTicketsForNextTwoYears = async (ticketData, selectedDayOfWeeks) => {
+const generateTicketsForNextTwoYears = async (ticketData, selectedDayOfWeek) => {
   const adjustDayOfWeek = (startDate, dayOfWeek) => {
     const adjustedDate = new Date(startDate);
     adjustedDate.setDate(startDate.getDate() + ((dayOfWeek + 6 - startDate.getDay()) % 7));
@@ -426,39 +486,49 @@ const generateTicketsForNextTwoYears = async (ticketData, selectedDayOfWeeks) =>
   };
 
   const startDate = new Date();
+  const ticketDate = adjustDayOfWeek(startDate, selectedDayOfWeek);
+  startDate.setDate(ticketDate.getDate());
+  startDate.setHours(8, 0, 0, 0);
+
   const tickets = [];
 
   for (let i = 0; i < 2 * 52; i++) {
-    const ticketDate = new Date(startDate);
-    startDate.setDate(startDate.getDate() + 6);
+    // const ticketDateString = ticketDate.toISOString();
+    const ticketDateString = moment(ticketDate).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
 
-    const ticketDateString = ticketDate.toISOString();
+    const ticketDataWithDate = {
+      ...ticketData,
+      date: ticketDateString,
+    };
 
-    const stopsWithDates = ticketData.stops.map((stop) => {
-      const stopDates = stop.dayOfWeek.map((dayOfWeek) => {
-        const stopDate = adjustDayOfWeek(new Date(ticketDate), dayOfWeek);
-        return stopDate.toISOString();
-      });
+    const stopsWithTime = ticketDataWithDate.stops.map((stop) => {
+      const stopDate = moment(ticketDateString);
+
+      if (stop.isTomorrow) {
+        if (stop.isTomorrow) {
+          stopDate.add(1, 'day');
+        }
+      }
 
       return {
         ...stop,
-        dates: stopDates,
+        time: stop.time,
+        date: stopDate.format('YYYY-MM-DDTHH:mm:ss.SSS[Z]'), 
       };
     });
 
-    const ticketDataWithDates = {
-      ...ticketData,
-      date: ticketDateString,
-      stops: stopsWithDates,
+    const ticketWithStops = {
+      ...ticketDataWithDate,
+      stops: stopsWithTime,
     };
 
-    tickets.push(ticketDataWithDates);
+    tickets.push(ticketWithStops);
+
+    ticketDate.setDate(ticketDate.getDate() + 7);
   }
 
   await Ticket.insertMany(tickets);
 
   return tickets;
 };
-
-
 
