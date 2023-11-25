@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
 
 const ticketSchema = mongoose.Schema({
-  
   lineCode: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Line',
@@ -30,18 +29,17 @@ const ticketSchema = mongoose.Schema({
           lng: { type: Number },
         }
       ],
-      times: [String],
+      time: { type: String },
+      date: { type: String }, // Corrected this line
       price: { type: Number },
       childrenPrice: { type: Number },
-      dates: [String],
-    },
+    }
   ],
   date: {
     type: String,
   },
   time: {
     type: String,
-    required: true,
   },
   type: {
     type: String,
@@ -57,7 +55,6 @@ const ticketSchema = mongoose.Schema({
     enum: ['true', 'false'],
     default: true
   },
-
 }, { timestamps: true });
 
 module.exports = mongoose.model("Ticket", ticketSchema);
