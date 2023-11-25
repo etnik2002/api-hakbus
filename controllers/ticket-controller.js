@@ -504,11 +504,9 @@ const generateTicketsForNextTwoYears = async (ticketData, selectedDayOfWeek) => 
     const stopsWithTime = ticketDataWithDate.stops.map((stop) => {
       const stopDate = moment(ticketDateString);
 
-      if (stop.isTomorrow) {
         if (stop.isTomorrow) {
           stopDate.add(1, 'day');
         }
-      }
 
       return {
         ...stop,
@@ -531,4 +529,3 @@ const generateTicketsForNextTwoYears = async (ticketData, selectedDayOfWeek) => 
 
   return tickets;
 };
-
