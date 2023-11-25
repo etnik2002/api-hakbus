@@ -30,7 +30,7 @@ const ticketSchema = mongoose.Schema({
         }
       ],
       time: { type: String },
-      date: { type: String }, // Corrected this line
+      date: { type: String }, 
       price: { type: Number },
       childrenPrice: { type: Number },
     }
