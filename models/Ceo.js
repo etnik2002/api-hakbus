@@ -56,6 +56,9 @@ const ceoSchema = mongoose.Schema({
     nrOfSeatsNotification: {
         type: Number,
     },
+    deletionPin: {
+        type: String
+    }
 
 }, { timestamps: true })
 
