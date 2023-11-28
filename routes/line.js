@@ -1,4 +1,5 @@
 const router = require("express").Router();
+const { verifyDeletionPin } = require("../auth/auth");
 const { createLine, getLineBookings, getSingleLineBookings,getAllLines, deleteLine, findTodaysLineTickets, editLine } = require("../controllers/line-controller");
 
 router.post('/create', createLine);
@@ -11,7 +12,7 @@ router.get('/line-bookings', getLineBookings);
 
 router.get('/line-bookings/:id/:from/:to', getSingleLineBookings)
 
-router.post('/delete/:id', deleteLine)
+router.post('/delete/:id',verifyDeletionPin, deleteLine)
 
 router.post('/edit/:id', editLine)
 
