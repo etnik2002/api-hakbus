@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const Ceo = require("../models/Ceo");
 
 module.exports = {
     ceoAccessToken: async (req, res, next) => {
@@ -51,6 +52,22 @@ module.exports = {
             console.log(error);
             return res.status(500).json("Internal Server Error");
         }
-    }
+    },
+
+    verifyDeletionPin: async (req,res, next) => {
+        try {
+            console.log(req.params)
+            const ceo = await Ceo.findById(req.body.userID);
+            console.log({ceo})
+            if(ceo.deletionPin != req.body.pin) {
+                return res.status(401).json("Wrong pin");
+            }
+            next();
+
+        } catch (error) {
+            console.log(error);
+            return res.status(500).json("Internal Server Error");
+        }
+    },
 
 };

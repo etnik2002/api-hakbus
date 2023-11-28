@@ -167,6 +167,7 @@ module.exports = {
 
     deleteAgency: async (req, res) => {
         try {
+          console.log({body: req.body})
           const deleteAgency = await Agency.findByIdAndRemove(req.params.id);
           res.status(200).json({ message: "Agjencia u fshi me sukses"});
         } catch (error) {
@@ -236,7 +237,6 @@ module.exports = {
             },
           ]);
       
-          console.log(agencySales)
 
           const agenciesInDebt = await Agency.find({ _id: { $in: agencySales.map((item) => item._id) } })
             .select('-password')

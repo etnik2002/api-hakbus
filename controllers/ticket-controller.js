@@ -400,7 +400,7 @@ module.exports = {
       deleteTicket: async (req, res) => {
         try {
           const deleteTicket = await Ticket.findByIdAndRemove(req.params.id);
-          res.status(200).json({ message: "ticket deleted successfully ->  " + deleteTicket });
+          res.status(200).json({ message: "Linja u fshij me sukses"});
         } catch (error) {
           console.error(error);
           res.status(500).json("error -> " + error);

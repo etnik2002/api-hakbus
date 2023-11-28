@@ -307,6 +307,19 @@ module.exports = {
         }
       },
 
+      changePin: async (req,res) => {
+        try {
+          console.log(req.params);
+          const ceo = await Ceo.findById(req.params.id);
+          ceo.deletionPin = req.body.pin;
+          await ceo.save();
+          return res.status(200).json("Pin changed");
+        } catch (error) {
+          console.log(error);
+          return res.status(500).json(error);
+        }
+      },
+
       changePassword: async (req,res) => {
         try {
           const ceo = await Ceo.findById(req.params.id);
