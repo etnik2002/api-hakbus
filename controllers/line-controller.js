@@ -17,6 +17,9 @@ module.exports = {
                 lng: req.body.lng,
                 endLat: req.body.endLat,
                 endLng: req.body.endLng,
+                freeLuggages: req.body.freeLuggages,
+                luggagePrice: req.body.luggagePrice,
+                luggageSize: req.body.luggageSize,
             })
 
             console.log(req.body)
@@ -31,7 +34,11 @@ module.exports = {
 
     getAllLines: async (req, res) => {
       try {
-        const all = await Line.aggregate([{ $match: {} }]).exec();
+        const all = await Line.aggregate([
+          { $match: {} },
+          { $sort: { createdAt: -1 } }
+        ]).exec();
+
         res.status(200).json(all);
       } catch (error) {
         res.status(500).json("error " + error);
@@ -252,22 +259,33 @@ module.exports = {
 
       deleteLine: async (req,res) => {
         try {
-            const deletedLine = await Line.findByIdAndRemove(req.params.id);
-            res.status(200).json(deletedLine);
-        } catch (error) {
-            res.status(500).json(error);
-        }
+          const deletedLine = await Line.findByIdAndDelete(req.params.id);
+  
+          const result = await Ticket.deleteMany({ lineCode: req.params.id });
+          const count = result.deletedCount || 0;
+  
+          res.status(200).json(`${count} linja u fshijne te lidhura me ${deletedLine.code}`);
+      } catch (error) {
+          console.error(error);
+          res.status(500).json({ error: 'Internal Server Error' });
+      }
       },
-
-      editLine: async (req,res) => {
+      editLine: async (req, res) => {
         try {
-            const editPayload = req.body;
-            await Line.findByIdAndUpdate(req.params.id, editPayload);
-            return res.status(200).json("edited");
+          const editPayload = req.body;
+          const lineId = req.params.id;
+      
+          const filteredEditPayload = Object.fromEntries(
+            Object.entries(editPayload).filter(([key, value]) => value !== undefined && value !== null && value != "" )
+          );
+      
+          await Line.findByIdAndUpdate(lineId, filteredEditPayload);
+      
+          return res.status(200).json("edited");
         } catch (error) {
-            res.status(500).json(error);
+          res.status(500).json(error);
         }
       },
-
+      
 
 }

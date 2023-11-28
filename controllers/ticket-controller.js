@@ -478,7 +478,7 @@ module.exports = {
 
 }
 
-const generateTicketsForNextTwoYears = async (ticketData, selectedDayOfWeek) => {
+const generateTicketsForNextTwoYears = async (ticketData, selectedDaysOfWeek) => {
   const adjustDayOfWeek = (startDate, dayOfWeek) => {
     const adjustedDate = new Date(startDate);
     adjustedDate.setDate(startDate.getDate() + ((dayOfWeek + 6 - startDate.getDay()) % 7));
@@ -486,43 +486,42 @@ const generateTicketsForNextTwoYears = async (ticketData, selectedDayOfWeek) => 
   };
 
   const startDate = new Date();
-  const ticketDate = adjustDayOfWeek(startDate, selectedDayOfWeek);
-  startDate.setDate(ticketDate.getDate());
-  startDate.setHours(8, 0, 0, 0);
-
   const tickets = [];
 
-  for (let i = 0; i < 2 * 52; i++) {
-    // const ticketDateString = ticketDate.toISOString();
-    const ticketDateString = moment(ticketDate).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
+  for (const selectedDayOfWeek of selectedDaysOfWeek) {
+    let ticketDate = adjustDayOfWeek(startDate, selectedDayOfWeek);
 
-    const ticketDataWithDate = {
-      ...ticketData,
-      date: ticketDateString,
-    };
+    for (let i = 0; i < 2 * 52; i++) {
+      const ticketDateString = ticketDate.toISOString();
 
-    const stopsWithTime = ticketDataWithDate.stops.map((stop) => {
-      const stopDate = moment(ticketDateString);
+      const ticketDataWithDate = {
+        ...ticketData,
+        date: ticketDateString,
+      };
+
+      const stopsWithTime = ticketDataWithDate.stops.map((stop) => {
+        const stopDate = new Date(ticketDateString);
 
         if (stop.isTomorrow) {
-          stopDate.add(1, 'day');
+          stopDate.setDate(stopDate.getDate() + 1);
         }
 
-      return {
-        ...stop,
-        time: stop.time,
-        date: stopDate.format('YYYY-MM-DDTHH:mm:ss.SSS[Z]'), 
+        return {
+          ...stop,
+          time: stop.time,
+          date: stopDate.toISOString(),
+        };
+      });
+
+      const ticketWithStops = {
+        ...ticketDataWithDate,
+        stops: stopsWithTime,
       };
-    });
 
-    const ticketWithStops = {
-      ...ticketDataWithDate,
-      stops: stopsWithTime,
-    };
+      tickets.push(ticketWithStops);
 
-    tickets.push(ticketWithStops);
-
-    ticketDate.setDate(ticketDate.getDate() + 7);
+      ticketDate.setDate(ticketDate.getDate() + 7);
+    }
   }
 
   await Ticket.insertMany(tickets);

@@ -16,6 +16,15 @@ const LineSchema = mongoose.Schema({
     to: {
         type: String
     },
-  });
+    freeLuggages: {
+        type: Number,
+    },
+    luggagePrice: {
+        type: Number,
+    },
+    luggageSize: {
+        type: String,
+    },
+  }, { timestamps: true });
 
 module.exports = mongoose.model("Line", LineSchema);

@@ -218,11 +218,43 @@ module.exports = {
       },
       getAgenciesInDebt: async (req, res) => {
         try {
-            const agenciesInDebt = await Agency.find({ debt: { $exists: true, $gt: 0 } }).select('-password');
-            console.log(agenciesInDebt);
-            res.status(200).json(agenciesInDebt);
+          const { from, to } = req.query;
+          console.log(req.query)
+
+          const agencySales = await Booking.aggregate([
+            {
+              $match: {
+                createdAt: { $gte: new Date(from), $lte: new Date(to) },
+                seller: { $ne: null },
+              },
+            },
+            {
+              $group: {
+                _id: '$seller',
+                totalSales: { $sum: '$price' }, 
+              },
+            },
+          ]);
+      
+          console.log(agencySales)
+
+          const agenciesInDebt = await Agency.find({ _id: { $in: agencySales.map((item) => item._id) } })
+            .select('-password')
+            .lean();
+      
+          const result = agenciesInDebt.map((agency) => {
+            const agencySale = agencySales.find((item) => item._id.equals(agency._id));
+            const agencyDebt = (agencySale ? agencySale.totalSales : 0) * (agency.percentage / 100);
+            return {
+              ...agency,
+              totalSales: agencySale ? agencySale.totalSales : 0,
+              debt: agencyDebt,
+            };
+          });
+      
+          res.status(200).json(result);
         } catch (error) {
-            res.status(500).json("error -> " + error);
+          res.status(500).json({ error: `Server error -> ${error.message}` });
         }
     },
     

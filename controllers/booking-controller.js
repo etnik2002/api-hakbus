@@ -288,30 +288,44 @@ module.exports = {
 
       },
 
-      getFilteredBookings: async (req, res) => {
+       getFilteredBookings : async (req, res) => {
         try {
-          if (req.query.agency === '' || req.query.from === '' || req.query.to === '') {
-            return res.status(500).json('Please fill in all the fields');
-          } else {
-            const fromDate = moment(req.query.from, 'DD-MM-YYYY').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]'); 
-            const toDate = moment(req.query.to, 'DD-MM-YYYY').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]'); 
-            console.log(fromDate, toDate)
-
-            const filteredBookings = await Booking.find({
-              createdAt: { $gte: fromDate, $lte: toDate },
-              seller: req.query.agency
-            }).populate({
-              path: 'seller buyer',
-              select: '-password' 
-            }).populate({
-              path: 'ticket',
-              populate: { path: 'lineCode' } 
-            })
-      
-            res.status(200).json(filteredBookings);
+          if (!req.query.from || !req.query.to) {
+            return res.status(400).json('Please provide both "from" and "to" dates.');
           }
+      
+          const fromDate = moment(req.query.from, 'DD-MM-YYYY').toISOString();
+          const toDate = moment(req.query.to, 'DD-MM-YYYY').toISOString();
+      
+          let query = {
+            createdAt: { $gte: fromDate, $lte: toDate },
+          };
+      
+          if (req.query.agency) {
+            query['seller'] = req.query.agency;
+          }
+      
+          if (req.query.city) {
+            query['seller.city'] = req.query.city;
+          }
+      
+          const filteredBookings = await Booking.find(query)
+          .populate({
+            path: 'seller',
+            select: '-password',
+          })
+          .populate({
+            path: 'buyer',
+            select: '-password',
+          })
+          .populate({
+            path: 'ticket',
+            populate: { path: 'lineCode' },
+          });
+      
+          res.status(200).json(filteredBookings);
         } catch (error) {
-          res.status(500).json({ message: `Server error -> ${error}` });
+          res.status(500).json({ message: `Server error -> ${error.message}` });
         }
       },
       
