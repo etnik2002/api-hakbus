@@ -214,6 +214,16 @@ module.exports = {
         }
       },
 
+      importCitiesFromExcel: async (req,res) => {
+        try {
+          console.log("Excel extractor to be done");
+          return res.status(201).json("in construction")
+        } catch (error) {
+          console.log(error);
+          res.status(500).send({ message: "Some error happened" + error });
+        }
+      },
+
       getAllCitiesPagination: async (req, res) => {
         try {
           const page = parseInt(req.query.page) || 0;
