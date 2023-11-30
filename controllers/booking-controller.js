@@ -27,45 +27,54 @@ admin.initializeApp({
     const monthDiff = today.getMonth() - birthDateObj.getMonth();
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDateObj.getDate())) {
       age -= 1;
-    }
+    } 
   
     return age;
   }
   
 
   const findPrice = (ticket, from, to) => {
-    const stop = ticket?.stops.find(
-      (s) =>
-        (s.from[0]?.city === from && s.to.some((t) => t.city === to)) ||
-        (s.from[0]?.city === to && s.to.some((t) => t.city === from))
-    );
-  
-    return stop ? stop.price : null;
+    const stop = ticket?.stops?.find(s => s.from.some(cityInfo => cityInfo.city === from) && s.to.some(t => t.city === to));
+    if (stop) {
+      return stop.price;
+    } else {
+      return "Price not found";
+    }
   };
   
   const findChildrenPrice = (ticket, from, to) => {
-    const stop = ticket?.stops.find(
-      (s) =>
-        (s.from[0]?.city === from && s.to.some((t) => t.city === to)) ||
-        (s.from[0]?.city === to && s.to.some((t) => t.city === from))
-    );
-  
-    return stop ? stop.childrenPrice : null;
+    const stop = ticket.stops.find(s => s.from.some(cityInfo => cityInfo.city === from) && s.to.some(t => t.city === to));
+    if (stop) {
+      return stop.childrenPrice;
+    } else {
+      return "Children Price not found";
+    }
   };
   
   
   const findTime = (ticket, from, to) => {
-    const stop = ticket?.stops.find(
+    const stop = ticket?.stops?.find(
       (s) =>
-        (s.from[0]?.city === from && s.to.some((t) => t.city === to)) ||
-        (s.from[0]?.city === to && s.to.some((t) => t.city === from))
+        s.from.some((cityInfo) => cityInfo.city === from) &&
+        s.to.some((t) => t.city === to)
     );
-  
     if (stop) {
-      console.log({time: stop.time, stop})
       return stop.time;
     } else {
-      return "Price not found";
+      return "Time not found";
+    }
+  };
+
+  const findDate = (ticket, from, to) => {
+    const stop = ticket.stops.find(
+      (s) =>
+        s.from.some((cityInfo) => cityInfo.city === from) &&
+        s.to.some((t) => t.city === to)
+    );
+    if (stop) {
+      return stop.date;
+    } else {
+      return "Date not found";
     }
   };
 
@@ -159,8 +168,8 @@ module.exports = {
         age: req.body.age,
         price: totalPrice,
         passengers: passengers,
-        type: bookingType, 
-        isPaid: true
+        isPaid: true,
+        platform: req.body.platform,
       });
   
       await newBooking.save().then(async () => {

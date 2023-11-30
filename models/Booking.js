@@ -49,11 +49,10 @@ const bookingSchema = mongoose.Schema({
     price: {
         type: Number
     },
-    type: {
+    platform: {
         type: String,
-        enum: ["oneway", "return", 'both'],
-        default: "oneway" 
-    }, 
+        enum: ["ios", "android", "web"]
+    },
     isPaid: {
         type: Boolean,
         enum: ['true', 'false'],
