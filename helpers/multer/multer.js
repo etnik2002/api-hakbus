@@ -19,8 +19,18 @@ const cloudinaryStorage = new CloudinaryStorage({
   },
 });
 
+const excelStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    console.log({ req, file });
+    cb(null, path.join(__dirname, 'public', 'excel'));
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + '-' + file.originalname);
+  },
+});
 
+const excelUpload = multer({ storage: excelStorage });
 
 const attachmentUpload = multer({ storage: cloudinaryStorage });
 
-module.exports = { attachmentUpload };
+module.exports = { attachmentUpload, excelUpload };

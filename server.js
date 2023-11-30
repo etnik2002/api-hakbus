@@ -57,12 +57,6 @@ if (cluster.isMaster) {
     })
   );
 
-   
- 
-  
-  // app.use(cors({
-  //   origin: ['http://localhost:4462', 'https://admin-hakbus.vercel.app']
-  // }))
 
   app.use(session({
     secret: process.env.OUR_SECRET,
