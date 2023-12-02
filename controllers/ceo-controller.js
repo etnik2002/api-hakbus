@@ -45,13 +45,12 @@ module.exports = {
 
     editObserver: async (req,res) => {
       try {
-        console.log({body:req.body})
         const hashedPassword = await bcrypt.hashSync(req.body.password, 10);
         const observer = await Ceo.findById(req.params.id);
         const editPayload = {
           name: req.body.name || observer.name,
           email: req.body.email ||observer.email,
-          password:hashedPassword || observer.password,
+          password: hashedPassword || observer.password,
           access:req.body.access || observer.access
         }
         

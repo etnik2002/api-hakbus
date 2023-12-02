@@ -78,6 +78,16 @@ admin.initializeApp({
     }
   };
 
+  function findPassengersLuggagePrice(ticket, passenger) {
+    const currentPrice = ticket?.lineCode?.luggagePrice;
+    const freeLuggages = ticket?.lineCode?.freeLuggages;
+    const difference = passenger.numberOfLuggages - freeLuggages;
+    if(difference > 1) {
+      return currentPrice * difference;
+    }
+    return 0;
+  }
+
 module.exports = {
 
   placeBooking : async (req, res) => {
@@ -86,7 +96,7 @@ module.exports = {
       const type = req.body.type;
       const onlyReturn = req.body.onlyReturn;
       const numberOfPsg = req.body.passengers.length || 1;
-      const ticket = await Ticket.findById(req.params.ticketID);
+      const ticket = await Ticket.findById(req.params.ticketID).populate("lineCode");
 
       if(onlyReturn) {
         if(ticket.numberOfReturnTickets < numberOfPsg) {
@@ -115,6 +125,8 @@ module.exports = {
           return res.status(400).json("Not seats left for both ways");
         }
       }
+
+
       
       let totalPrice = 0;
       const passengers = req.body.passengers.map((passenger) => {
@@ -127,12 +139,12 @@ module.exports = {
           fullName: passenger.fullName,
           birthDate: passenger.birthDate,
           age: parseInt(age),
-          price: type == true ? passengerPrice * 2 : passengerPrice,
+          price: type == (true ? passengerPrice * 2 : passengerPrice) + (req.body.luggagePrice * passenger.numberOfLuggages),
+          numberOfLuggages: passenger.numberOfLuggages,
+          // luggagePrice: ticket?.lineCode?.luggagePrice * req.body.numberOfLuggages,
+          luggagePrice: findPassengersLuggagePrice(ticket, passenger),
         };
       });
-      
-      const sendEmailNotification = req.body.sendEmailNotification;
-      const sendSmsNotification = req.body.sendSmsNotification;
 
       let bookingType;
 
