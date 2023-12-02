@@ -22,7 +22,7 @@ const storage = new CloudinaryStorage({
 
 const multerUploader = multer({ storage: storage });
 
-async function generateQRCode(data, passengers, destination, dateTime) {
+async function generateQRCode(data, passengers, destination, dateTime, freeLuggages) {
   try {
     const qrOptions = {
       type: 'png',
@@ -136,15 +136,22 @@ async function generateQRCode(data, passengers, destination, dateTime) {
 
                     <body>
                         <div class="ticket-container">
-                            <div class="ticket-header">
+                          <img class="qr-code" src=${result.secure_url} alt="QR Code" />
+                          <div class="ticket-header">
                                 <p>Hello ${passenger?.fullName || 'Passenger'},</p>
                                 <p>Your HakBus Booking Details</p>
                             </div>
                             <div class="booking-details">
                                 <p><strong>Destination:</strong> ${destination.from} -> ${destination.to}</p>
                                 <p><strong>Date:</strong> ${moment(dateTime.date).format("DD-MM-YYYY")}, <strong>Time:</strong> ${dateTime.time}</p>
+                                <p> ${passenger?.age <= 10 ? "Child" : "Adult"}</p>
+                                <p>Booking ID: ${data}</p>
+                                <p>Free luggages: ${freeLuggages}</p>
+                                <p>Extra luggages: ${passenger?.numberOfLuggages}</p>
+                                <b>Luggages price:&euro; ${passenger?.luggagePrice}</b> <br />
+                                <b>Ticket price:&euro; ${passenger?.price}</b> <br />
+                                <b>Total price:&euro; ${passenger?.price + passenger?.luggagePrice}</b> <br />
                             </div>
-                            <img class="qr-code" src=${result.secure_url} alt="QR Code" />
                             <div class="onboarding-message">
                                 <p>Use this QR code for onboarding when you travel with HakBus.</p>
                             </div>

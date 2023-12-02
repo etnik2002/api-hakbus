@@ -205,7 +205,7 @@ module.exports = {
       const destination = { from: req.body.from, to: req.body.to };
       const dateTime = { date: ticket.date, time: findTime(ticket, req.body.from, req.body.to) };
 
-      await generateQRCode(newBooking._id.toString(), req.body.passengers, destination, dateTime);
+      await generateQRCode(newBooking._id.toString(), newBooking.passengers, destination, dateTime, ticket?.lineCode?.freeLuggages);
       
       var seatNotification = {};
       if (ticket.numberOfTickets <= ceo[0].nrOfSeatsNotification + 1) {
