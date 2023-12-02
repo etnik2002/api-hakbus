@@ -78,15 +78,7 @@ admin.initializeApp({
     }
   };
 
-  function findPassengersLuggagePrice(ticket, passenger) {
-    const currentPrice = ticket?.lineCode?.luggagePrice;
-    const freeLuggages = ticket?.lineCode?.freeLuggages;
-    const difference = passenger.numberOfLuggages - freeLuggages;
-    if(difference > 1) {
-      return currentPrice * difference;
-    }
-    return 0;
-  }
+
 
 module.exports = {
 
@@ -139,10 +131,10 @@ module.exports = {
           fullName: passenger.fullName,
           birthDate: passenger.birthDate,
           age: parseInt(age),
-          price: type == (true ? passengerPrice * 2 : passengerPrice) + (req.body.luggagePrice * passenger.numberOfLuggages),
+          price: type == true ? passengerPrice * 2 : passengerPrice,
           numberOfLuggages: passenger.numberOfLuggages,
-          // luggagePrice: ticket?.lineCode?.luggagePrice * req.body.numberOfLuggages,
-          luggagePrice: findPassengersLuggagePrice(ticket, passenger),
+          luggagePrice: ticket?.lineCode?.luggagePrice * passenger.numberOfLuggages,
+          // luggagePrice: findPassengersLuggagePrice(ticket, passenger),
         };
       });
 
