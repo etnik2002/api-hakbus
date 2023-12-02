@@ -14,6 +14,9 @@ const citySchema = mongoose.Schema({
     lng: {
         type: Number,
     },
+    code: {
+        type: String,
+    },
 })
 
 

@@ -32,6 +32,15 @@ module.exports = {
         }
     },    
 
+    getLineById: async (req,res) => {
+      try {
+        const line = await Line.findById(req.params.id);
+        return res.status(200).json(line)
+      } catch (error) {
+        res.status(500).json(error);
+      }
+    },
+
     getAllLines: async (req, res) => {
       try {
         const all = await Line.aggregate([
