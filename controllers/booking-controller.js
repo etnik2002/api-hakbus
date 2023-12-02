@@ -131,7 +131,7 @@ module.exports = {
           fullName: passenger.fullName,
           birthDate: passenger.birthDate,
           age: parseInt(age),
-          price: totalPrice,
+          price: passengerPrice,
           numberOfLuggages: passenger.numberOfLuggages,
           luggagePrice: ticket?.lineCode?.luggagePrice * passenger.numberOfLuggages,
           // luggagePrice: findPassengersLuggagePrice(ticket, passenger),
