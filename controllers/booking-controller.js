@@ -131,7 +131,7 @@ module.exports = {
           fullName: passenger.fullName,
           birthDate: passenger.birthDate,
           age: parseInt(age),
-          price: type == true ? passengerPrice * 2 : passengerPrice,
+          price: totalPrice,
           numberOfLuggages: passenger.numberOfLuggages,
           luggagePrice: ticket?.lineCode?.luggagePrice * passenger.numberOfLuggages,
           // luggagePrice: findPassengersLuggagePrice(ticket, passenger),
