@@ -43,6 +43,9 @@ const bookingSchema = mongoose.Schema({
             luggagePrice: {
                 type: Number,
             },
+            numberOfLuggages: {
+                type: Number,
+            }
         }
     ],
     price: {
