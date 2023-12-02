@@ -124,7 +124,7 @@ module.exports = {
       const passengers = req.body.passengers.map((passenger) => {
         const age = calculateAge(passenger.birthDate);
         const passengerPrice = age <= 10 ? findChildrenPrice(ticket, req.body.from, req.body.to) : findPrice(ticket, req.body.from, req.body.to);
-        totalPrice += passengerPrice + ticket?.lineCode?.luggagePrice || 0 * passenger.numberOfLuggages;
+        totalPrice += passengerPrice + (ticket?.lineCode?.luggagePrice || 0 * passenger.numberOfLuggages);
         return {
           email: passenger.email,
           phone: passenger.phone,
