@@ -142,7 +142,7 @@ module.exports = {
       
               const ticketsForLine = await Ticket.find(ticketQuery)
                 .populate('lineCode')
-                .sort({ date: 'asc' });
+                .sort({ 'date': 'asc' });
       
               const ticketsForLineWithBookings = ticketsForLine.map((ticket) => {
                 const bookingsForTicket = allBookings.filter(
@@ -158,7 +158,7 @@ module.exports = {
             }
           }
       
-          // ticketsWithBookings.sort((a, b) => new Date(a.ticket.date) - new Date(b.ticket.date));
+          ticketsWithBookings.sort((a, b) => new Date(a.ticket.date) - new Date(b.ticket.date));
           res.status(200).json(ticketsWithBookings);
         } catch (error) {
           console.error(error);
