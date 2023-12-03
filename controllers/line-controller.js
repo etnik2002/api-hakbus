@@ -174,66 +174,12 @@ module.exports = {
 
       getSingleLineBookings: async (req,res) =>{
         try {
-          const all = await Booking.find({}).populate('buyer seller ticket');
-          console.log(all)
-          const filtered = all.filter((b) => b?.ticket?.lineCode == req.params.id && (moment(b.ticket.date).format('DD-MM-YYYY') == req.params.from || moment(b.ticket.returnDate).format('DD-MM-YYYY') == req.params.from));
-
-          // const filtered = all.filter((b) => b.ticket.lineCode == req.params.id && (moment(b.ticket.date).format('DD-MM-YYYY') == (moment(req.params.from).format('DD-MM-YYYY')) || moment(b.ticket.returnDate).format('DD-MM-YYYY') <= (moment(req.params.from).format('DD-MM-YYYY'))));
-
-          // const bookingsForLine = await Booking.aggregate([
-          //   {
-          //     $lookup: {
-          //       from: 'tickets',
-          //       localField: 'ticket',
-          //       foreignField: '_id',
-          //       as: 'ticket',
-          //     },
-          //   },
-          //   {
-          //     $unwind: '$ticket',
-          //   },
-          //   {
-          //     $lookup: {
-          //       from: 'lines',
-          //       localField: 'ticket.lineCode',
-          //       foreignField: '_id',
-          //       as: 'ticket.lineCode',
-          //     },
-          //   },
-          //   {
-          //     $unwind: '$ticket.lineCode',
-          //   },
-          //   {
-          //     $lookup: {
-          //       from: 'users',
-          //       localField: 'buyer',
-          //       foreignField: '_id',
-          //       as: 'buyer',
-          //     },
-          //   },
-          //   {
-          //     $unwind: '$buyer',
-          //   },
-          //   {
-          //     $sort: { createdAt: -1 },
-          //   },
-          //   {
-          //     $match: {
-          //       'ticket.lineCode._id': new mongoose.Types.ObjectId(req.params.id),
-          //       $or: [
-          //         { 'ticket.date': req.params.from },
-          //         { 'ticket.returnDate': req.params.from },
-          //       ],
-          //     },
-          //   },
-          //   {
-          //     $project: {
-          //       'buyer.password': 0,
-          //     },
-          //   },
-          // ]).exec();
+          const all = await Booking.find({
+            'ticket': req.params.id,
+          }).populate('buyer seller ticket');
+          
       
-          res.status(200).json(filtered);
+          res.status(200).json(all);
         } catch (error) {
           console.log(error)
           res.status(500).json(error);
