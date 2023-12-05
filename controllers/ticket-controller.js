@@ -174,30 +174,30 @@ module.exports = {
       
           console.log({page, size, skipCount})
 
-          const from = req.query.from;
-          const to = req.query.to;
-          const cities = await City.find({
-            $or: [
-              {
-                name: req.query.from,
-              },
-              {
-                name: req.query.to,
-              },
-            ],
-          });
-          console.log({ from, to });
-          const haveCountries = cities[0]?.country == '' && cities[1]?.country == '';
+          // const from = req.query.from;
+          // const to = req.query.to;
+          // const cities = await City.find({
+          //   $or: [
+          //     {
+          //       code: req.query.from,
+          //     },
+          //     {
+          //       code: req.query.to,
+          //     },
+          //   ],
+          // });
+          // console.log({ cities });
+          // const haveCountries = cities[0]?.country == '' && cities[1]?.country == '';
       
-          if (cities[0]?.country == cities[1]?.country) {
-            return res.status(404).json('No tickets found for your chosen locations!');
-          }
+          // if (cities[0]?.country == cities[1]?.country) {
+          //   return res.status(404).json('No tickets found for your chosen locations!');
+          // }
           const currentDateFormatted = moment(new Date()).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
           const distinctTicketIds = await Ticket.distinct('_id', {
             $or: [
               {
-                'stops.from.city': req.query.from,
-                'stops.to.city': req.query.to,
+                'stops.from.code': req.query.from,
+                'stops.to.code': req.query.to,
               }
             ]
           });

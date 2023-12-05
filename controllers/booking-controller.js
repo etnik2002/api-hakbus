@@ -34,7 +34,7 @@ admin.initializeApp({
   
 
   const findPrice = (ticket, from, to) => {
-    const stop = ticket?.stops?.find(s => s.from.some(cityInfo => cityInfo.city === from) && s.to.some(t => t.city === to));
+    const stop = ticket?.stops?.find(s => s.from.some(cityInfo => cityInfo.code === from) && s.to.some(t => t.code === to));
     if (stop) {
       return stop.price;
     } else {
@@ -43,7 +43,8 @@ admin.initializeApp({
   };
   
   const findChildrenPrice = (ticket, from, to) => {
-    const stop = ticket.stops.find(s => s.from.some(cityInfo => cityInfo.city === from) && s.to.some(t => t.city === to));
+    console.log({from, to});
+    const stop = ticket.stops.find(s => s.from.some(cityInfo => cityInfo.code === from) && s.to.some(t => t.code === to));
     if (stop) {
       return stop.childrenPrice;
     } else {
@@ -55,8 +56,8 @@ admin.initializeApp({
   const findTime = (ticket, from, to) => {
     const stop = ticket?.stops?.find(
       (s) =>
-        s.from.some((cityInfo) => cityInfo.city === from) &&
-        s.to.some((t) => t.city === to)
+        s.from.some((cityInfo) => cityInfo.code === from) &&
+        s.to.some((t) => t.code === to)
     );
     if (stop) {
       return stop.time;
@@ -68,8 +69,8 @@ admin.initializeApp({
   const findDate = (ticket, from, to) => {
     const stop = ticket.stops.find(
       (s) =>
-        s.from.some((cityInfo) => cityInfo.city === from) &&
-        s.to.some((t) => t.city === to)
+        s.from.some((cityInfo) => cityInfo.code === from) &&
+        s.to.some((t) => t.code === to)
     );
     if (stop) {
       return stop.date;
@@ -118,12 +119,11 @@ module.exports = {
         }
       }
 
-
       
       let totalPrice = 0;
       const passengers = req.body.passengers.map((passenger) => {
         const age = calculateAge(passenger.birthDate);
-        const passengerPrice = age <= 10 ? findChildrenPrice(ticket, req.body.from, req.body.to) : findPrice(ticket, req.body.from, req.body.to);
+        const passengerPrice = age <= 10 ? findChildrenPrice(ticket, req.body.from.code, req.body.to.code) : findPrice(ticket, req.body.from.code, req.body.to.code);
         totalPrice += passengerPrice + (ticket?.lineCode?.luggagePrice * passenger.numberOfLuggages);
         return {
           email: passenger.email,
@@ -164,8 +164,10 @@ module.exports = {
         buyer: buyerObjectId,
         ticket: req.params.ticketID,
         firstname: req.body.firstname,
-        from: req.body.from,
-        to: req.body.to,
+        from: req.body.from.value,
+        to: req.body.to.value,
+        fromCode: req.body.from.code,
+        toCode: req.body.to.code,
         lastname: req.body.lastname,
         email: req.body.email,
         phone: req.body.phone,
