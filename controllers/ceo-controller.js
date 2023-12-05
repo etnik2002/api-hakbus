@@ -203,6 +203,7 @@ module.exports = {
             country: req.body.country,
             lat: latitude,
             lng: longitude,
+            code: req.body.cityCode,
           })
           
           console.log(newCity)

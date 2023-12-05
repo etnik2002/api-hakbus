@@ -15,6 +15,8 @@ const bookingSchema = mongoose.Schema({
     },
     from: { type: String },
     to: { type: String },
+    fromCode: { type: String },
+    toCode: { type: String },
     passengers: [
         {
             fullName: {
