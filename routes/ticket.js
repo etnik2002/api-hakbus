@@ -1,10 +1,13 @@
 const router = require("express").Router();
 const { registerTicket, editTicket, deleteTicket, updateSeats,updateReturnSeats, stopSales, getSingleTicket, getAllTicket, getSearchedTickets, getNearestTicket, getAllTicketPagination, getTicketLinesBasedOnDate, allowSales, getTicketById, getAll} = require("../controllers/ticket-controller");
 const { ceoAccessToken, verifyDeletionPin } = require("../auth/auth");
+const { requestLimiter } = require("../auth/limiter");
+
+router.use(requestLimiter);
 
 router.get('/lines', getTicketLinesBasedOnDate);
 
-router.post('/create', registerTicket);
+router.post('/create',ceoAccessToken, registerTicket);
 
 router.get('/', getSearchedTickets);
 

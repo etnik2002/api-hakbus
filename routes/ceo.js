@@ -2,15 +2,18 @@ const router = require("express").Router();
 const { ceoAccessToken } = require("../auth/auth");
 const { createCeo, login, getStats, deactivateAgency ,activateAgency,editObserver,getObserverById, addCity, getAllCities, deleteCity, getCeoById, confirmDebtPayment, getAllObservers, deleteObs, setNrOfSeatsNotification, sendBookingToEmail, getAllCitiesPagination, changePassword, changeEmail, changePin, importCitiesFromExcel} = require("../controllers/ceo-controller");
 const { attachmentUpload, excelUpload } = require('../helpers/multer/multer');
+const { requestLimiter } = require("../auth/limiter");
+
+router.use(requestLimiter);
 
 
 router.post('/attachment/send', attachmentUpload.array('attachments'), sendBookingToEmail)
 
-router.post('/create', createCeo);
+router.post('/create',ceoAccessToken, createCeo);
 
 router.post('/login', login);
 
-router.get('/observer', getAllObservers);
+router.get('/observer',ceoAccessToken, getAllObservers);
 
 router.get('/observer/:id', getObserverById);
 
@@ -30,7 +33,7 @@ router.post('/deactivate/:id',deactivateAgency);
 
 router.post('/activate/:id',activateAgency);
 
-router.post ('/add-city', addCity);
+router.post ('/add-city',ceoAccessToken, addCity);
 
 router.post ('/add-city-excel', excelUpload.single("file"), importCitiesFromExcel);
 

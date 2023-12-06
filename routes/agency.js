@@ -1,14 +1,17 @@
 const router = require("express").Router();
-const { verifyActiveAgent, verifyDeletionPin } = require("../auth/auth");
+const { verifyActiveAgent, verifyDeletionPin, ceoAccessToken, verifyAgentAccessToken } = require("../auth/auth");
 const { createAgency, loginAsAgency, getAll,payDebt,getSearchedTickets, deleteAgency, editAgency, getAgenciesInDebt, confirmBookingPayment, getSingleAgency, getAgencyTickets, soldTickets, scanBooking, createScanningToken, getToken, deleteToken, sendBookingAttachment, getAgencySales, makeBookingForCustomers, applyForCollaboration, 
  } = require("../controllers/agency-controller");
 const { attachmentUpload } = require('../helpers/multer/multer');
+const { requestLimiter } = require("../auth/limiter");
+
+router.use(requestLimiter);
 
 router.get('/sales/:id', getAgencySales)
 
 router.get('/debt', getAgenciesInDebt);
 
-router.post('/create', createAgency);
+router.post('/create',ceoAccessToken, createAgency);
 
 router.post('/sales/register', applyForCollaboration)
 
@@ -32,7 +35,7 @@ router.post('/paydebt/:id', payDebt);
 
 router.post('/login', loginAsAgency);
 
-router.get('/', getAll);
+router.get('/',ceoAccessToken, getAll);
 
 router.get('/:id', getSingleAgency)
 

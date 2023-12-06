@@ -1,6 +1,9 @@
 const router = require("express").Router();
 const { verifyDeletionPin } = require("../auth/auth");
 const { createLine, getLineBookings, getSingleLineBookings,getAllLines, deleteLine,getLineById, findTodaysLineTickets, editLine } = require("../controllers/line-controller");
+const { requestLimiter } = require("../auth/limiter");
+
+router.use(requestLimiter);
 
 router.post('/create', createLine);
 

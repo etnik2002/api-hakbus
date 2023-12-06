@@ -1,6 +1,9 @@
 const { placeBooking, getSingleBooking, getWeeklyBookings, getAllBookings, getMonthlyBookings, getFilteredBookings, getBookingsFromDateRange, payBooking } = require("../controllers/booking-controller");
 const router = require("express").Router()
-const paypal = require('../controllers/paypal-controller');
+const { requestLimiter } = require("../auth/limiter");
+
+router.use(requestLimiter);
+
 
 router.post('/create/:buyerID/:ticketID', placeBooking);
 

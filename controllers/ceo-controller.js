@@ -69,6 +69,7 @@ module.exports = {
           if (!ceo) {
             return res.status(401).json({ message: "Invalid Email " });
           }
+          
     
           const validPassword = await bcrypt.compare(
             req.body.password,
