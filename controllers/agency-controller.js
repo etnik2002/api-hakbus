@@ -542,7 +542,7 @@ module.exports = {
           isActive: false,
       })
 
-      // await newAgency.save();
+      await newAgency.save();
 
       res.status(201).json(newAgency);
 
