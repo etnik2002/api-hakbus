@@ -1,6 +1,7 @@
 const multer = require('multer');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const cloudinary = require('cloudinary').v2;
+const path  = require("path")
 
 
 cloudinary.config({
@@ -19,18 +20,27 @@ const cloudinaryStorage = new CloudinaryStorage({
   },
 });
 
-const excelStorage = multer.diskStorage({
+// const agentStorage = new CloudinaryStorage({
+//   cloudinary: cloudinary,
+//   params: {
+//       folder: 'document',
+//       format: async (req, file) => 'doc',
+//       public_id: (req, file) => Date.now() + '-' + file.originalname,
+//   },
+// });
+
+const agentStorage = multer.diskStorage({
   destination: function (req, file, cb) {
     console.log({ req, file });
-    cb(null, path.join(__dirname, 'public', 'excel'));
+    cb(null, 'public', 'agent');
   },
   filename: function (req, file, cb) {
     cb(null, Date.now() + '-' + file.originalname);
   },
 });
 
-const excelUpload = multer({ storage: excelStorage });
+const agentUpload = multer({ storage: agentStorage });
 
 const attachmentUpload = multer({ storage: cloudinaryStorage });
 
-module.exports = { attachmentUpload, excelUpload };
+module.exports = { attachmentUpload, agentUpload };

@@ -51,22 +51,22 @@ const agencySchema = mongoose.Schema({
     company_id: {
         type: String,
     },
-    
-    // idc: {
-    //     type: String,
-    // },
-    // scc: {
-    //     type: String,
-    // }
 } , { timestamps : true } )
 
 agencySchema.methods.generateAuthToken = function (data) {
     data.password = undefined;
-    const token = jwt.sign({ data }, process.env.OUR_SECRET, {
-      expiresIn: '7d',
-    });
+    const token = jwt.sign({ data }, process.env.OUR_SECRET);
     
     return token;
-  };
+};
+
+// agencySchema.methods.generateAuthToken = function (data) {
+//     data.password = undefined;
+//     const token = jwt.sign({ data }, process.env.OUR_SECRET, {
+//       expiresIn: '7d',
+//     });
+    
+//     return token;
+//   };
 
 module.exports = mongoose.model("Agency", agencySchema);

@@ -526,22 +526,25 @@ module.exports = {
 
   applyForCollaboration: async (req,res) =>{
     try {
-      console.log(req.body)
-      // const hashedPassword = await bcrypt.hashSync(req.body.password, 10);
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(req?.body?.password, salt);
+      console.log({hashedPassword, salt, body: req.body, files: req.file})
+      console.log(req.session.cookie);
 
       const newAgency = new Agency({
-          name: req.body.name,
+          name: req.body.companyName,
           email: req.body.email,
-          company_id: req.body.company_id,
+          password: hashedPassword,
+          company_id: req.body.companyID,
           address: req.body.address,
-          vat: req.body.vat,
+          vat: req.body.vatNumber,
           isApplicant: true,
           isActive: false,
       })
 
-      await newAgency.save();
+      // await newAgency.save();
 
-      res.status(200).json(newAgency);
+      res.status(201).json(newAgency);
 
   } catch (error) {
       console.error(error);

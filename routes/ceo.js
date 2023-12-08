@@ -35,7 +35,7 @@ router.post('/activate/:id',activateAgency);
 
 router.post ('/add-city',ceoAccessToken, addCity);
 
-router.post ('/add-city-excel', excelUpload.single("file"), importCitiesFromExcel);
+// router.post ('/add-city-excel', excelUpload.single("file"), importCitiesFromExcel);
 
 router.post('/confirm-debt/:id/:notificationId', confirmDebtPayment);
 
