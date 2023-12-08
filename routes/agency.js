@@ -2,7 +2,7 @@ const router = require("express").Router();
 const { verifyActiveAgent, verifyDeletionPin, ceoAccessToken, verifyAgentAccessToken } = require("../auth/auth");
 const { createAgency, loginAsAgency, getAll,payDebt,getSearchedTickets, deleteAgency, editAgency, getAgenciesInDebt, confirmBookingPayment, getSingleAgency, getAgencyTickets, soldTickets, scanBooking, createScanningToken, getToken, deleteToken, sendBookingAttachment, getAgencySales, makeBookingForCustomers, applyForCollaboration, 
  } = require("../controllers/agency-controller");
-const { attachmentUpload } = require('../helpers/multer/multer');
+const { attachmentUpload, agentUpload } = require('../helpers/multer/multer');
 const { requestLimiter } = require("../auth/limiter");
 
 router.use(requestLimiter);
@@ -13,7 +13,7 @@ router.get('/debt', getAgenciesInDebt);
 
 router.post('/create',ceoAccessToken, createAgency);
 
-router.post('/sales/register', applyForCollaboration)
+router.post('/sales/register',agentUpload.single("document"), applyForCollaboration)
 
 router.post('/scan/:bookingID/:agencyID', scanBooking)
 

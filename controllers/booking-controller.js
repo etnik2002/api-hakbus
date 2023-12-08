@@ -204,7 +204,7 @@ module.exports = {
         await Ceo.findByIdAndUpdate(ceo[0]._id, { $inc: { totalProfit: totalPrice } });
       });
       
-      const destination = { from: req.body.from, to: req.body.to };
+      const destination = { from: req.body.from.value, to: req.body.to.value };
       const dateTime = { date: ticket.date, time: findTime(ticket, req.body.from, req.body.to) };
 
       await generateQRCode(newBooking._id.toString(), newBooking.passengers, destination, dateTime, ticket?.lineCode?.freeLuggages);

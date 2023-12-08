@@ -11,6 +11,7 @@ const City = require("../models/City");
 
 
 function calculateAge(birthDate) {
+  console.log({birthDate});
   const today = new Date();
   const birthDateArray = birthDate.split("-"); 
   const birthDateObj = new Date(
@@ -29,24 +30,51 @@ function calculateAge(birthDate) {
 }
 
 
-const findPrice = (ticket, from, to) => {
-  const stop = ticket?.stops.find(
-    (s) =>
-      (s.from[0]?.city === from && s.to.some((t) => t.city === to)) ||
-      (s.from[0]?.city === to && s.to.some((t) => t.city === from))
-  );
 
-  return stop ? stop.price : null;
+const findPrice = (ticket, from, to) => {
+  const stop = ticket?.stops?.find(s => s.from.some(cityInfo => cityInfo.code === from) && s.to.some(t => t.code === to));
+  if (stop) {
+    return stop.price;
+  } else {
+    return "Price not found";
+  }
 };
 
 const findChildrenPrice = (ticket, from, to) => {
-  const stop = ticket?.stops.find(
-    (s) =>
-      (s.from[0]?.city === from && s.to.some((t) => t.city === to)) ||
-      (s.from[0]?.city === to && s.to.some((t) => t.city === from))
-  );
+  console.log({from, to});
+  const stop = ticket?.stops?.find(s => s.from.some(cityInfo => cityInfo.code === from) && s.to.some(t => t.code === to));
+  if (stop) {
+    return stop.childrenPrice;
+  } else {
+    return "Children Price not found";
+  }
+};
 
-  return stop ? stop.childrenPrice : null;
+
+const findTime = (ticket, from, to) => {
+  const stop = ticket?.stops?.find(
+    (s) =>
+      s.from.some((cityInfo) => cityInfo.code === from) &&
+      s.to.some((t) => t.code === to)
+  );
+  if (stop) {
+    return stop.time;
+  } else {
+    return "Time not found";
+  }
+};
+
+const findDate = (ticket, from, to) => {
+  const stop = ticket.stops.find(
+    (s) =>
+      s.from.some((cityInfo) => cityInfo.code === from) &&
+      s.to.some((t) => t.code === to)
+  );
+  if (stop) {
+    return stop.date;
+  } else {
+    return "Date not found";
+  }
 };
 
 
@@ -354,33 +382,35 @@ module.exports = {
       const toDate = moment(req.query.toDate).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
       
 
-      const cities = await City.find({
-        $or: [
-          {
-            name: req.query.from,
-          },
-          {
-            name: req.query.to,
-          }
-        ]
-      })
-
       const distinctTicketIds = await Ticket.distinct('_id', {
         $or: [
           {
-            'stops.from.city': req.query.from,
-            'stops.to.city': req.query.to,
-          },
-          {
-            'stops.from.city': req.query.to,
-            'stops.to.city': req.query.from,
-          },
-        ],
+            'stops.from.code': req.query.from,
+            'stops.to.code': req.query.to,
+          }
+        ]
       });
+
+      const query = {
+        $match: {
+          _id: { $in: distinctTicketIds },
+          date: { $gte: fromDate, $lte: toDate },
+          numberOfTickets: { $gt: 0 },
+          isActive: true
+        }
+      }
       
-      const uniqueTickets = await Ticket.find({_id: { $in: distinctTicketIds }, date: { $gte: fromDate, $lte: toDate }, numberOfTickets: { $gt: 0 }}).populate('lineCode');
-      
-      return res.status(200).json(uniqueTickets);
+      console.log(query);
+
+      const uniqueTickets = await Ticket.aggregate([
+        query
+      ])
+
+      if(uniqueTickets.length == 0) {
+        return res.status(204).json("no routes found");
+      }
+
+        return res.status(200).json(uniqueTickets);
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: 'Internal server error' + error });
@@ -428,40 +458,43 @@ module.exports = {
 
   makeBookingForCustomers: async (req,res) => {
     try {
-      console.log(req.params)
       const agency = await Agency.findById(req.params.sellerID);
       const ceo = await Ceo.aggregate([{$match: {}}]);
-      const type = req.body.type;
-      const ticket = await Ticket.findById(req.params.ticketID);
+      const ticket = await Ticket.findById(req.params.ticketID).populate("lineCode");
       
       
-      let totalPrice = req.body.ticketPrice;
+      let totalPrice = 0;
+      console.log({totalPrice});
       const passengers = req.body.passengers?.map((passenger) => {
-        const age = calculateAge(passenger.birthdate);
-        const passengerPrice = age <= 10 ? findChildrenPrice(ticket, req.body.from, req.body.to) : findPrice(ticket, req.body.from, req.body.to);
-        console.log({passenger, passengerPrice})
+        const age = calculateAge(passenger.birthDate);
+        const passengerPrice = age <= 10 ? findChildrenPrice(ticket, req.body.from.code, req.body.to.code) : findPrice(ticket, req.body.from.code, req.body.to.code);
+        console.log({passengerPrice});
+        totalPrice += passengerPrice + (ticket?.lineCode?.luggagePrice * passenger.numberOfLuggages);
         return {
           email: passenger.email,
           phone: passenger.phone,
           fullName: passenger.fullName,
           birthDate: passenger.birthdate,
-          age: calculateAge(passenger.birthdate),
+          age: calculateAge(passenger.birthDate),
           price: passengerPrice,
+          numberOfLuggages: passenger.numberOfLuggages,
+          luggagePrice: ticket?.lineCode?.luggagePrice * passenger.numberOfLuggages,
         };
       });
       
       const agencyPercentage = agency.percentage / 100;
       const agencyEarnings = (totalPrice * agencyPercentage);
-      const ourEarnings = req.body.ticketPrice - agencyEarnings;
-      const sendEmailNotification = req.body.sendEmailNotification;
-      const sendSmsNotification = req.body.sendSmsNotification;
+      const ourEarnings = totalPrice - agencyEarnings;
+      console.log({tp: req.body.ticketPrice, totalPrice,agencyPercentage, agencyEarnings, ourEarnings});
 
       const newBooking = await new Booking({
         seller: agency?._id,
         ticket: req.params.ticketID,
-        from: req.body.from,
-        to: req.body.to,
-        price: req.body.ticketPrice,
+        from: req.body.from.value,
+        to: req.body.to.value,
+        fromCode: req.body.from.code,
+        toCode: req.body.to.code,
+        price: totalPrice,
         passengers: passengers,
         isPaid: true
       })
@@ -479,68 +512,39 @@ module.exports = {
         await Ceo.findByIdAndUpdate(ceo[0]._id, { $inc: { totalProfit: ourEarnings } });
       });
   
-      await generateQRCode(newBooking._id.toString(), req.body.passengers);
+      const destination = { from: req.body.from.value, to: req.body.to.value };
+      const dateTime = { date: ticket.date, time: findTime(ticket, req.body.from, req.body.to) };
 
+      await generateQRCode(newBooking._id.toString(), newBooking.passengers, destination, dateTime, ticket?.lineCode?.freeLuggages);
 
-      if (sendEmailNotification) {
-        passengers.forEach(async (passenger) => {
-          await sendOrderToUsersEmail(passenger.email || user.email , ticket, '6499b15485cb1e6f21a34a46', 'HakBus customer', passenger.fullName, totalPrice, bookingType);
-        }).then((res) => {
-          // console.log(res)
-        }).catch((err) => {
-          console.log(err)
-        })
-      }
-
-      var seatNotification = {};
-
-      if(ticket.numberOfReturnTickets <= ceo[0].nrOfSeatsNotification + 1) {
-        seatNotification = {
-          message: `Kanë mbetur vetëm 2 vende të lira për linjën  (${ticket.to} / ${ticket.from}) me datë ${ticket.returnDate}`,
-          title: `2 ulëse të mbetura`,
-          ticket_id: ticket._id,
-          link: `${process.env.FRONTEND_URL}/ticket/edit/${ticket.id}`,
-          confirmed: false,
-        };
-        await Ceo.findByIdAndUpdate(ceo[0]._id, { $push: { notifications: seatNotification } });
-      } else if (ticket.numberOfTickets <= ceo[0].nrOfSeatsNotification + 1) {
-        seatNotification = {
-          message: `Kanë mbetur vetëm 2 vende të lira për linjën (${ticket.from} / ${ticket.to}) me datë ${ticket.date}`,
-          title: `2 ulëse të mbetura`,
-          ticket_id: ticket._id,
-          link: `${process.env.FRONTEND_URL}/ticket/edit/${ticket.id}`,
-          confirmed: false,
-        };
-        await Ceo.findByIdAndUpdate(ceo[0]._id, { $push: { notifications: seatNotification } });
-      }
-
-      const createdBooking = await Booking.findById(newBooking._id).populate('ticket seller')
-
-      console.log(createdBooking)
-      res.status(200).json(createdBooking);
+      res.status(200).json(newBooking);
     } catch (error) {
+      console.log(error);
       return res.status(500).json(`error -> ${error}`);
     }
   },
 
   applyForCollaboration: async (req,res) =>{
     try {
-      console.log(req.body)
-      // const hashedPassword = await bcrypt.hashSync(req.body.password, 10);
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(req?.body?.password, salt);
+      console.log({hashedPassword, salt, body: req.body, files: req.file})
+      console.log(req.session.cookie);
 
       const newAgency = new Agency({
-          name: req.body.name,
+          name: req.body.companyName,
           email: req.body.email,
-          company_id: req.body.company_id,
+          password: hashedPassword,
+          company_id: req.body.companyID,
           address: req.body.address,
-          vat: req.body.vat,
+          vat: req.body.vatNumber,
           isApplicant: true,
           isActive: false,
       })
 
       await newAgency.save();
 
-      res.status(200).json(newAgency);
+      res.status(201).json(newAgency);
 
   } catch (error) {
       console.error(error);
