@@ -1,6 +1,6 @@
 const cluster = require("cluster");
 const Ticket = require("./models/Ticket");
-const fetch = require("node-fetch");
+const { default: fetch } = require("node-fetch");
 const numCPUs = require("os").cpus().length;
 
 if (cluster.isMaster) {
@@ -12,8 +12,9 @@ if (cluster.isMaster) {
 
   cluster.on("exit", (worker, code, signal) => {
     console.log(`Worker ${worker.process.pid} died`);
-    cluster.fork();
+    cluster.fork(); 
   });
+  
 } else {
   const express = require("express");
   const app = express();
@@ -22,9 +23,6 @@ if (cluster.isMaster) {
   const bodyParser = require("body-parser");
   const session = require('express-session');
   const MongoStore = require('connect-mongo');
-  const helmet = require('helmet');
-  const rateLimit = require('express-rate-limit');
-  const csrf = require('csurf');
   require("dotenv").config();
 
   const userRoutes = require("./routes/user");
@@ -35,17 +33,23 @@ if (cluster.isMaster) {
   const driverRoutes = require("./routes/driver");
   const ceoRoutes = require("./routes/ceo");
   const notificationRoutes = require("./routes/notification");
+  const axios = require("axios");
   var cookieParser = require('cookie-parser');
 
-  app.use(helmet());
+  app.use(express.json());
+  app.use(bodyParser.json());
   app.use(cors());
   app.use(cookieParser(process.env.OUR_SECRET));
-
-  const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, 
-    max: 100, 
+  
+  app.use(function (req, res, next) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Allow-Credentials', true);
+    next();
   });
-  app.use(limiter);
+
+
 
   app.use(
     express.urlencoded({
@@ -53,18 +57,21 @@ if (cluster.isMaster) {
     })
   );
 
+
+  app.use(session({
+    secret: process.env.OUR_SECRET,
+    resave: false,
+    saveUninitialized: false
+  }));
+
   app.use(
     session({
+      secret: process.env.OUR_SECRET,
       resave: false,
       saveUninitialized: true,
       store: MongoStore.create({
         mongoUrl: process.env.DATABASE_URL,
       }),
-      cookie: {
-        secure: true,
-        httpOnly: true,
-        sameSite: 'strict',
-      },
     })
   );
 
@@ -81,10 +88,10 @@ if (cluster.isMaster) {
   app.use('/line', lineRoutes);
   app.use('/notification', notificationRoutes);
 
-  app.get('/', (req, res) => {
-    res.json({ message: "HakBus API" });
-  });
-
+  app.get('/', (req,res) => {
+      res.json({message: "HakBus API"})
+  })
+  
   const PORT = process.env.PORT || 4462;
   app.listen(PORT, () => {
     console.log(`Worker ${process.pid} listening on http://localhost:${PORT}`);
