@@ -179,29 +179,9 @@ module.exports = {
       });
   
       await newBooking.save().then(async () => {
-        if (type) {
           await Ticket.findByIdAndUpdate(req.params.ticketID, {
             $inc: { numberOfTickets: -numberOfPsg },
           });
-  
-          await Ticket.findByIdAndUpdate(req.params.ticketID, {
-            $inc: { numberOfReturnTickets: -numberOfPsg },
-          });
-        } 
-
-        if (onlyReturn) {
-          await Ticket.findByIdAndUpdate(req.params.ticketID, {
-            $inc: { numberOfReturnTickets: -numberOfPsg },
-          });
-        }
-        
-        else {
-          await Ticket.findByIdAndUpdate(req.params.ticketID, {
-            $inc: { numberOfTickets: -numberOfPsg },
-          });
-        }
-  
-        await Ceo.findByIdAndUpdate(ceo[0]._id, { $inc: { totalProfit: totalPrice } });
       });
       
       const destination = { from: req.body.from.value, to: req.body.to.value };
