@@ -77,6 +77,33 @@ const findDate = (ticket, from, to) => {
   }
 };
 
+function detectPayment(ticket, isPaid) {
+  const firstStop = ticket.stops[0];
+
+  if (firstStop) {
+    const currentTime = new Date();
+    const firstStopTime = new Date(firstStop.date); 
+    const timeComponents = firstStop.time.split(':');
+    
+    firstStopTime.setHours(parseInt(timeComponents[0], 10));
+    firstStopTime.setMinutes(parseInt(timeComponents[1], 10));
+    
+    console.log({ firstStop, currentTime, firstStopTime });
+    console.log({difference: firstStopTime.getTime(), difference2: currentTime.getTime(), diff: firstStopTime.getTime() - currentTime.getTime(), time: 24 * 60 * 60 * 1000})
+
+    if (firstStopTime.getTime() - currentTime.getTime() < 24 * 60 * 60 * 1000) {
+      return true;
+    }
+  }
+
+  if (isPaid) {
+    return true;
+  }
+
+  return false;
+}
+
+
 
 module.exports = {
 
@@ -93,8 +120,6 @@ module.exports = {
                 percentage: req.body.percentage,
                 city:req.body.city,
                 country:req.body.country,
-                // idc: req.body.idc,
-                // scc: req.body.scc,
             })
 
             await newAgency.save();
@@ -419,8 +444,17 @@ module.exports = {
 
   confirmBookingPayment: async (req,res) => {
     try {
-        const { id } = req.params;
-        await Booking.findByIdAndUpdate(id, { $set: { isPaid: true } });
+        const { id,agency_id } = req.params;
+        const agency = await Agency.findById(agency_id);
+        const booking = await Booking.findByIdAndUpdate(id, { $set: { isPaid: true } });
+        const destination = { from: booking.from, to: booking.to };
+        const dateTime = { date: booking.date, time: findTime(booking.ticket, req.body.from, req.body.to) };
+        await generateQRCode(booking._id.toString(), booking.passengers, destination, dateTime, booking.ticket?.lineCode?.freeLuggages);
+        const agencyPercentage = agency.percentage / 100;
+        const agencyEarnings = (booking.price * agencyPercentage);
+        agency.debt += agencyEarnings;
+        await agency.save();
+
         res.status(200).json("Successfully confirmed payment"); 
 
     } catch (error) {
@@ -464,11 +498,9 @@ module.exports = {
       
       
       let totalPrice = 0;
-      console.log({totalPrice});
       const passengers = req.body.passengers?.map((passenger) => {
         const age = calculateAge(passenger.birthDate);
         const passengerPrice = age <= 10 ? findChildrenPrice(ticket, req.body.from.code, req.body.to.code) : findPrice(ticket, req.body.from.code, req.body.to.code);
-        console.log({passengerPrice});
         totalPrice += passengerPrice + (ticket?.lineCode?.luggagePrice * passenger.numberOfLuggages);
         return {
           email: passenger.email,
@@ -485,7 +517,6 @@ module.exports = {
       const agencyPercentage = agency.percentage / 100;
       const agencyEarnings = (totalPrice * agencyPercentage);
       const ourEarnings = totalPrice - agencyEarnings;
-      console.log({tp: req.body.ticketPrice, totalPrice,agencyPercentage, agencyEarnings, ourEarnings});
 
       const newBooking = await new Booking({
         seller: agency?._id,
@@ -496,27 +527,30 @@ module.exports = {
         toCode: req.body.to.code,
         price: totalPrice,
         passengers: passengers,
-        isPaid: true
+        isPaid: detectPayment(ticket, req.body.isPaid)
       })
+
 
       await newBooking.save().then(async () => {
           await Ticket.findByIdAndUpdate(req.params.ticketID, {
             $inc: { numberOfTickets: -1 },
           });
   
-          console.log({ourEarnings})
-        await Agency.findByIdAndUpdate(req.params.sellerID, {
-          $inc: { totalSales: 1, profit: agencyEarnings, debt: ourEarnings },
-        });
-  
-        await Ceo.findByIdAndUpdate(ceo[0]._id, { $inc: { totalProfit: ourEarnings } });
+        if(detectPayment(ticket, req.body.isPaid)) {
+          await Agency.findByIdAndUpdate(req.params.sellerID, {
+            $inc: { totalSales: 1, profit: agencyEarnings, debt: ourEarnings },
+          });
+        }
       });
   
       const destination = { from: req.body.from.value, to: req.body.to.value };
-      const dateTime = { date: ticket.date, time: findTime(ticket, req.body.from, req.body.to) };
+      const dateTime = { date: ticket.date, time: findTime(ticket, req.body.from.code, req.body.to.code) };
+      const dateString = findDate(ticket, req.body.from.code, req.body.to.code)
+      console.log({dateString})
 
-      await generateQRCode(newBooking._id.toString(), newBooking.passengers, destination, dateTime, ticket?.lineCode?.freeLuggages);
-
+      if(detectPayment(ticket, req.body.isPaid)){
+        await generateQRCode(newBooking._id.toString(), newBooking.passengers, destination, dateTime,new Date(dateString).toDateString(), ticket?.lineCode?.freeLuggages);
+      }
       res.status(200).json(newBooking);
     } catch (error) {
       console.log(error);

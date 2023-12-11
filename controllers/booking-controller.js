@@ -185,9 +185,10 @@ module.exports = {
       });
       
       const destination = { from: req.body.from.value, to: req.body.to.value };
-      const dateTime = { date: ticket.date, time: findTime(ticket, req.body.from, req.body.to) };
+      const dateTime = { date: ticket.date, time: findTime(ticket, req.body.from.code, req.body.to.code) };
+      const dateString = findDate(ticket, req.body.from.code, req.body.to.code)
 
-      await generateQRCode(newBooking._id.toString(), newBooking.passengers, destination, dateTime, ticket?.lineCode?.freeLuggages);
+      await generateQRCode(newBooking._id.toString(), newBooking.passengers, destination, dateTime,new Date(dateString).toDateString(), ticket?.lineCode?.freeLuggages);
       
       var seatNotification = {};
       if (ticket.numberOfTickets <= ceo[0].nrOfSeatsNotification + 1) {
@@ -291,18 +292,21 @@ module.exports = {
       
           const fromDate = moment(req.query.from, 'DD-MM-YYYY').toISOString();
           const toDate = moment(req.query.to, 'DD-MM-YYYY').toISOString();
-      
+          
           let query = {
             createdAt: { $gte: fromDate, $lte: toDate },
           };
-      
+          
           if (req.query.agency) {
             query['seller'] = req.query.agency;
           }
-      
+          
           if (req.query.city) {
             query['seller.city'] = req.query.city;
           }
+          
+          console.log({req: req.query})
+          console.log({query})
       
           const filteredBookings = await Booking.find(query)
           .populate({

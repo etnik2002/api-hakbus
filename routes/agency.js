@@ -19,7 +19,7 @@ router.post('/scan/:bookingID/:agencyID', scanBooking)
 
 router.post('/booking/create/:sellerID/:ticketID',verifyActiveAgent, makeBookingForCustomers);
 
-router.post('/payment/confirm/:id', confirmBookingPayment);
+router.post('/payment/confirm/:id/:agency_id', confirmBookingPayment);
 
 router.post('/attachment/send', attachmentUpload.array('attachments'), sendBookingAttachment)
 

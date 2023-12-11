@@ -22,7 +22,7 @@ const storage = new CloudinaryStorage({
 
 const multerUploader = multer({ storage: storage });
 
-async function generateQRCode(data, passengers, destination, dateTime, freeLuggages) {
+async function generateQRCode(data, passengers, destination, dateTime,dateString, freeLuggages) {
   try {
     const qrOptions = {
       type: 'png',
@@ -144,6 +144,7 @@ async function generateQRCode(data, passengers, destination, dateTime, freeLugga
                             <div class="booking-details">
                                 <p><strong>Destination:</strong> ${destination.from} -> ${destination.to}</p>
                                 <p><strong>Date:</strong> ${moment(dateTime.date).format("DD-MM-YYYY")}, <strong>Time:</strong> ${dateTime.time}</p>
+                                <p><strong>Day:</strong> ${dateString}</p>
                                 <p> ${passenger?.age <= 10 ? "Child" : "Adult"}</p>
                                 <p>Booking ID: ${data}</p>
                                 <p>Free luggages: ${freeLuggages}</p>

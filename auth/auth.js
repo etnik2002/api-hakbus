@@ -57,9 +57,9 @@ module.exports = {
     verifyDeletionPin: async (req,res, next) => {
         try {
             const id = new mongoose.Types.ObjectId(req.body.userID)
-            const ceo = await Ceo.findById(id);
-
-            if(ceo.deletionPin != req.body.pin && ceo._id != req.body.userID) {
+            const ceo = await Ceo.find();
+            console.log(ceo)
+            if(ceo[0].deletionPin != req.body.pin && ceo[0]._id != req.body.userID) {
                 return res.status(401).json("Wrong pin");
             }
             next();
