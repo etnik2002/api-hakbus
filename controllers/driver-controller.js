@@ -185,7 +185,7 @@ module.exports = {
         const editedData = {
           name: req.body.name || driver.name,
           email: req.body.email || driver.email,
-          password: driver.password,
+          password: req.body.password || driver.password,
           code: req.body.code || driver.code,
           lines: req.body.lines || driver.lines,
           scannedBookings: driver.scannedBookings

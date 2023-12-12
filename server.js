@@ -1,6 +1,8 @@
 const cluster = require("cluster");
 const Ticket = require("./models/Ticket");
 const { default: fetch } = require("node-fetch");
+const Booking = require("./models/Booking");
+const { sendBookingCancellationNotification } = require("./helpers/mail");
 const numCPUs = require("os").cpus().length;
 
 if (cluster.isMaster) {
@@ -20,6 +22,7 @@ if (cluster.isMaster) {
   const app = express();
   const mongoose = require("mongoose");
   const cors = require("cors");
+  const moment = require("moment")
   const bodyParser = require("body-parser");
   const session = require('express-session');
   const MongoStore = require('connect-mongo');
@@ -92,6 +95,30 @@ if (cluster.isMaster) {
       res.json({message: "HakBus API"})
   })
   
+  const checkAndCancelBookings = async () => {
+    try {
+      const today = moment(new Date()).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
+      const bookings = await Booking.find({ date: today });
+      console.log({ bookings, today: new Date(today) });
+  
+      for (const booking of bookings) {
+        if (!booking.isPaid) {
+          console.log({ paid: booking.isPaid });
+  
+          for (const passenger of booking.passengers) {
+            await sendBookingCancellationNotification(passenger, booking);
+          }
+  
+          await Booking.findByIdAndRemove(booking._id);
+        }
+      }
+    } catch (error) {
+      console.error('Error in booking cancellation process:', error);
+    }
+  };
+  
+  // setInterval(checkAndCancelBookings, 1000 * 10);
+
   const PORT = process.env.PORT || 4462;
   app.listen(PORT, () => {
     console.log(`Worker ${process.pid} listening on http://localhost:${PORT}`);

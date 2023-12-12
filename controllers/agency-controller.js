@@ -168,7 +168,9 @@ module.exports = {
             email: req.body.email ? req.body.email : agency.email,
             password: req.body.password ? hashedPassword : agency.password,
             phone: req.body.phone ? req.body.phone : agency.phone,
-            percentage: req.body.percentage ? req.body.percentage : agency.percentage
+            percentage: req.body.percentage ? req.body.percentage : agency.percentage,
+            city: req.body.city || agency.city,
+            country: req.body.country || agency.country,
           }
     
           const updatedAgency = await Agency.findByIdAndUpdate(req.params.id, editAgency);
@@ -521,6 +523,7 @@ module.exports = {
       const newBooking = await new Booking({
         seller: agency?._id,
         ticket: req.params.ticketID,
+        date: findDate(ticket, req.body.from.code, req.body.to.code),
         from: req.body.from.value,
         to: req.body.to.value,
         fromCode: req.body.from.code,

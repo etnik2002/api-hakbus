@@ -164,6 +164,7 @@ module.exports = {
         buyer: buyerObjectId,
         ticket: req.params.ticketID,
         firstname: req.body.firstname,
+        date: findDate(ticket, req.body.from.code, req.body.to.code),
         from: req.body.from.value,
         to: req.body.to.value,
         fromCode: req.body.from.code,

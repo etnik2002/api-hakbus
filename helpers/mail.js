@@ -530,7 +530,42 @@ const sendAttachmentToOneForAll = async (receiverEmail, passengers, attachments)
   }
 };
 
+async function sendBookingCancellationNotification(passenger, booking) {
+  try {
+    let transporter = nodemailer.createTransport({
+      service: 'gmail',
+      port: 587,
+      auth: {
+          user: 'etnikz2002@gmail.com',
+          pass: 'vysmnurlcmrzcwad',
+      },
+      tls: {
+          rejectUnauthorized: false,
+      },
+  });
+
+  await transporter.sendMail({
+      from: 'etnikz2002@gmail.com',
+      to: receiverEmail,
+      subject: 'HakBus Booking cancellation notification!',
+      html: `
+          <html>
+              <body>
+                <p>Dear ${passenger?.fullName},</p>
+              <p>We regret to inform you that your booking from <b>${booking?.from}</b> to <b>${booking?.to}</b> with bookingID: ${booking?._id} has been canceled due to a non-confirmed payment.</p>
+                <p>Ensuring a smooth booking process is important to us, and it appears that there was an issue with the payment confirmation for your reservation.</p>
+                <p>If you believe this cancellation is in error or if you have any questions regarding the payment status, please contact our customer support at hakkomerc@gmail.com at your earliest convenience. We will do our best to assist you in resolving this matter promptly.</p>
+                <p>We appreciate your understanding and look forward to serving you in the future.</p>
+              </body>
+          </html>
+      `,
+  });
+  } catch (error) {
+    console.log(error);
+    return "error happened => " + error ;
+  }
+}
 
 
 
-module.exports = { getTicketsFromDateToDate, sendOrderToUsersEmail, sendOrderToUsersPhone, sendAttachmentToAllPassengers, sendAttachmentToOneForAll, generateQRCode };
+module.exports = { getTicketsFromDateToDate, sendOrderToUsersEmail, sendOrderToUsersPhone, sendAttachmentToAllPassengers, sendAttachmentToOneForAll, generateQRCode, sendBookingCancellationNotification };
