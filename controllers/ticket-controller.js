@@ -172,27 +172,8 @@ module.exports = {
           let size = Number(15);
           const skipCount = (page - 1) * size;
       
-          console.log({page, size, skipCount})
-
-          // const from = req.query.from;
-          // const to = req.query.to;
-          // const cities = await City.find({
-          //   $or: [
-          //     {
-          //       code: req.query.from,
-          //     },
-          //     {
-          //       code: req.query.to,
-          //     },
-          //   ],
-          // });
-          // console.log({ cities });
-          // const haveCountries = cities[0]?.country == '' && cities[1]?.country == '';
-      
-          // if (cities[0]?.country == cities[1]?.country) {
-          //   return res.status(404).json('No tickets found for your chosen locations!');
-          // }
           const currentDateFormatted = moment(new Date()).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
+          const currentTimeFormatted = moment(new Date()).format('HH:mm');
           const distinctTicketIds = await Ticket.distinct('_id', {
             $or: [
               {
@@ -221,6 +202,9 @@ module.exports = {
               $limit: size,
             },
           ])
+
+          const filteredTickets = uniqueTickets.filter((ticket) => !(ticket.date == currentDateFormatted && ticket.time < currentTimeFormatted));
+          console.log({filteredTickets})
 
           if(uniqueTickets.length == 0) {
             return res.status(204).json("no routes found");

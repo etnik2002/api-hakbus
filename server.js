@@ -98,10 +98,11 @@ if (cluster.isMaster) {
   const checkAndCancelBookings = async () => {
     try {
       const today = moment(new Date()).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
-      const bookings = await Booking.find({ date: today });
-      console.log({ bookings, today: new Date(today) });
+      const bookings = await Booking.find({ });
   
       for (const booking of bookings) {
+        console.log({ today: new Date(today), bdate: new Date(booking.date) });
+  
         if (!booking.isPaid) {
           console.log({ paid: booking.isPaid });
   

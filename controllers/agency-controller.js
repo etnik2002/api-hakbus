@@ -430,7 +430,10 @@ module.exports = {
       console.log(query);
 
       const uniqueTickets = await Ticket.aggregate([
-        query
+        query,
+        {
+          $sort: { date: 1 },
+        },
       ])
 
       if(uniqueTickets.length == 0) {
@@ -519,6 +522,7 @@ module.exports = {
       const agencyPercentage = agency.percentage / 100;
       const agencyEarnings = (totalPrice * agencyPercentage);
       const ourEarnings = totalPrice - agencyEarnings;
+
 
       const newBooking = await new Booking({
         seller: agency?._id,

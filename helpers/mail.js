@@ -546,7 +546,7 @@ async function sendBookingCancellationNotification(passenger, booking) {
 
   await transporter.sendMail({
       from: 'etnikz2002@gmail.com',
-      to: receiverEmail,
+      to: passenger?.email,
       subject: 'HakBus Booking cancellation notification!',
       html: `
           <html>
