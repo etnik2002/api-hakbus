@@ -9,6 +9,33 @@ const Booking = require("../models/Booking");
 const City = require("../models/City");
 const cron = require("cron");
 
+
+const findTime = (ticket, from, to) => {
+  const stop = ticket?.stops?.find(
+    (s) =>
+      s.from.some((cityInfo) => cityInfo.code === from) &&
+      s.to.some((t) => t.code === to)
+  );
+  if (stop) {
+    return stop.time;
+  } else {
+    return "Time not found";
+  }
+};
+
+const findDate = (ticket, from, to) => {
+  const stop = ticket.stops.find(
+    (s) =>
+      s.from.some((cityInfo) => cityInfo.code === from) &&
+      s.to.some((t) => t.code === to)
+  );
+  if (stop) {
+    return stop.date;
+  } else {
+    return "Date not found";
+  }
+};
+
 module.exports = {
 
   registerTicket: async (req, res) => {
@@ -202,14 +229,28 @@ module.exports = {
             },
           ])
 
-          const filteredTickets = uniqueTickets.filter((ticket) => !(ticket.date == currentDateFormatted && ticket.time < currentTimeFormatted));
-          console.log({filteredTickets})
 
-          if(uniqueTickets.length == 0) {
+          const filteredTickets = uniqueTickets.filter((ticket) => {
+            const ticketDate = moment(findDate(ticket, req.query.from, req.query.to));
+            const ticketTime = moment(findTime(ticket, req.query.from, req.query.to), 'HH:mm');
+            const currentDate = moment(currentDateFormatted);
+            const currentTime = moment(currentTimeFormatted, 'HH:mm');
+          
+            console.log({ ticketDate, ticketTime, currentDate, currentTime });
+          
+            return ticketDate.isSame(currentDate, 'day') && ticketTime.isBefore(currentTime);
+          });
+          
+                    
+          const remainingTickets = uniqueTickets.filter((ticket) => !filteredTickets.includes(ticket));
+          console.log({remainingTickets})
+
+
+          if(remainingTickets.length == 0) {
             return res.status(204).json("no routes found");
           }
 
-            return res.status(200).json(uniqueTickets);
+            return res.status(200).json(remainingTickets);
           } catch (error) {
           console.error(error);
           res.status(500).json({ message: "Internal error -> " + error });
