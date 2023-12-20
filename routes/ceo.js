@@ -3,7 +3,8 @@ const { ceoAccessToken } = require("../auth/auth");
 const { createCeo, login, getStats, deactivateAgency ,activateAgency,editObserver,getObserverById, addCity, getAllCities, deleteCity, getCeoById, confirmDebtPayment, getAllObservers, deleteObs, setNrOfSeatsNotification, sendBookingToEmail, getAllCitiesPagination, changePassword, changeEmail, changePin, importCitiesFromExcel} = require("../controllers/ceo-controller");
 const { attachmentUpload, excelUpload } = require('../helpers/multer/multer');
 const { requestLimiter } = require("../auth/limiter");
-
+const apicache = require("apicache");
+const cache = apicache.middleware;
 router.use(requestLimiter);
 
 
@@ -21,7 +22,7 @@ router.post('/observer/edit/:id', editObserver);
 
 router.post('/observer/delete/:id', deleteObs);
 
-router.get('/all-cities', getAllCities);
+router.get('/all-cities',cache('1 minutes'), getAllCities);
 
 router.get('/all-cities-pagination', getAllCitiesPagination);
 

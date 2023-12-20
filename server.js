@@ -18,6 +18,8 @@ if (cluster.isMaster) {
   });
   
 } else {
+  require("dotenv").config();
+  const helmet = require("helmet");
   const express = require("express");
   const app = express();
   const mongoose = require("mongoose");
@@ -26,7 +28,7 @@ if (cluster.isMaster) {
   const bodyParser = require("body-parser");
   const session = require('express-session');
   const MongoStore = require('connect-mongo');
-  require("dotenv").config();
+  const apicache = require("apicache");
 
   const userRoutes = require("./routes/user");
   const agencyRoutes = require("./routes/agency");
@@ -43,6 +45,7 @@ if (cluster.isMaster) {
   app.use(bodyParser.json());
   app.use(cors());
   app.use(cookieParser(process.env.OUR_SECRET));
+  app.use(helmet());
   
   app.use(function (req, res, next) {
     res.setHeader('Access-Control-Allow-Origin', '*');

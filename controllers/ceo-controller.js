@@ -252,6 +252,7 @@ module.exports = {
           ];
       
           const allCities = await City.aggregate(pipeline);
+          console.log("req came")
           res.status(200).json(allCities);
         } catch (error) {
           console.log(error);
