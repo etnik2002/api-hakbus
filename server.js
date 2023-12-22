@@ -4,6 +4,8 @@ const { default: fetch } = require("node-fetch");
 const Booking = require("./models/Booking");
 const { sendBookingCancellationNotification } = require("./helpers/mail");
 const numCPUs = require("os").cpus().length;
+const moment = require("moment")
+
 
 if (cluster.isMaster) {
   console.log(`Master ${process.pid} is running`);
@@ -24,7 +26,6 @@ if (cluster.isMaster) {
   const app = express();
   const mongoose = require("mongoose");
   const cors = require("cors");
-  const moment = require("moment")
   const bodyParser = require("body-parser");
   const session = require('express-session');
   const MongoStore = require('connect-mongo');
@@ -64,12 +65,6 @@ if (cluster.isMaster) {
   );
 
 
-  app.use(session({
-    secret: process.env.OUR_SECRET,
-    resave: false,
-    saveUninitialized: false
-  }));
-
   app.use(
     session({
       secret: process.env.OUR_SECRET,
@@ -96,32 +91,7 @@ if (cluster.isMaster) {
 
   app.get('/', (req,res) => {
       res.json({message: "HakBus API"})
-  })
-  
-  const checkAndCancelBookings = async () => {
-    try {
-      const today = moment(new Date()).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
-      const bookings = await Booking.find({ });
-  
-      for (const booking of bookings) {
-        console.log({ today: new Date(today), bdate: new Date(booking.date) });
-  
-        if (!booking.isPaid) {
-          console.log({ paid: booking.isPaid });
-  
-          for (const passenger of booking.passengers) {
-            await sendBookingCancellationNotification(passenger, booking);
-          }
-  
-          await Booking.findByIdAndRemove(booking._id);
-        }
-      }
-    } catch (error) {
-      console.error('Error in booking cancellation process:', error);
-    }
-  };
-  
-  // setInterval(checkAndCancelBookings, 1000 * 10);
+  })  
 
   const PORT = process.env.PORT || 4462;
   app.listen(PORT, () => {

@@ -35,7 +35,7 @@
     "multer-storage-cloudinary": "^4.0.0",
     "node-fetch": "^2.6.12",
     "nodemailer": "^6.9.3",
-    "nodemon": "^2.0.22",
+    "nodemon": "^3.0.2",
     "qrcode": "^1.5.3"
   }
 }
