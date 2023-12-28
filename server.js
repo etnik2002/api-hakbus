@@ -64,12 +64,6 @@ if (cluster.isMaster) {
   );
 
 
-  app.use(session({
-    secret: process.env.OUR_SECRET,
-    resave: false,
-    saveUninitialized: false
-  }));
-
   app.use(
     session({
       secret: process.env.OUR_SECRET,
@@ -94,9 +88,49 @@ if (cluster.isMaster) {
   app.use('/line', lineRoutes);
   app.use('/notification', notificationRoutes);
 
-  app.get('/', (req,res) => {
-      res.json({message: "HakBus API"})
-  })
+  
+  // const crypto = require('crypto');
+  // function generateSignature(httpMethod, requestBody, contentType, dateHeader, requestUri, secret) {
+  //   const message = `${httpMethod}\n${crypto.createHash('sha512').update(requestBody).digest('hex')}\n${contentType}\n${dateHeader}\n${requestUri}`;
+  
+  //   const hmac = crypto.createHmac('sha512', secret);
+  //   hmac.update(message, 'utf-8');
+  
+  //   return hmac.digest('base64');
+  // }
+
+  // app.get('/',async (req,res) => {
+  //   console.log({params : req.params, query: req.query})
+    
+  //   const apiKey = '863001IC086301-Sim';
+  //   const sharedSecret = 'BEqa9mX1JEkrmtdGCvVZg767e3XkJD';
+  //   const apiUrl = `https://your-api-url.com/api/v3/transaction/${apiKey}/debit`;
+    
+  //   const transactionData = {
+  //     merchantTransactionId: '2019-09-02-0004',
+  //     amount: '9.99',
+  //     currency: 'EUR',
+  //   };
+    
+  //   const dateHeader = 'Tue, 21 Jul 2020 13:15:03 UTC';
+    
+  //   const headers = {
+  //     'Content-Type': 'application/json; charset=utf-8',
+  //     'Date': dateHeader,
+  //   };
+    
+  //   const signature = generateSignature('POST', JSON.stringify(transactionData), headers['Content-Type'], dateHeader, apiUrl, sharedSecret);
+  //   headers['X-Signature'] = signature;
+    
+  //   const requestOptions = {
+  //     headers,
+  //   };
+    
+  //   const response = await axios.post(apiUrl, transactionData, requestOptions)
+  //     console.log(response.data)
+  //     res.redirect('https://www.hakbus.org/user/tickets/654cedeb9c5e05fc0ae87426')
+      
+  // })
   
   const checkAndCancelBookings = async () => {
     try {
