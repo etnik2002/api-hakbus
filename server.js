@@ -3,6 +3,7 @@ const Ticket = require("./models/Ticket");
 const { default: fetch } = require("node-fetch");
 const Booking = require("./models/Booking");
 const { sendBookingCancellationNotification } = require("./helpers/mail");
+const { log } = require("console");
 const numCPUs = require("os").cpus().length;
 
 if (cluster.isMaster) {
@@ -89,48 +90,106 @@ if (cluster.isMaster) {
   app.use('/notification', notificationRoutes);
 
   
-  // const crypto = require('crypto');
-  // function generateSignature(httpMethod, requestBody, contentType, dateHeader, requestUri, secret) {
-  //   const message = `${httpMethod}\n${crypto.createHash('sha512').update(requestBody).digest('hex')}\n${contentType}\n${dateHeader}\n${requestUri}`;
+  const crypto = require('crypto');
+  function generateSignature(httpMethod, requestBody, contentType, dateHeader, requestUri, secret) {
+    const message = `${httpMethod}\n${crypto.createHash('sha512').update(requestBody).digest('hex')}\n${contentType}\n${dateHeader}\n${requestUri}`;
   
-  //   const hmac = crypto.createHmac('sha512', secret);
-  //   hmac.update(message, 'utf-8');
+    const hmac = crypto.createHmac('sha512', secret);
+    hmac.update(message, 'utf-8');
   
-  //   return hmac.digest('base64');
-  // }
+    return hmac.digest('base64');
+  }
 
-  // app.get('/',async (req,res) => {
-  //   console.log({params : req.params, query: req.query})
+  app.post('/',async (req,res) => {
+    console.log({req})
     
-  //   const apiKey = '863001IC086301-Sim';
-  //   const sharedSecret = 'BEqa9mX1JEkrmtdGCvVZg767e3XkJD';
-  //   const apiUrl = `https://your-api-url.com/api/v3/transaction/${apiKey}/debit`;
+    const apiKey = '863001IC086301-Sim';
+    const sharedSecret = 'BEqa9mX1JEkrmtdGCvVZg767e3XkJD';
+    const apiUrl = `https://your-api-url.com/api/v3/transaction/${apiKey}/debit`;
     
-  //   const transactionData = {
-  //     merchantTransactionId: '2019-09-02-0004',
-  //     amount: '9.99',
-  //     currency: 'EUR',
-  //   };
+    const transactionData = {
+      "merchantTransactionId": "2019-09-02-0001",
+      "additionalId1": "x0001",
+      "additionalId2": "y0001",
+      "extraData": {
+        "someKey": "someValue",
+        "otherKey": "otherValue"
+      },
+      "merchantMetaData": "merchantRelevantData",
+      "amount": "9.99",
+      "surchargeAmount": "0.9",
+      "currency": "EUR",
+      "successUrl": "https://example.com/success",
+      "cancelUrl": "https://example.com/cancel",
+      "errorUrl": "https://example.com/error",
+      "callbackUrl": "https://example.com/callback",
+      "transactionToken": "ix::tRaNsAcT1OnToK3N",
+      "description": "Example Product",
+      "customer": {
+        "identification": "c0001",
+        "firstName": "John",
+        "lastName": "Doe",
+        "birthDate": "1990-10-10",
+        "gender": "M",
+        "billingAddress1": "Maple Street 1",
+        "billingAddress2": "Syrup Street 2",
+        "billingCity": "Victoria",
+        "billingPostcode": "V8W",
+        "billingState": "British Columbia",
+        "billingCountry": "CA",
+        "billingPhone": "1234567890",
+        "shippingFirstName": "John",
+        "shippingLastName": "Doe",
+        "shippingCompany": "Big Company Inc.",
+        "shippingAddress1": "Yellow alley 3",
+        "shippingAddress2": "Yellow alley 4",
+        "shippingCity": "Victoria",
+        "shippingPostcode": "V8W",
+        "shippingState": "British Columbia",
+        "shippingCountry": "CA",
+        "shippingPhone": "1234567890",
+        "company": "John's Maple Syrup",
+        "email": "john@example.com",
+        "emailVerified": false,
+        "ipAddress": "127.0.0.1",
+        "nationalId": "123123",
+        "extraData": {
+          "someCustomerDataKey": "value",
+          "anotherKey": "anotherValue"
+        },
+        "paymentData": {
+          "ibanData": {
+            "iban": "AT123456789012345678",
+            "bic": "ABC",
+            "mandateId": "1234",
+            "mandateDate": "2019-09-29"
+          }
+        }
+      },
+      "threeDSecureData": {
+        "3dsecure": "MANDATORY"
+      },
+      "language": "en"
+    }
     
-  //   const dateHeader = 'Tue, 21 Jul 2020 13:15:03 UTC';
+    const dateHeader = 'Tue, 21 Jul 2020 13:15:03 UTC';
     
-  //   const headers = {
-  //     'Content-Type': 'application/json; charset=utf-8',
-  //     'Date': dateHeader,
-  //   };
+    const headers = {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Date': dateHeader,
+    };
     
-  //   const signature = generateSignature('POST', JSON.stringify(transactionData), headers['Content-Type'], dateHeader, apiUrl, sharedSecret);
-  //   headers['X-Signature'] = signature;
+    const signature = generateSignature('POST', JSON.stringify(transactionData), headers['Content-Type'], dateHeader, apiUrl, sharedSecret);
+    headers['X-Signature'] = signature;
+    console.log({transactionData: transactionData.customer.paymentData})
+    const requestOptions = {
+      headers,
+    };
     
-  //   const requestOptions = {
-  //     headers,
-  //   };
-    
-  //   const response = await axios.post(apiUrl, transactionData, requestOptions)
-  //     console.log(response.data)
-  //     res.redirect('https://www.hakbus.org/user/tickets/654cedeb9c5e05fc0ae87426')
+    const response = await axios.post(apiUrl, transactionData, requestOptions)
+      res.send(response.data)
       
-  // })
+  })
   
   const checkAndCancelBookings = async () => {
     try {
