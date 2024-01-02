@@ -4,6 +4,7 @@ const { default: fetch } = require("node-fetch");
 const Booking = require("./models/Booking");
 const { sendBookingCancellationNotification } = require("./helpers/mail");
 const { log } = require("console");
+const { query } = require("express");
 const numCPUs = require("os").cpus().length;
 
 if (cluster.isMaster) {
@@ -92,103 +93,82 @@ if (cluster.isMaster) {
   
   const crypto = require('crypto');
   function generateSignature(httpMethod, requestBody, contentType, dateHeader, requestUri, secret) {
-    const message = `${httpMethod}\n${crypto.createHash('sha512').update(requestBody).digest('hex')}\n${contentType}\n${dateHeader}\n${requestUri}`;
+    const formattedRequestUri = requestUri.replace(/\t/g, ''); 
+    console.log({formattedRequestUri})
+    const message = `${httpMethod}\n${crypto.createHash('sha512').update(requestBody).digest('hex')}\n${contentType}\n${dateHeader}\n${formattedRequestUri}`;
+    console.log({ message });
   
     const hmac = crypto.createHmac('sha512', secret);
     hmac.update(message, 'utf-8');
   
     return hmac.digest('base64');
   }
+  
+  
 
-  app.post('/',async (req,res) => {
-    console.log({req})
-    
-    const apiKey = '863001IC086301-Sim';
+  function generateBasicAuthHeader(username, password) {
+    const authString = `${username}:${password}`;
+    const base64Encoded = Buffer.from(authString, 'utf-8').toString('base64');
+    return `Basic ${base64Encoded}`;
+  }
+
+  app.post('/proccess_payment',async (req,res) => {
+    console.log({tokeniii: req.body.transaction_token})
+    const apiKey = '	863001IC086301-SIM';
     const sharedSecret = 'BEqa9mX1JEkrmtdGCvVZg767e3XkJD';
-    const apiUrl = `https://your-api-url.com/api/v3/transaction/${apiKey}/debit`;
+    const apiUrl = `https://gateway.bankart.si/api/v3/transaction/${apiKey}/debit`;
+    const apiUsername = 'API00863001HAKKOMERC'; 
+    const apiPassword = '?exoSkk4"L5v@$$dShP0AND7PV@gI'; 
     
+    const basicAuth = generateBasicAuthHeader(apiUsername, apiPassword)
+    console.log({basicAuth})
     const transactionData = {
-      "merchantTransactionId": "2019-09-02-0001",
-      "additionalId1": "x0001",
-      "additionalId2": "y0001",
-      "extraData": {
-        "someKey": "someValue",
-        "otherKey": "otherValue"
-      },
-      "merchantMetaData": "merchantRelevantData",
-      "amount": "9.99",
-      "surchargeAmount": "0.9",
+      "merchantTransactionId": "2024-01-01-0001",
+      "amount": req.body.Amount,
       "currency": "EUR",
-      "successUrl": "https://example.com/success",
-      "cancelUrl": "https://example.com/cancel",
-      "errorUrl": "https://example.com/error",
-      "callbackUrl": "https://example.com/callback",
-      "transactionToken": "ix::tRaNsAcT1OnToK3N",
-      "description": "Example Product",
+      "successUrl": "https://www.hakbus.org?success=true",
+      "cancelUrl": "https://www.hakbus.org?success=false",
+      "errorUrl": "https://www.hakbus.org?error=true",
+      "callbackUrl": "https://www.hakbus.org?callback=true",
+      "transactionToken": req.body.transaction_token,
+      "description": "HakBus Booking",
       "customer": {
-        "identification": "c0001",
-        "firstName": "John",
-        "lastName": "Doe",
-        "birthDate": "1990-10-10",
-        "gender": "M",
-        "billingAddress1": "Maple Street 1",
-        "billingAddress2": "Syrup Street 2",
-        "billingCity": "Victoria",
-        "billingPostcode": "V8W",
-        "billingState": "British Columbia",
-        "billingCountry": "CA",
-        "billingPhone": "1234567890",
-        "shippingFirstName": "John",
-        "shippingLastName": "Doe",
-        "shippingCompany": "Big Company Inc.",
-        "shippingAddress1": "Yellow alley 3",
-        "shippingAddress2": "Yellow alley 4",
-        "shippingCity": "Victoria",
-        "shippingPostcode": "V8W",
-        "shippingState": "British Columbia",
-        "shippingCountry": "CA",
-        "shippingPhone": "1234567890",
-        "company": "John's Maple Syrup",
-        "email": "john@example.com",
-        "emailVerified": false,
-        "ipAddress": "127.0.0.1",
-        "nationalId": "123123",
-        "extraData": {
-          "someCustomerDataKey": "value",
-          "anotherKey": "anotherValue"
-        },
-        "paymentData": {
-          "ibanData": {
-            "iban": "AT123456789012345678",
-            "bic": "ABC",
-            "mandateId": "1234",
-            "mandateDate": "2019-09-29"
-          }
-        }
+        "firstName": req.body.first_name,
+        "lastName": req.body.last_name,
+        "email": req.body.email,
       },
-      "threeDSecureData": {
-        "3dsecure": "MANDATORY"
-      },
-      "language": "en"
+      "language": req.body.Language
     }
     
-    const dateHeader = 'Tue, 21 Jul 2020 13:15:03 UTC';
-    
-    const headers = {
-      'Content-Type': 'application/json; charset=utf-8',
-      'Date': dateHeader,
-    };
-    
-    const signature = generateSignature('POST', JSON.stringify(transactionData), headers['Content-Type'], dateHeader, apiUrl, sharedSecret);
-    headers['X-Signature'] = signature;
-    console.log({transactionData: transactionData.customer.paymentData})
-    const requestOptions = {
-      headers,
-    };
-    
-    const response = await axios.post(apiUrl, transactionData, requestOptions)
-      res.send(response.data)
-      
+
+  const dateHeader = new Date().toUTCString();
+  const headers = { 
+    'Content-Type' : 'application/json; charset=utf-8',
+    'Date': dateHeader
+  };
+
+  const requestUri = `/api/v3/transaction/${apiKey}/debit`;
+  console.log({requestUri})
+  const signature = generateSignature('POST', JSON.stringify(transactionData), headers['Content-Type'], dateHeader, requestUri, sharedSecret);
+  
+  headers['X-Signature'] = signature;
+  // headers['Authorization'] = basicAuth;
+
+  const requestOptions = {
+    headers,
+  };
+
+  console.log({headers})
+  try {
+    const response = await axios.post(apiUrl, transactionData, requestOptions);
+    console.log('Transaction successful:', response.data);
+    res.json("payment success");
+  } catch (error) {
+    console.error('Transaction failed:', error.response.data);
+    res.status(500).json("payment failed");
+  }
+    // console.log(response.data)  
+    // res.send(response.data)
   })
   
   const checkAndCancelBookings = async () => {
