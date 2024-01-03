@@ -95,7 +95,7 @@ if (cluster.isMaster) {
   const base64 = require('base64-js');
   
   function generateSignature(httpMethod, requestBody, contentType, dateHeader, requestUri, secret) {
-    const message = `${httpMethod}\n${crypto.createHash('sha256').update(requestBody).digest('hex')}\n${contentType}\n${dateHeader}\n${requestUri}`;
+    const message = `${httpMethod}\n${crypto.createHash('sha512').update(requestBody).digest('hex')}\n${contentType}\n${dateHeader}\n${requestUri}`;
     const hmac = crypto.createHmac('sha512', secret);
     hmac.update(message, 'utf-8');
     const base64Formatted = base64.fromByteArray(Buffer.from(hmac.digest('hex'), 'hex'));
