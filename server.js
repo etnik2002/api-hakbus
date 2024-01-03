@@ -92,19 +92,17 @@ if (cluster.isMaster) {
 
   
   const crypto = require('crypto');
-  function generateSignature(httpMethod, requestBody, contentType, dateHeader, requestUri, secret) {
-    const formattedRequestUri = requestUri.replace(/\t/g, ''); 
-    console.log({formattedRequestUri})
-    const message = `${httpMethod}\n${crypto.createHash('sha512').update(requestBody).digest('hex')}\n${contentType}\n${dateHeader}\n${formattedRequestUri}`;
-    console.log({ message });
+  const base64 = require('base64-js');
   
+  function generateSignature(httpMethod, requestBody, contentType, dateHeader, requestUri, secret) {
+    const message = `${httpMethod}\n${crypto.createHash('sha256').update(requestBody).digest('hex')}\n${contentType}\n${dateHeader}\n${requestUri}`;
     const hmac = crypto.createHmac('sha512', secret);
     hmac.update(message, 'utf-8');
-  
-    return hmac.digest('base64');
-  }
-  
-  
+    const base64Formatted = base64.fromByteArray(Buffer.from(hmac.digest('hex'), 'hex'));
+    
+    console.log({base64Formatted})
+    return base64Formatted;
+}
 
   function generateBasicAuthHeader(username, password) {
     const authString = `${username}:${password}`;
@@ -114,7 +112,7 @@ if (cluster.isMaster) {
 
   app.post('/proccess_payment',async (req,res) => {
     console.log({tokeniii: req.body.transaction_token})
-    const apiKey = '	863001IC086301-SIM';
+    const apiKey = '863001IC086301-SIM';
     const sharedSecret = 'BEqa9mX1JEkrmtdGCvVZg767e3XkJD';
     const apiUrl = `https://gateway.bankart.si/api/v3/transaction/${apiKey}/debit`;
     const apiUsername = 'API00863001HAKKOMERC'; 
@@ -139,18 +137,24 @@ if (cluster.isMaster) {
       },
       "language": req.body.Language
     }
-    
 
-  const dateHeader = new Date().toUTCString();
+
+  const currentDate = new Date();
+  const oneHourLater = new Date(currentDate.getTime() + 60 * 60 * 1000);
+  
+  const dateHeader = oneHourLater.toUTCString();
+    
   const headers = { 
     'Content-Type' : 'application/json; charset=utf-8',
-    'Date': dateHeader
+    'Date': dateHeader,
+    'Authorization': basicAuth,
   };
 
-  const requestUri = `/api/v3/transaction/${apiKey}/debit`;
-  console.log({requestUri})
+  const requestUri = `/api/v3/transaction/` + apiKey + '/debit';
+  console.log({transactionData})
   const signature = generateSignature('POST', JSON.stringify(transactionData), headers['Content-Type'], dateHeader, requestUri, sharedSecret);
-  
+  console.log({signature})
+
   headers['X-Signature'] = signature;
   // headers['Authorization'] = basicAuth;
 
