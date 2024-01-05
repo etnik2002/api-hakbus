@@ -156,7 +156,7 @@ if (cluster.isMaster) {
   console.log({signature})
 
   headers['X-Signature'] = signature;
-  // headers['Authorization'] = basicAuth;
+  headers['authorization'] = basicAuth;
 
   const requestOptions = {
     headers,
