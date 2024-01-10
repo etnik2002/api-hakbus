@@ -4,7 +4,7 @@ const Ticket = require("../models/Ticket");
 const moment = require("moment");
 const Agency = require("../models/Agency");
 const Ceo = require("../models/Ceo");
-const { sendOrderToUsersEmail, sendAttachmentToAllPassengers, generateQRCode } = require("../helpers/mail");
+const { sendOrderToUsersEmail, sendAttachmentToAllPassengers, generateQRCode, cancelNotPaidBookingImmediately } = require("../helpers/mail");
 const User = require("../models/User");
 const mongoose = require('mongoose');
 var admin = require("firebase-admin");
@@ -175,7 +175,6 @@ module.exports = {
         age: req.body.age,
         price: totalPrice,
         passengers: passengers,
-        isPaid: true,
         platform: req.body.platform,
       });
   
@@ -189,8 +188,14 @@ module.exports = {
       const dateTime = { date: ticket.date, time: findTime(ticket, req.body.from.code, req.body.to.code) };
       const dateString = findDate(ticket, req.body.from.code, req.body.to.code)
 
-      await generateQRCode(newBooking._id.toString(), newBooking.passengers, destination, dateTime,new Date(dateString).toDateString(), ticket?.lineCode?.freeLuggages);
-      
+      setTimeout(async() => {
+        const b = await Booking.findById(newBooking._id);
+        if(b && b.isPaid) {
+            await generateQRCode(newBooking._id.toString(), newBooking.passengers, destination, dateTime,new Date(dateString).toDateString(), ticket?.lineCode?.freeLuggages);
+          }
+          console.log("not paid")
+        }, 1000 * 60 * 10);
+        
       var seatNotification = {};
       if (ticket.numberOfTickets <= ceo[0].nrOfSeatsNotification + 1) {
         seatNotification = {
@@ -211,65 +216,36 @@ module.exports = {
     }
   },
 
-      payBooking: async (req, res) => {
+      cancelNotPaidImmediatelyBooking: async (req,res) => {
         try {
-          console.log("start");
-          const DOMAIN = "http://localhost:4462";
-          const user = await User.findById(req.params.buyerID);
-          const ticket = await Ticket.findById(req.params.ticketID).populate('agency');
-          const agency = await Agency.find({});
-          const price = req.body.age <= 12 ? ticket.childrenPrice : ticket.price;
-          const API_KEY = agency.pls;
-          
-          const agencyPercentage = agency.percentage / 100;
-          const agencyEarnings = price - price * agencyPercentage;
-          const ourEarnings = price - agencyEarnings;
-      
-          const sendEmailNotification = req.body.sendEmailNotification;
-          const sendSmsNotification = req.body.sendSmsNotification;
-          
-          try {
-            const { token } = req.body;
-      
-          } catch (error) {
-            console.error(error);
-            res.status(500).json({ error: 'Failed to create checkout session -> ' + error });
+          const deltedBooking = await Booking.findByIdAndRemove(req.params.id);
+          console.log(deltedBooking)
+          if(!deltedBooking) {
+            return res.status(404).json("booking not found");
           }
-      
-          const newBooking = new Booking({
-            buyer: req.params.buyerID,
-            seller: req.params.sellerID,
-            ticket: req.params.ticketID,
-            firstname: req.body.firstname,
-            lastname: req.body.lastname,
-            email: req.body.email,
-            phone: req.body.phone,
-            age: req.body.age,
-            bookingDate: moment().format("DD-M-YYYY"),
-            price: price,
+          await Ticket.findByIdAndUpdate(deltedBooking?.ticket, {
+            $inc: { numberOfTickets: deltedBooking?.passengers?.length },
           });
-      
-          await newBooking.save().then(async () => {
-            await Ticket.findByIdAndUpdate(req.params.ticketID, {
-              $inc: { numberOfTickets: -1 },
-            });
-            await Agency.findByIdAndUpdate(req.params.sellerID, {
-              $inc: { totalSales: 1, profit: agencyEarnings },
-            });
-      
-            await Ceo.findByIdAndUpdate('6498755c438b9ec3237688ca', { $inc: { totalProfit: ourEarnings } });
-          });
-      
-          const customersName = `${req.body.firstname} ${req.body.lastname}`;
-          await sendOrderToUsersEmail(user.email, ticket, user._id, user.name, customersName);
-      
-          res.status(200).json(newBooking);
+
+          if(deltedBooking?.isPaid) {
+            await cancelNotPaidBookingImmediately(deltedBooking);
+          }
+          return res.status(200).json("Booking cancelled immediately");
         } catch (error) {
-          console.log(error)
+          console.log(error);
           res.status(500).json({ message: `Server error -> ${error}` });
         }
       },
       
+      payBooking: async (req,res) => {
+        try {
+          await Booking.findByIdAndUpdate(req.params.id, { $set: { isPaid: true } })
+          return res.status(200).json("Paid");
+        } catch (error) {
+          console.log(error);
+          res.status(500).json({ message: `Server error -> ${error}` });
+        }
+      },
       
       getAllBookings: async (req,res)=>{
         try {

@@ -199,6 +199,60 @@ async function getTicketsFromDateToDate(from, to) {
     return tickets;
 }
 
+async function cancelNotPaidBookingImmediately (booking) {
+  try {
+    let transporter = nodemailer.createTransport({
+      service: 'gmail',
+      port: 587,
+      auth: {
+        user: 'etnikz2002@gmail.com',
+        pass: 'vysmnurlcmrzcwad',
+      },
+      tls: {
+        rejectUnauthorized: false,
+      },
+    });
+
+    const userEmail = [];
+    booking.passengers.map((p) => {
+      userEmail.push(p.email)
+    })
+
+    let info = await transporter.sendMail({
+      from: 'etnikz2002@gmail.com', 
+      to: userEmail, 
+      subject: 'Booking Cancelled Due to Unsuccessful Payment',
+      html: `
+        <html>
+          <head>
+            <style>
+
+            </style>
+          </head>
+          <body>
+            <div style="font-family: 'Arial', sans-serif; padding: 20px; background-color: #f4f4f4; text-align: center;">
+              <h2 style="color: #333;">Booking Cancelled</h2>
+              <p style="color: #555;">Dear customer,</p>
+              <p style="color: #555;">We regret to inform you that your booking has been cancelled due to an unsuccessful payment and the qrcode you received will not be working for onboarding.</p>
+              <p style="color: #555;">If you have any questions or concerns, please contact our support team.</p>
+              <p style="color: #555;">Thank you for choosing HakBus!</p>
+              <div style="margin-top: 20px; padding: 10px; background-color: #ffffff; border: 1px solid #ddd; border-radius: 5px;">
+                <p style="color: #333; font-weight: bold;">Contact Information:</p>
+                <p style="color: #555;">Email: support@hakbus.com</p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `,
+    });
+    
+
+  } catch (error) {
+    console.log(error)
+    return JSON.stringify(error);
+  }
+}
+
 async function sendOrderToUsersEmail ( userEmail, ticket, buyerName, customersName, price, type )  {
     try {
 
@@ -568,4 +622,4 @@ async function sendBookingCancellationNotification(passenger, booking) {
 
 
 
-module.exports = { getTicketsFromDateToDate, sendOrderToUsersEmail, sendOrderToUsersPhone, sendAttachmentToAllPassengers, sendAttachmentToOneForAll, generateQRCode, sendBookingCancellationNotification };
+module.exports = { getTicketsFromDateToDate, sendOrderToUsersEmail, sendOrderToUsersPhone,cancelNotPaidBookingImmediately, sendAttachmentToAllPassengers, sendAttachmentToOneForAll, generateQRCode, sendBookingCancellationNotification };

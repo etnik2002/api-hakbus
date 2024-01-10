@@ -1,4 +1,4 @@
-const { placeBooking, getSingleBooking, getWeeklyBookings, getAllBookings, getMonthlyBookings, getFilteredBookings, getBookingsFromDateRange, payBooking } = require("../controllers/booking-controller");
+const { placeBooking, getSingleBooking, getWeeklyBookings, getAllBookings, getMonthlyBookings, getFilteredBookings, getBookingsFromDateRange, payBooking, cancelNotPaidImmediatelyBooking } = require("../controllers/booking-controller");
 const router = require("express").Router()
 const { requestLimiter } = require("../auth/limiter");
 
@@ -8,6 +8,10 @@ router.use(requestLimiter);
 router.post('/create/:buyerID/:ticketID', placeBooking);
 
 router.get('/', getAllBookings);
+
+router.post('/pay/:id', payBooking)
+
+router.post('/cancel-immediately/:id', cancelNotPaidImmediatelyBooking)
 
 router.get('/monthly', getMonthlyBookings);
 

@@ -147,7 +147,6 @@ if (cluster.isMaster) {
   const headers = { 
     'Content-Type' : 'application/json; charset=utf-8',
     'Date': dateHeader,
-    'Authorization': basicAuth,
   };
 
   const requestUri = `/api/v3/transaction/` + apiKey + '/debit';
@@ -156,7 +155,7 @@ if (cluster.isMaster) {
   console.log({signature})
 
   headers['X-Signature'] = signature;
-  headers['authorization'] = basicAuth;
+  // headers['authorization'] = basicAuth;
 
   const requestOptions = {
     headers,
