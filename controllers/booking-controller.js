@@ -190,11 +190,12 @@ module.exports = {
 
       setTimeout(async() => {
         const b = await Booking.findById(newBooking._id);
-        if(b && b.isPaid) {
-            await generateQRCode(newBooking._id.toString(), newBooking.passengers, destination, dateTime,new Date(dateString).toDateString(), ticket?.lineCode?.freeLuggages);
-          }
-          console.log("not paid")
-        }, 1000 * 60 * 10);
+        if(!b.isPaid) {
+          return await Booking.findByIdAndRemove(b._id);
+        }
+        
+          await generateQRCode(newBooking._id.toString(), newBooking.passengers, destination, dateTime,new Date(dateString).toDateString(), ticket?.lineCode?.freeLuggages);
+       }, 1000 * 60 * 5);
         
       var seatNotification = {};
       if (ticket.numberOfTickets <= ceo[0].nrOfSeatsNotification + 1) {
