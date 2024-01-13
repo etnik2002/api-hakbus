@@ -10,7 +10,7 @@ router.post('/create/:buyerID/:ticketID', placeBooking);
 
 router.get('/', getAllBookings);
 
-router.post('/pay/:id', payBooking)
+router.post('/pay/:id/:tid', payBooking)
 
 router.post('/cancel-immediately/:id', cancelNotPaidImmediatelyBooking)
 
