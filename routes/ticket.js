@@ -2,6 +2,8 @@ const router = require("express").Router();
 const { registerTicket, editTicket, deleteTicket, updateSeats,updateReturnSeats, stopSales, getSingleTicket, getAllTicket, getSearchedTickets, getNearestTicket, getAllTicketPagination, getTicketLinesBasedOnDate, allowSales, getTicketById, getAll} = require("../controllers/ticket-controller");
 const { ceoAccessToken, verifyDeletionPin } = require("../auth/auth");
 const { requestLimiter } = require("../auth/limiter");
+const apicache = require("apicache");
+const cache = apicache.middleware;
 
 router.use(requestLimiter);
 
@@ -9,7 +11,7 @@ router.get('/lines', getTicketLinesBasedOnDate);
 
 router.post('/create',ceoAccessToken, registerTicket);
 
-router.get('/', getSearchedTickets);
+router.get('/',cache('1 minutes'), getSearchedTickets);
 
 router.get('/getall', getAll);
 

@@ -1,7 +1,8 @@
 const { placeBooking, getSingleBooking, getWeeklyBookings, getAllBookings, getMonthlyBookings, getFilteredBookings, getBookingsFromDateRange, payBooking, cancelNotPaidImmediatelyBooking } = require("../controllers/booking-controller");
 const router = require("express").Router()
 const { requestLimiter } = require("../auth/limiter");
-
+const apicache = require("apicache");
+const cache = apicache.middleware;
 router.use(requestLimiter);
 
 
@@ -21,6 +22,6 @@ router.get('/date-range', getBookingsFromDateRange)
 
 router.post('/create/:buyerID/:sellerID/:ticketID', placeBooking);
 
-router.get('/:id', getSingleBooking);
+router.get('/:id',cache('10 minutes'), getSingleBooking);
 
 module.exports = router;
