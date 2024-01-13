@@ -62,6 +62,9 @@ const bookingSchema = mongoose.Schema({
         enum: ['true', 'false'],
         default: 'false',
     },
+    transaction_id: {
+        type: String,
+    },
     
 } , { timestamps : true });
 

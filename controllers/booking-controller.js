@@ -240,7 +240,8 @@ module.exports = {
       
       payBooking: async (req,res) => {
         try {
-          await Booking.findByIdAndUpdate(req.params.id, { $set: { isPaid: true } })
+          console.log({tid: req.query.tid})
+          await Booking.findByIdAndUpdate(req.params.id, { $set: { isPaid: true, transaction_id: req.query.tid } })
           return res.status(200).json("Paid");
         } catch (error) {
           console.log(error);
