@@ -82,4 +82,13 @@ module.exports = {
         }
       },
 
+      deleteUser: async (req,res) => {
+        try {
+          await User.findByIdAndRemove(req.params.id);
+          return res.status(200).json("User deleted")
+        } catch (error) {
+          res.status(500).send({ message: "Some error happened" + error });
+        }
+      },
+
 }
