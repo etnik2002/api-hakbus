@@ -236,14 +236,11 @@ module.exports = {
             const currentDate = moment(currentDateFormatted);
             const currentTime = moment(currentTimeFormatted, 'HH:mm');
           
-            console.log({ ticketDate, ticketTime, currentDate, currentTime });
-          
             return ticketDate.isSame(currentDate, 'day') && ticketTime.isBefore(currentTime);
           });
           
                     
           const remainingTickets = uniqueTickets.filter((ticket) => !filteredTickets.includes(ticket));
-          console.log({remainingTickets})
 
 
           if(remainingTickets.length == 0) {

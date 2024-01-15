@@ -13,8 +13,6 @@ router.post('/create',ceoAccessToken, registerTicket);
 
 router.get('/',cache('1 minutes'), getSearchedTickets);
 
-router.get('/getall', getAll);
-
 router.get('/:id', getSingleTicket);
 
 router.post('/stop-sales/:id',verifyDeletionPin, stopSales);
