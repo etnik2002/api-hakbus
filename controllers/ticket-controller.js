@@ -151,44 +151,41 @@ module.exports = {
         try {
           const startDate = req.query.startDate;
           const endDate = req.query.endDate;
-          const allBookings = await Booking.find({});
-          const allLineIDS = req.query.line.split('-');
-          console.log("req came lines")
-          let ticketsWithBookings = []; 
-          
+          const allLineIDS = req.query.line.split('-').filter(Boolean);
+      
+          const allBookings = await Booking.find({ });
+          const ticketsWithBookings = [];
+      
           for (const line of allLineIDS) {
-            if (line !== "") {
-              const line_id = new mongoose.Types.ObjectId(line);
-              console.log(line_id);
+            const line_id = new mongoose.Types.ObjectId(line);
       
-              const ticketQuery = {
-                date: { $gte: startDate, $lte: endDate },
-                lineCode: line_id
+            const ticketQuery = {
+              date: { $gte: startDate, $lte: endDate },
+              lineCode: line_id,
+            };
+      
+            const ticketsForLine = await Ticket.find(ticketQuery)
+              .populate('lineCode')
+              .sort({ date: 'asc' });
+      
+            const ticketsForLineWithBookings = ticketsForLine.map((ticket) => {
+              const bookingsForTicket = allBookings.filter(
+                (booking) => booking.ticket.toString() === ticket._id.toString()
+              );
+              return {
+                ticket,
+                bookings: bookingsForTicket,
               };
+            });
       
-              const ticketsForLine = await Ticket.find(ticketQuery)
-                .populate('lineCode')
-                .sort({ 'date': 'asc' });
-      
-              const ticketsForLineWithBookings = ticketsForLine.map((ticket) => {
-                const bookingsForTicket = allBookings.filter(
-                  (booking) => booking.ticket.toString() === ticket._id.toString()
-                );
-                return {
-                  ticket: ticket,
-                  bookings: bookingsForTicket
-                };
-              });
-      
-              ticketsWithBookings.push(...ticketsForLineWithBookings);
-            }
+            ticketsWithBookings.push(...ticketsForLineWithBookings);
           }
       
           ticketsWithBookings.sort((a, b) => new Date(a.ticket.date) - new Date(b.ticket.date));
           res.status(200).json(ticketsWithBookings);
         } catch (error) {
           console.error(error);
-          res.status(500).json({ message: "Internal error -> " + error });
+          res.status(500).json({ message: `Internal error -> ${error}` });
         }
       },
 

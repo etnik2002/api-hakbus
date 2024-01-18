@@ -72,6 +72,9 @@ module.exports = {
             res.status(500).send({ message: "Some error happened" + error });
           }
         },
+
+        
+
       getSingleUser: async (req,res) => {
         try {
           const user = await User.findById(req.params.id);
@@ -90,5 +93,7 @@ module.exports = {
           res.status(500).send({ message: "Some error happened" + error });
         }
       },
+
+
 
 }

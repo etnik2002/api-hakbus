@@ -14,7 +14,7 @@ router.post('/create',ceoAccessToken, createCeo);
 
 router.post('/login', login);
 
-router.get('/observer',ceoAccessToken, getAllObservers);
+router.get('/observer', ceoAccessToken, getAllObservers);
 
 router.get('/observer/:id', getObserverById);
 
@@ -28,7 +28,7 @@ router.get('/all-cities-pagination', getAllCitiesPagination);
 
 router.get('/stats', getStats);
 
-router.get('/:id', getCeoById);
+router.get('/:id',cache('5 minutes'), getCeoById);
 
 router.post('/deactivate/:id',deactivateAgency);
 
