@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const { registerUser, login, getUserProfile, getSingleUser, deleteUser } = require("../controllers/user-controller");
+const { registerUser, login, getUserProfile, getUserBookings, deleteUser } = require("../controllers/user-controller");
 const { requestLimiter } = require("../auth/limiter");
 const apicache = require("apicache");
 const { verifyUser } = require("../auth/userAuth");
@@ -13,5 +13,7 @@ router.post('/login', login);
 router.get('/:id',cache('1 minutes'), getUserProfile);
 
 router.post('/delete/:id',verifyUser, deleteUser);
+
+router.get('/bookings/:id', getUserBookings);
 
 module.exports = router;
