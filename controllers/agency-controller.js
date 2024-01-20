@@ -137,16 +137,20 @@ module.exports = {
 
             const agency = await Agency.findOne({ email: req.body.email });
             if (!agency) {
-                return res.status(401).json({ message: "Invalid Email " });
+                return res.status(401).json({ message: "Invalid credentials " });
             }
                 
+            if(!agency.isActive) {
+                return res.status(401).json({data: null, message: "Your account has been deactivated, please contact hakbus for reactivation" });
+            }
+
             const validPassword = await bcrypt.compare(
                 req.body.password,
                 agency.password
             );
 
             if (!validPassword) {
-                return res.status(401).json({data: null, message: "Invalid  Password" });
+                return res.status(401).json({data: null, message: "Invalid  credentials" });
             }
 
                 const token = agency.generateAuthToken(agency);
