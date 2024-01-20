@@ -14,6 +14,6 @@ router.get('/:id',cache('1 minutes'), getUserProfile);
 
 router.post('/delete/:id',verifyUser, deleteUser);
 
-router.get('/bookings/:id', getUserBookings);
+router.get('/bookings/:id',cache('1 minutes'), getUserBookings);
 
 module.exports = router;
