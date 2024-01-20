@@ -2,6 +2,7 @@ const router = require("express").Router();
 const { registerUser, login, getUserProfile, getSingleUser, deleteUser } = require("../controllers/user-controller");
 const { requestLimiter } = require("../auth/limiter");
 const apicache = require("apicache");
+const { verifyUser } = require("../auth/userAuth");
 const cache = apicache.middleware;
 router.use(requestLimiter);
 
@@ -11,8 +12,6 @@ router.post('/login', login);
 
 router.get('/:id',cache('1 minutes'), getUserProfile);
 
-router.post('/delete/:id', deleteUser);
-
-router.get('/unique/:id', getSingleUser);
+router.post('/delete/:id',verifyUser, deleteUser);
 
 module.exports = router;

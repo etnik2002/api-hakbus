@@ -55,35 +55,13 @@ module.exports = {
         
         getUserProfile: async (req,res) => {
           try {
-            const userBookings = await Booking.find({ buyer: req.params.id })
-              .populate({
-                path: 'ticket',
-                populate: { path: 'lineCode', model: 'Line' } 
-              })
-              .populate({
-                path: 'buyer seller',
-                select: '-password'
-              })
-              .sort({ createdAt: 'desc' });
-        
             const user = await User.findById(req.params.id);
-            res.status(200).json({ user: user, userBookings: userBookings });
+            res.status(200).json(user);
           } catch (error) {
             res.status(500).send({ message: "Some error happened" + error });
           }
         },
 
-        
-
-      getSingleUser: async (req,res) => {
-        try {
-          const user = await User.findById(req.params.id);
-          res.status(200).json(user);
-        } catch (error) {
-          console.log(error)
-          res.status(500).send({ message: "Some error happened" + error });
-        }
-      },
 
       deleteUser: async (req,res) => {
         try {

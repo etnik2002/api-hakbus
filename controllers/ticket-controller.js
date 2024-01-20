@@ -112,7 +112,7 @@ module.exports = {
       
       getAllTicket: async (req,res) => {
         try {
-          const all = await Ticket.find({}).populate('lineCode')
+          const all = await Ticket.find({})
           res.status(200).json(all)
         } catch (error) {
           res.status(500).json({ message: "Internal error -> " + error });
@@ -206,6 +206,8 @@ module.exports = {
             ]
           });
 
+          console.log({distinctTicketIds, from: req.query.from, to : req.query.to})
+
           const uniqueTickets = await Ticket.aggregate([
             {
               $match: {
@@ -226,7 +228,7 @@ module.exports = {
             },
           ])
 
-
+          console.log({uniqueTickets})
           const filteredTickets = uniqueTickets.filter((ticket) => {
             const ticketDate = moment(findDate(ticket, req.query.from, req.query.to));
             const ticketTime = moment(findTime(ticket, req.query.from, req.query.to), 'HH:mm');

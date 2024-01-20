@@ -7,11 +7,13 @@ const cache = apicache.middleware;
 
 router.use(requestLimiter);
 
+router.get('/all', getAllTicket)
+
 router.get('/lines',cache('3 minutes'), getTicketLinesBasedOnDate);
 
 router.post('/create',ceoAccessToken, registerTicket);
 
-router.get('/',cache('1 minutes'), getSearchedTickets);
+router.get('/',cache('3 minutes'), getSearchedTickets);
 
 router.get('/:id', getSingleTicket);
 
@@ -24,10 +26,6 @@ router.post('/update-seats/:id', updateSeats);
 router.post('/update-return-seats/:id', updateReturnSeats);
 
 router.get('/nearest', getNearestTicket);
-
-router.get('/all',ceoAccessToken, getAllTicketPagination);
-
-router.get('/all-tickets',ceoAccessToken, getAllTicket);
 
 router.post('/edit/:id',ceoAccessToken, editTicket);
 
