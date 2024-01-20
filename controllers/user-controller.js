@@ -74,7 +74,7 @@ module.exports = {
 
       getUserBookings: async (req,res) => {
         try {
-          const bookings = await Booking.find({ buyer: req.params.id });
+          const bookings = await Booking.find({ buyer: req.params.id }).populate('ticket');
           return res.status(200).json(bookings);
         } catch (error) {
           res.status(500).send({ message: "Some error happened" + error });
