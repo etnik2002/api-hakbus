@@ -39,7 +39,10 @@ if (cluster.isMaster) {
   const lineRoutes = require("./routes/line");
   const driverRoutes = require("./routes/driver");
   const ceoRoutes = require("./routes/ceo");
+  const bankRoutes = require('./routes/bank.js');
   const notificationRoutes = require("./routes/notification");
+  
+  
   const axios = require("axios");
   var cookieParser = require('cookie-parser');
 
@@ -89,6 +92,7 @@ if (cluster.isMaster) {
   app.use('/driver', driverRoutes);
   app.use('/line', lineRoutes);
   app.use('/notification', notificationRoutes);
+  app.use('/bank', bankRoutes);
 
 
   const PORT = process.env.PORT || 4462;
