@@ -160,11 +160,35 @@ module.exports = {
         buyerObjectId = undefined;
       }
 
+      const dateValue = findDate(ticket, req.body.from.code, req.body.to.code);
+
+      if (dateValue !== "Date not found") {
+        const dateObject = new Date(dateValue);
+      
+        const options = {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+          hour: 'numeric',
+          minute: 'numeric',
+          second: 'numeric',
+          timeZoneName: 'short',
+        };
+      
+        const formattedDate = dateObject.toLocaleString('en-US', options);
+      
+        console.log({dateValue});
+      } else {
+        console.log("Date not found");
+      }
+      
+
       const newBooking = new Booking({
         buyer: buyerObjectId,
         ticket: req.params.ticketID,
         firstname: req.body.firstname,
-        date: findDate(ticket, req.body.from.code, req.body.to.code),
+        date: dateValue,
         from: req.body.from.value,
         to: req.body.to.value,
         fromCode: req.body.from.code,
@@ -189,13 +213,13 @@ module.exports = {
       const dateString = findDate(ticket, req.body.from.code, req.body.to.code)
 
       setTimeout(async() => {
-        const b = await Booking.findById(newBooking._id);
-        if(!b.isPaid) {
-          return await Booking.findByIdAndRemove(b._id);
-        }
-        
+          const b = await Booking.findById(newBooking._id);
+          if(!b.isPaid) {
+            return await Booking.findByIdAndRemove(b._id);
+          }
+          
           await generateQRCode(newBooking._id.toString(), newBooking.passengers, destination, dateTime,new Date(dateString).toDateString(), ticket?.lineCode?.freeLuggages);
-       }, 1000 * 60 * 5);
+       }, 1000 * 60 * 2);
         
       var seatNotification = {};
       if (ticket.numberOfTickets <= ceo[0].nrOfSeatsNotification + 1) {
