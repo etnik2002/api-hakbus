@@ -162,33 +162,13 @@ module.exports = {
 
       const dateValue = findDate(ticket, req.body.from.code, req.body.to.code);
 
-      if (dateValue !== "Date not found") {
-        const dateObject = new Date(dateValue);
-      
-        const options = {
-          weekday: 'short',
-          month: 'short',
-          day: 'numeric',
-          year: 'numeric',
-          hour: 'numeric',
-          minute: 'numeric',
-          second: 'numeric',
-          timeZoneName: 'short',
-        };
-      
-        const formattedDate = dateObject.toLocaleString('en-US', options);
-      
-        console.log({dateValue});
-      } else {
-        console.log("Date not found");
-      }
       
 
       const newBooking = new Booking({
         buyer: buyerObjectId,
         ticket: req.params.ticketID,
         firstname: req.body.firstname,
-        date: dateValue,
+        date: new Date(dateValue),
         from: req.body.from.value,
         to: req.body.to.value,
         fromCode: req.body.from.code,
