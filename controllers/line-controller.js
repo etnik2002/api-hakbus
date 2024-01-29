@@ -242,5 +242,17 @@ module.exports = {
         }
       },
       
+      getLineTickets: async (req,res) => {
+        try {
+          const lineTickets = await Ticket.find({ lineCode: req.params.lineid }).limit(1);
+          if(lineTickets) {
+            return res.status(200).json(lineTickets);
+          }
+
+          return res.status(402).json("no lines found")
+        } catch (error) {
+          return res.status(500).json(error)
+        }
+      },
 
 }
