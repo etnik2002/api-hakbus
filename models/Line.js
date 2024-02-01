@@ -25,6 +25,9 @@ const LineSchema = mongoose.Schema({
     luggageSize: {
         type: String,
     },
+    isNk: {
+        type: Boolean
+    },
   }, { timestamps: true });
 
 module.exports = mongoose.model("Line", LineSchema);
