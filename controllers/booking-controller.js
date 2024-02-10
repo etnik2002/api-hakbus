@@ -192,14 +192,13 @@ module.exports = {
       // const dateTime = { date: ticket.date, time: findTime(ticket, req.body.from.code, req.body.to.code) };
       // const dateString = findDate(ticket, req.body.from.code, req.body.to.code)
 
-      // setTimeout(async() => {
-      //     const b = await Booking.findById(newBooking._id);
-      //     if(!b.isPaid) {
-      //       return await Booking.findByIdAndRemove(b._id);
-      //     }
-          
-      //     await generateQRCode(newBooking._id.toString(), newBooking.passengers, destination, dateTime,new Date(dateString).toDateString(), ticket?.lineCode?.freeLuggages);
-      //  }, 1000 * 60 * 5);
+      const createdBooking = await Booking.findById(newBooking._id).populate('ticket seller');
+      setTimeout(async() => {
+          if(!createdBooking.isPaid) {
+            return await Booking.findByIdAndRemove(b._id);
+          }
+          // await generateQRCode(newBooking._id.toString(), newBooking.passengers, destination, dateTime,new Date(dateString).toDateString(), ticket?.lineCode?.freeLuggages);
+       }, 1000 * 60 * 10);
         
       var seatNotification = {};
       if (ticket.numberOfTickets <= ceo[0].nrOfSeatsNotification + 1) {
@@ -213,7 +212,6 @@ module.exports = {
         await Ceo.findByIdAndUpdate(ceo[0]._id, { $push: { notifications: seatNotification } });
       }
        
-      const createdBooking = await Booking.findById(newBooking._id).populate('ticket seller')
       res.status(200).json(createdBooking);
     } catch (error) {
       console.log(error);
