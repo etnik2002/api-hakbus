@@ -246,7 +246,7 @@ module.exports = {
             return res.status(204).json("no routes found");
           }
 
-            return res.status(200).json(remainingTickets);
+            return res.status(200).json(uniqueTickets);
           } catch (error) {
           console.error(error);
           res.status(500).json({ message: "Internal error -> " + error });
