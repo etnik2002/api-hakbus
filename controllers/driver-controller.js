@@ -223,6 +223,11 @@ module.exports = {
             if (!booking) {
               return res.status(401).json("Rezervimi eshte anuluar ose nuk egziston!");
             }
+
+            const bookingDate = moment(booking?.date).format('DD-MM-YYYY');
+            if(bookingDate != date) {
+              return res.status(401).json("Data e udhtimit nuk eshte e njejte me daten e sotshme")
+            }
       
             if(!booking.isPaid) {
               return res.status(401).json("Bileta nuk eshte paguar!");
