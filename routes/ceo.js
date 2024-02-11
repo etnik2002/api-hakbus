@@ -22,7 +22,7 @@ router.post('/observer/edit/:id', editObserver);
 
 router.post('/observer/delete/:id', deleteObs);
 
-router.get('/all-cities',cache('1 minutes'), getAllCities);
+router.get('/all-cities',cache('10 minutes'), getAllCities);
 
 router.get('/all-cities-pagination', getAllCitiesPagination);
 

@@ -168,7 +168,7 @@ module.exports = {
         buyer: buyerObjectId,
         ticket: req.params.ticketID,
         firstname: req.body.firstname,
-        date: new Date(dateValue),
+        date: dateValue,
         from: req.body.from.value,
         to: req.body.to.value,
         fromCode: req.body.from.code,
@@ -188,18 +188,17 @@ module.exports = {
           });
       });
       
-      const destination = { from: req.body.from.value, to: req.body.to.value };
-      const dateTime = { date: ticket.date, time: findTime(ticket, req.body.from.code, req.body.to.code) };
-      const dateString = findDate(ticket, req.body.from.code, req.body.to.code)
+      // const destination = { from: req.body.from.value, to: req.body.to.value };
+      // const dateTime = { date: ticket.date, time: findTime(ticket, req.body.from.code, req.body.to.code) };
+      // const dateString = findDate(ticket, req.body.from.code, req.body.to.code)
 
+      const createdBooking = await Booking.findById(newBooking._id).populate('ticket seller');
       setTimeout(async() => {
-          const b = await Booking.findById(newBooking._id);
-          if(!b.isPaid) {
+          if(!createdBooking.isPaid) {
             return await Booking.findByIdAndRemove(b._id);
           }
-          
-          await generateQRCode(newBooking._id.toString(), newBooking.passengers, destination, dateTime,new Date(dateString).toDateString(), ticket?.lineCode?.freeLuggages);
-       }, 1000 * 60 * 2);
+          // await generateQRCode(newBooking._id.toString(), newBooking.passengers, destination, dateTime,new Date(dateString).toDateString(), ticket?.lineCode?.freeLuggages);
+       }, 1000 * 60 * 10);
         
       var seatNotification = {};
       if (ticket.numberOfTickets <= ceo[0].nrOfSeatsNotification + 1) {
@@ -214,7 +213,6 @@ module.exports = {
         await Ceo.findByIdAndUpdate(ceo[0]._id, { $push: { notifications: seatNotification } });
       }
        
-      const createdBooking = await Booking.findById(newBooking._id).populate('ticket seller')
       res.status(200).json(createdBooking);
     } catch (error) {
       console.log(error);
@@ -225,7 +223,6 @@ module.exports = {
       cancelNotPaidImmediatelyBooking: async (req,res) => {
         try {
           const deltedBooking = await Booking.findByIdAndRemove(req.params.id);
-          console.log(deltedBooking)
           if(!deltedBooking) {
             return res.status(404).json("booking not found");
           }
@@ -246,6 +243,25 @@ module.exports = {
       payBooking: async (req,res) => {
         try {
           console.log({tid: req.params.tid})
+          const newBooking = await Booking.findById(req.params.id)
+          .populate({
+            path: 'ticket',
+            populate: {
+              path: 'lineCode',
+              model: 'Line'
+            }
+          });
+          
+          const destination = { from: newBooking.from, to: newBooking.to };
+          const dateString = findDate(newBooking.ticket, newBooking.fromCode, newBooking.toCode)
+          const dateTime = { date: dateString, time: findTime(newBooking.ticket, newBooking.fromCode, newBooking.toCode) };
+
+          console.log({destination, dateString, dateTime})
+          const emailSent = await generateQRCode(newBooking._id.toString(), newBooking.passengers, destination, dateTime,new Date(dateString).toDateString(), newBooking.ticket?.lineCode?.freeLuggages);
+          if(!emailSent) {
+            return res.status(403).json("error sending email")
+          }
+          console.log({newBooking})
           await Booking.findByIdAndUpdate(req.params.id, { $set: { isPaid: true, transaction_id: req.params.tid } })
           return res.status(200).json("Paid");
         } catch (error) {
