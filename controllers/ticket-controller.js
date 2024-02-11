@@ -228,6 +228,49 @@ module.exports = {
             },
           ])
 
+          // const uniqueTickets = await Ticket.aggregate([
+          //   {
+          //     $match: {
+          //       _id: { $in: distinctTicketIds },
+          //       date: { $gte: currentDateFormatted },
+          //       numberOfTickets: { $gt: 0 },
+          //       isActive: true,
+          //     }
+          //   },
+          //   {
+          //     $lookup: {
+          //       from: "stops",
+          //       let: { fromCode: "$from", toCode: "$to" },
+          //       pipeline: [
+          //         {
+          //           $match: {
+          //             $expr: {
+          //               $and: [
+          //                 { $eq: ["$code", "$$fromCode"] },
+          //                 { $eq: ["$code", "$$toCode"] }
+          //               ]
+          //             }
+          //           }
+          //         }
+          //       ],
+          //       as: "matchedStops"
+          //     }
+          //   },
+          //   {
+          //     $match: { "matchedStops": { $ne: [] } }
+          //   },
+          //   {
+          //     $sort: { date: 1 },
+          //   },
+          //   {
+          //     $skip: skipCount,
+          //   },
+          //   {
+          //     $limit: size,
+          //   },
+          // ]);
+          
+
           console.log({uniqueTickets})
           const filteredTickets = uniqueTickets.filter((ticket) => {
             const ticketDate = moment(findDate(ticket, req.query.from, req.query.to));

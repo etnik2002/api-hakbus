@@ -21,6 +21,9 @@ const ceoSchema = mongoose.Schema({
     },
     notifications: [
         {
+            type: {
+                type: String,
+            },
             message: {
                 type: String,
             },
