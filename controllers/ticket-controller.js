@@ -192,8 +192,8 @@ module.exports = {
       getSearchedTickets: async (req,res) => {
         try {
           let page = Number(req.query.page) || 1;
-          let size = Number(8);
-         const skipCount = (page - 1) * size;
+          let size = Number(15);
+          const skipCount = (page - 1) * size;
       
           const currentDateFormatted = moment(new Date()).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
           const currentTimeFormatted = moment(new Date()).format('HH:mm');
@@ -206,8 +206,6 @@ module.exports = {
             ]
           });
 
-          console.log({distinctTicketIds, from: req.query.from, to : req.query.to})
-
           const uniqueTickets = await Ticket.aggregate([
             {
               $match: {
@@ -218,74 +216,55 @@ module.exports = {
               }
             },
             {
-              $sort: { date: 1 },
+              $unwind: "$stops" 
             },
             {
-              $skip: skipCount,
+              $match: {
+                "stops.from.code": req.query.from,
+                "stops.to.code": req.query.to
+              }
             },
             {
-              $limit: size,
+              $sort: { date: 1 }
             },
-          ])
-
-          // const uniqueTickets = await Ticket.aggregate([
-          //   {
-          //     $match: {
-          //       _id: { $in: distinctTicketIds },
-          //       date: { $gte: currentDateFormatted },
-          //       numberOfTickets: { $gt: 0 },
-          //       isActive: true,
-          //     }
-          //   },
-          //   {
-          //     $lookup: {
-          //       from: "stops",
-          //       let: { fromCode: "$from", toCode: "$to" },
-          //       pipeline: [
-          //         {
-          //           $match: {
-          //             $expr: {
-          //               $and: [
-          //                 { $eq: ["$code", "$$fromCode"] },
-          //                 { $eq: ["$code", "$$toCode"] }
-          //               ]
-          //             }
-          //           }
-          //         }
-          //       ],
-          //       as: "matchedStops"
-          //     }
-          //   },
-          //   {
-          //     $match: { "matchedStops": { $ne: [] } }
-          //   },
-          //   {
-          //     $sort: { date: 1 },
-          //   },
-          //   {
-          //     $skip: skipCount,
-          //   },
-          //   {
-          //     $limit: size,
-          //   },
-          // ]);
+            {
+              $skip: skipCount
+            },
+            {
+              $limit: size
+            },
+            {
+              $group: {
+                _id: "$_id",
+                lineCode: { $first: "$lineCode" },
+                from: { $first: "$from" },
+                to: { $first: "$to" },
+                date: { $first: "$date" },
+                time: { $first: "$time" },
+                type: { $first: "$type" },
+                numberOfTickets: { $first: "$numberOfTickets" },
+                isActive: { $first: "$isActive" },
+                stops: { $push: "$stops" } 
+              }
+            }
+          ]);
           
 
-          console.log({uniqueTickets})
-          const filteredTickets = uniqueTickets.filter((ticket) => {
-            const ticketDate = moment(findDate(ticket, req.query.from, req.query.to));
-            const ticketTime = moment(findTime(ticket, req.query.from, req.query.to), 'HH:mm');
-            const currentDate = moment(currentDateFormatted);
-            const currentTime = moment(currentTimeFormatted, 'HH:mm');
+
+          // const filteredTickets = uniqueTickets.filter((ticket) => {
+          //   const ticketDate = moment(findDate(ticket, req.query.from, req.query.to));
+          //   const ticketTime = moment(findTime(ticket, req.query.from, req.query.to), 'HH:mm');
+          //   const currentDate = moment(currentDateFormatted);
+          //   const currentTime = moment(currentTimeFormatted, 'HH:mm');
           
-            return ticketDate.isSame(currentDate, 'day') && ticketTime.isBefore(currentTime);
-          });
+          //   return ticketDate.isSame(currentDate, 'day') && ticketTime.isBefore(currentTime);
+          // });
           
                     
-          const remainingTickets = uniqueTickets.filter((ticket) => !filteredTickets.includes(ticket));
+          // const remainingTickets = uniqueTickets.filter((ticket) => !filteredTickets.includes(ticket));
 
 
-          if(remainingTickets.length == 0) {
+          if(uniqueTickets.length == 0) {
             return res.status(204).json("no routes found");
           }
 
