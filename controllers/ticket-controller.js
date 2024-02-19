@@ -251,17 +251,17 @@ module.exports = {
           
 
 
-          // const filteredTickets = uniqueTickets.filter((ticket) => {
-          //   const ticketDate = moment(findDate(ticket, req.query.from, req.query.to));
-          //   const ticketTime = moment(findTime(ticket, req.query.from, req.query.to), 'HH:mm');
-          //   const currentDate = moment(currentDateFormatted);
-          //   const currentTime = moment(currentTimeFormatted, 'HH:mm');
+          const filteredTickets = uniqueTickets.filter((ticket) => {
+            const ticketDate = moment(findDate(ticket, req.query.from, req.query.to));
+            const ticketTime = moment(findTime(ticket, req.query.from, req.query.to), 'HH:mm');
+            const currentDate = moment(currentDateFormatted);
+            const currentTime = moment(currentTimeFormatted, 'HH:mm');
           
-          //   return ticketDate.isSame(currentDate, 'day') && ticketTime.isBefore(currentTime);
-          // });
+            return ticketDate.isSame(currentDate, 'day') && ticketTime.isBefore(currentTime);
+          });
           
                     
-          // const remainingTickets = uniqueTickets.filter((ticket) => !filteredTickets.includes(ticket));
+          const remainingTickets = uniqueTickets.filter((ticket) => !filteredTickets.includes(ticket));
 
 
           if(uniqueTickets.length == 0) {
