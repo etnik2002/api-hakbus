@@ -192,8 +192,8 @@ module.exports = {
       getSearchedTickets: async (req,res) => {
         try {
           let page = Number(req.query.page) || 1;
-          let size = Number(15);
-          const skipCount = (page - 1) * size;
+          let size = Number(8);
+         const skipCount = (page - 1) * size;
       
           const currentDateFormatted = moment(new Date()).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
           const currentTimeFormatted = moment(new Date()).format('HH:mm');
@@ -206,51 +206,72 @@ module.exports = {
             ]
           });
 
-          const uniqueTickets = await Ticket.aggregate([
-            {
-              $match: {
-                _id: { $in: distinctTicketIds },
-                date: { $gte: currentDateFormatted },
-                numberOfTickets: { $gt: 0 },
-                isActive: true
-              }
-            },
-            {
-              $unwind: "$stops" 
-            },
-            {
-              $match: {
-                "stops.from.code": req.query.from,
-                "stops.to.code": req.query.to
-              }
-            },
-            {
-              $sort: { date: 1 }
-            },
-            {
-              $skip: skipCount
-            },
-            {
-              $limit: size
-            },
-            {
-              $group: {
-                _id: "$_id",
-                lineCode: { $first: "$lineCode" },
-                from: { $first: "$from" },
-                to: { $first: "$to" },
-                date: { $first: "$date" },
-                time: { $first: "$time" },
-                type: { $first: "$type" },
-                numberOfTickets: { $first: "$numberOfTickets" },
-                isActive: { $first: "$isActive" },
-                stops: { $push: "$stops" } 
-              }
-            }
-          ]);
+          console.log({distinctTicketIds, from: req.query.from, to : req.query.to})
+
+          // const uniqueTickets = await Ticket.aggregate([
+          //   {
+          //     $match: {
+          //       _id: { $in: distinctTicketIds },
+          //       date: { $gte: currentDateFormatted },
+          //       numberOfTickets: { $gt: 0 },
+          //       isActive: true
+          //     }
+          //   },
+          //   {
+          //     $sort: { date: 1 },
+          //   },
+          //   {
+          //     $skip: skipCount,
+          //   },
+          //   {
+          //     $limit: size,
+          //   },
+          // ])
+
+          // const uniqueTickets = await Ticket.aggregate([
+          //   {
+          //     $match: {
+          //       _id: { $in: distinctTicketIds },
+          //       date: { $gte: currentDateFormatted },
+          //       numberOfTickets: { $gt: 0 },
+          //       isActive: true,
+          //     }
+          //   },
+          //   {
+          //     $lookup: {
+          //       from: "stops",
+          //       let: { fromCode: "$from", toCode: "$to" },
+          //       pipeline: [
+          //         {
+          //           $match: {
+          //             $expr: {
+          //               $and: [
+          //                 { $eq: ["$code", "$$fromCode"] },
+          //                 { $eq: ["$code", "$$toCode"] }
+          //               ]
+          //             }
+          //           }
+          //         }
+          //       ],
+          //       as: "matchedStops"
+          //     }
+          //   },
+          //   {
+          //     $match: { "matchedStops": { $ne: [] } }
+          //   },
+          //   {
+          //     $sort: { date: 1 },
+          //   },
+          //   {
+          //     $skip: skipCount,
+          //   },
+          //   {
+          //     $limit: size,
+          //   },
+          // ]);
           
 
-
+          console.log({uniqueTickets})
           const filteredTickets = uniqueTickets.filter((ticket) => {
             const ticketDate = moment(findDate(ticket, req.query.from, req.query.to));
             const ticketTime = moment(findTime(ticket, req.query.from, req.query.to), 'HH:mm');
@@ -264,7 +285,7 @@ module.exports = {
           const remainingTickets = uniqueTickets.filter((ticket) => !filteredTickets.includes(ticket));
 
 
-          if(uniqueTickets.length == 0) {
+          if(remainingTickets.length == 0) {
             return res.status(204).json("no routes found");
           }
 
