@@ -208,56 +208,14 @@ module.exports = {
 
           console.log({distinctTicketIds, from: req.query.from, to : req.query.to})
 
-          // const uniqueTickets = await Ticket.aggregate([
-          //   {
-          //     $match: {
-          //       _id: { $in: distinctTicketIds },
-          //       date: { $gte: currentDateFormatted },
-          //       numberOfTickets: { $gt: 0 },
-          //       isActive: true
-          //     }
-          //   },
-          //   {
-          //     $sort: { date: 1 },
-          //   },
-          //   {
-          //     $skip: skipCount,
-          //   },
-          //   {
-          //     $limit: size,
-          //   },
-          // ])
-
           const uniqueTickets = await Ticket.aggregate([
             {
               $match: {
                 _id: { $in: distinctTicketIds },
                 date: { $gte: currentDateFormatted },
                 numberOfTickets: { $gt: 0 },
-                isActive: true,
+                isActive: true
               }
-            },
-            {
-              $lookup: {
-                from: "stops",
-                let: { fromCode: "$from", toCode: "$to" },
-                pipeline: [
-                  {
-                    $match: {
-                      $expr: {
-                        $and: [
-                          { $eq: ["$code", "$$fromCode"] },
-                          { $eq: ["$code", "$$toCode"] }
-                        ]
-                      }
-                    }
-                  }
-                ],
-                as: "matchedStops"
-              }
-            },
-            {
-              $match: { "matchedStops": { $ne: [] } }
             },
             {
               $sort: { date: 1 },
@@ -268,7 +226,49 @@ module.exports = {
             {
               $limit: size,
             },
-          ]);
+          ])
+
+          // const uniqueTickets = await Ticket.aggregate([
+          //   {
+          //     $match: {
+          //       _id: { $in: distinctTicketIds },
+          //       date: { $gte: currentDateFormatted },
+          //       numberOfTickets: { $gt: 0 },
+          //       isActive: true,
+          //     }
+          //   },
+          //   {
+          //     $lookup: {
+          //       from: "stops",
+          //       let: { fromCode: "$from", toCode: "$to" },
+          //       pipeline: [
+          //         {
+          //           $match: {
+          //             $expr: {
+          //               $and: [
+          //                 { $eq: ["$code", "$$fromCode"] },
+          //                 { $eq: ["$code", "$$toCode"] }
+          //               ]
+          //             }
+          //           }
+          //         }
+          //       ],
+          //       as: "matchedStops"
+          //     }
+          //   },
+          //   {
+          //     $match: { "matchedStops": { $ne: [] } }
+          //   },
+          //   {
+          //     $sort: { date: 1 },
+          //   },
+          //   {
+          //     $skip: skipCount,
+          //   },
+          //   {
+          //     $limit: size,
+          //   },
+          // ]);
           
 
           console.log({uniqueTickets})
