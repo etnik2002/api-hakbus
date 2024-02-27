@@ -278,7 +278,7 @@ module.exports = {
             const currentDate = moment(currentDateFormatted);
             const currentTime = moment(currentTimeFormatted, 'HH:mm');
           
-            return ticketDate.isSame(currentDate, 'day') && ticketTime.isBefore(currentTime);
+            return ticketDate.isSame(currentDate, 'day') && ticketTime.isAfter(currentTime);
           });
           
                     
