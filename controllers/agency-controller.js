@@ -391,6 +391,7 @@ module.exports = {
         const ceo = await Ceo.find({});
         console.log({ceo: ceo[0]})
         const newNotification = {
+            type:  "debt",
             message: `${agency.name} po paguan borxh prej ${debt} €. Borxhi duhet te konfirmohet ne menyre qe te perditesohet ne dashboardin e agjencionit`,
             title: `Pagese borxhi`,
             agency_id: agency._id,

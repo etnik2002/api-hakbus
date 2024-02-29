@@ -12,7 +12,7 @@ router.post('/login', login);
 
 router.get('/:id',cache('1 minutes'), getUserProfile);
 
-router.post('/delete/:id',verifyUser, deleteUser);
+router.post('/delete/:id',deleteUser);
 
 router.get('/bookings/:id',cache('1 minutes'), getUserBookings);
 

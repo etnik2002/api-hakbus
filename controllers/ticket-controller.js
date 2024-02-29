@@ -192,10 +192,15 @@ module.exports = {
       getSearchedTickets: async (req,res) => {
         try {
           let page = Number(req.query.page) || 1;
-          let size = Number(15);
+          let size = Number(8);
           const skipCount = (page - 1) * size;
-      
-          const currentDateFormatted = moment(new Date()).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
+        
+          const currentDate = moment();
+
+          currentDate.set({ hour: 0, minute: 0, second: 0 });
+          const currentDateFormatted = currentDate.format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
+
+          console.log({currentDateFormatted});
           const currentTimeFormatted = moment(new Date()).format('HH:mm');
           const distinctTicketIds = await Ticket.distinct('_id', {
             $or: [
@@ -228,25 +233,27 @@ module.exports = {
             },
           ])
 
-          console.log({uniqueTickets})
+
           const filteredTickets = uniqueTickets.filter((ticket) => {
             const ticketDate = moment(findDate(ticket, req.query.from, req.query.to));
             const ticketTime = moment(findTime(ticket, req.query.from, req.query.to), 'HH:mm');
+            
             const currentDate = moment(currentDateFormatted);
             const currentTime = moment(currentTimeFormatted, 'HH:mm');
-          
-            return ticketDate.isSame(currentDate, 'day') && ticketTime.isBefore(currentTime);
+            console.log({ticketDate, ticketTime, currentDate, currentTime});
+
+            return ticketDate.isSame(currentDateFormatted, 'day') && currentTime.isAfter(ticketTime);
           });
           
-                    
+          
           const remainingTickets = uniqueTickets.filter((ticket) => !filteredTickets.includes(ticket));
 
 
-          if(remainingTickets.length == 0) {
+          if(uniqueTickets.length == 0) {
             return res.status(204).json("no routes found");
           }
 
-            return res.status(200).json(uniqueTickets);
+            return res.status(200).json(remainingTickets);
           } catch (error) {
           console.error(error);
           res.status(500).json({ message: "Internal error -> " + error });

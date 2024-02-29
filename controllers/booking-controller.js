@@ -203,6 +203,7 @@ module.exports = {
       var seatNotification = {};
       if (ticket.numberOfTickets <= ceo[0].nrOfSeatsNotification + 1) {
         seatNotification = {
+          type: 'seat',
           message: `Kanë mbetur vetëm ${ceo[0].nrOfSeatsNotification} vende të lira për linjën (${ticket.from} / ${ticket.to}) me datë ${moment(ticket.date).format('DD-MM-YYYY')}`,
           title: `${ceo[0].nrOfSeatsNotification} ulëse të mbetura`,
           ticket_id: ticket._id,
