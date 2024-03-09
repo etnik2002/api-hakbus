@@ -211,8 +211,6 @@ module.exports = {
             ]
           });
 
-          console.log({distinctTicketIds, from: req.query.from, to : req.query.to})
-
           const uniqueTickets = await Ticket.aggregate([
             {
               $match: {
@@ -235,19 +233,19 @@ module.exports = {
 
 
           const filteredTickets = uniqueTickets.filter((ticket) => {
-            const ticketDate = moment(findDate(ticket, req.query.from, req.query.to));
+            const ticketDate = moment(findDate(ticket, req.query.from, req.query.to)).startOf('day');
             const ticketTime = moment(findTime(ticket, req.query.from, req.query.to), 'HH:mm');
             
             const currentDate = moment(currentDateFormatted);
             const currentTime = moment(currentTimeFormatted, 'HH:mm');
-            console.log({ticketDate, ticketTime, currentDate, currentTime});
+            console.log({ticketDate, currentDate, currentTime, ticketTime})
 
             return ticketDate.isSame(currentDateFormatted, 'day') && currentTime.isAfter(ticketTime);
           });
           
           
           const remainingTickets = uniqueTickets.filter((ticket) => !filteredTickets.includes(ticket));
-
+          console.log({testTicket: JSON.stringify(remainingTickets, null, 2)})
 
           if(uniqueTickets.length == 0) {
             return res.status(204).json("no routes found");
@@ -371,10 +369,14 @@ const generateTicketsForNextTwoYears = async (ticketData, selectedDaysOfWeek) =>
     return adjustedDate;
   };
 
-  const startDate = new Date();
   const tickets = [];
 
+
   for (const selectedDayOfWeek of selectedDaysOfWeek) {
+    const frankfurtTimezone = 'Europe/Berlin';
+    const startDateString = new Date().toLocaleString('en-US', { timeZone: frankfurtTimezone });
+    const startDate = new Date(startDateString);
+    
     let ticketDate = adjustDayOfWeek(startDate, selectedDayOfWeek);
 
     for (let i = 0; i < 2 * 52; i++) {
@@ -387,15 +389,40 @@ const generateTicketsForNextTwoYears = async (ticketData, selectedDaysOfWeek) =>
 
       const stopsWithTime = ticketDataWithDate.stops.map((stop) => {
         const stopDate = new Date(ticketDateString);
+        const maxBuyingTime = new Date(stopDate);
+        const hour = stop.time.split(":")[0];
+        const minute = stop.time.split(":")[1];
+        stopDate.setHours(parseInt(hour) + 1, parseInt(minute), 0, 0);
+        mbHours = stop.maxBuyingTime.split(':')[0];
+        mbMins = stop.maxBuyingTime.split(':')[1];
+        maxBuyingTime.setHours(parseInt(mbHours) + 1, mbMins, 0, 0);
+
 
         if (stop.isTomorrow) {
           stopDate.setDate(stopDate.getDate() + 1);
         }
 
+        let arrivalTimeHours = 0;
+        let arrivalTimeMinutes = 0;
+        let arrivalTimeDate;
+        
+        if (stop.arrivalTime.includes(':')) {
+          arrivalTimeHours = stop.arrivalTime.split(":")[0];
+          arrivalTimeMinutes = stop.arrivalTime.split(":")[1];
+        } else {
+            arrivalTimeHours = parseInt(stop.arrivalTime);
+            arrivalTimeMinutes = 0;
+        }
+        
+        const arrivalTimeMilliseconds = arrivalTimeHours * 60 * 60 * 1000 + arrivalTimeMinutes * 60 * 1000;
+        arrivalTimeDate = new Date(stopDate.getTime() + arrivalTimeMilliseconds);
+
         return {
           ...stop,
           time: stop.time,
           date: stopDate.toISOString(),
+          arrivalTimestamp: arrivalTimeDate,
+          maxBuyingTime: stop.maxBuyingTime
         };
       });
 
@@ -405,12 +432,14 @@ const generateTicketsForNextTwoYears = async (ticketData, selectedDaysOfWeek) =>
       };
 
       tickets.push(ticketWithStops);
+      console.log({ticket: JSON.stringify(ticketWithStops, null, 2)})
 
       ticketDate.setDate(ticketDate.getDate() + 7);
     }
   }
 
   await Ticket.insertMany(tickets);
-
+  
   return tickets;
 };
+
