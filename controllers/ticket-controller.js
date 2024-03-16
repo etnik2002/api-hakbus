@@ -23,6 +23,19 @@ const findTime = (ticket, from, to) => {
   }
 };
 
+const findMAxBuyingTime = (ticket, from, to) => {
+  const stop = ticket?.stops?.find(
+    (s) =>
+      s.from.some((cityInfo) => cityInfo.code === from) &&
+      s.to.some((t) => t.code === to)
+  );
+  if (stop) {
+    return stop.maxBuyingTime;
+  } else {
+    return "Time not found";
+  }
+};
+
 const findDate = (ticket, from, to) => {
   const stop = ticket.stops.find(
     (s) =>
@@ -234,8 +247,7 @@ module.exports = {
 
           const filteredTickets = uniqueTickets.filter((ticket) => {
             const ticketDate = moment(findDate(ticket, req.query.from, req.query.to)).startOf('day');
-            const ticketTime = moment(findTime(ticket, req.query.from, req.query.to), 'HH:mm');
-            
+            const ticketTime = moment(findMAxBuyingTime(ticket, req.query.from, req.query.to) || findTime(ticket, req.query.from, req.query.to), 'HH:mm');
             const currentDate = moment(currentDateFormatted);
             const currentTime = moment(currentTimeFormatted, 'HH:mm');
             console.log({ticketDate, currentDate, currentTime, ticketTime})
@@ -245,9 +257,8 @@ module.exports = {
           
           
           const remainingTickets = uniqueTickets.filter((ticket) => !filteredTickets.includes(ticket));
-          console.log({testTicket: JSON.stringify(remainingTickets, null, 2)})
 
-          if(uniqueTickets.length == 0) {
+          if(remainingTickets.length == 0) {
             return res.status(204).json("no routes found");
           }
 
