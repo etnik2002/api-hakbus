@@ -213,7 +213,6 @@ module.exports = {
           currentDate.set({ hour: 0, minute: 0, second: 0 });
           const currentDateFormatted = currentDate.format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
 
-          console.log({currentDateFormatted});
           const currentTimeFormatted = moment(new Date()).format('HH:mm');
           const distinctTicketIds = await Ticket.distinct('_id', {
             $or: [
@@ -250,11 +249,12 @@ module.exports = {
             const ticketTime = moment(findMAxBuyingTime(ticket, req.query.from, req.query.to) || findTime(ticket, req.query.from, req.query.to), 'HH:mm');
             const currentDate = moment(currentDateFormatted);
             const currentTime = moment(currentTimeFormatted, 'HH:mm');
-            console.log({ticketDate, currentDate, currentTime, ticketTime})
-
-            return ticketDate.isSame(currentDateFormatted, 'day') && currentTime.isAfter(ticketTime);
-          });
-          
+        
+            console.log({ticketDate, currentDate, currentTime, ticketTime, diff: ticketTime < currentTime});
+        
+            return ticketDate.isSame(currentDateFormatted, 'day') && ticketTime < currentTime;
+        });
+        
           
           const remainingTickets = uniqueTickets.filter((ticket) => !filteredTickets.includes(ticket));
 
