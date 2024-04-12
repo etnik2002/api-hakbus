@@ -249,10 +249,10 @@ module.exports = {
             const ticketTime = moment(findMAxBuyingTime(ticket, req.query.from, req.query.to) || findTime(ticket, req.query.from, req.query.to), 'HH:mm');
             const currentDate = moment(currentDateFormatted);
             const currentTime = moment(currentTimeFormatted, 'HH:mm');
+            const addedTicketTime = ticketTime.add(1, 'hour');
+            console.log({ticketDate,addedTicketTime, currentDate, currentTime, ticketTime, diff: ticketTime < currentTime});
         
-            console.log({ticketDate, currentDate, currentTime, ticketTime, diff: ticketTime < currentTime});
-        
-            return ticketDate.isSame(currentDateFormatted, 'day') && ticketTime < currentTime;
+            return ticketDate.isSame(currentDateFormatted, 'day') && addedTicketTime < currentTime;
         });
         
           
