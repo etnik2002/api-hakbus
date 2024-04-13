@@ -1,7 +1,7 @@
 const Ticket = require("../models/Ticket");
 const Agency = require("../models/Agency");
 // const moment = require("moment");
-const moment = require('moment-timezone');
+const moment = require('moment');
 const User = require("../models/User");
 const Line = require("../models/Line");
 const TicketService = require("../services/ticketService");
@@ -211,7 +211,7 @@ module.exports = {
           let size = Number(8);
           const skipCount = (page - 1) * size;
       
-          const currentDate = moment.tz(skopjeTimezone);
+          const currentDate = moment;
           const currentTime = currentDate.clone().format('HH:mm');
       
           currentDate.startOf('day');
@@ -247,8 +247,8 @@ module.exports = {
           ]);
       
           const filteredTickets = uniqueTickets.filter((ticket) => {
-            const ticketDate = moment.tz(findDate(ticket, req.query.from, req.query.to), skopjeTimezone).startOf('day');
-            const ticketTime = moment.tz(findMAxBuyingTime(ticket, req.query.from, req.query.to) || findTime(ticket, req.query.from, req.query.to), skopjeTimezone).format('HH:mm');
+            const ticketDate = moment(findDate(ticket, req.query.from, req.query.to)).startOf('day');
+            const ticketTime = moment(findMAxBuyingTime(ticket, req.query.from, req.query.to) || findTime(ticket, req.query.from, req.query.to), skopjeTimezone).format('HH:mm');
       
             return ticketDate.isSame(currentDate, 'day') && ticketTime < currentTime;
           });
