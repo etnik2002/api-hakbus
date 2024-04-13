@@ -13,7 +13,7 @@ const bookingSchema = mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Ticket'
     },
-    date: { type: String },
+    date: { type: Date },
     from: { type: String },
     to: { type: String },
     fromCode: { type: String },

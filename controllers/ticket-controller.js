@@ -206,7 +206,7 @@ module.exports = {
       
       getSearchedTickets: async (req, res) => {
         try {
-          const skopjeTimezone = 'Europe/Skopje';
+          const skopjeTimezone = "Europe/Berlin";
           let page = Number(req.query.page) || 1;
           let size = Number(8);
           const skipCount = (page - 1) * size;
