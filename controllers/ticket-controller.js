@@ -212,7 +212,7 @@ module.exports = {
           const skipCount = (page - 1) * size;
       
           const currentDate = moment;
-          const currentTime = currentDate.clone().format('HH:mm');
+          const currentTime = currentDate.format('HH:mm');
       
           currentDate.startOf('day');
           const currentDateFormatted = currentDate.format();
