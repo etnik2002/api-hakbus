@@ -207,7 +207,7 @@ module.exports = {
       getSearchedTickets: async (req,res) => {
         try {
           let page = Number(req.query.page) || 1;
-          let size = Number(15);
+          let size = Number(8);
           const skipCount = (page - 1) * size;
       
           const currentDateFormatted = moment(new Date()).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
