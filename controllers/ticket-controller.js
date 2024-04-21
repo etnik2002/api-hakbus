@@ -24,6 +24,19 @@ const findTime = (ticket, from, to) => {
   }
 };
 
+const findTimestamp = (ticket, from, to) => {
+  const stop = ticket?.stops?.find(
+    (s) =>
+      s.from.some((cityInfo) => cityInfo.code === from) &&
+      s.to.some((t) => t.code === to)
+  );
+  if (stop) {
+    return stop.timestamp;
+  } else {
+    return "Time not found";
+  }
+};
+
 const findMAxBuyingTime = (ticket, from, to) => {
   const stop = ticket?.stops?.find(
     (s) =>
@@ -210,7 +223,7 @@ module.exports = {
           let size = Number(8);
           const skipCount = (page - 1) * size;
       
-          const currentDateFormatted = moment(new Date()).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
+          const currentDateFormatted = moment(new Date()).startOf('day').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
           const currentTimeFormatted = moment(new Date()).format('HH:mm');
           const distinctTicketIds = await Ticket.distinct('_id', {
             $or: [
@@ -243,15 +256,16 @@ module.exports = {
 
 
           const filteredTickets = uniqueTickets.filter((ticket) => {
-            const ticketDate = moment(findDate(ticket, req.query.from, req.query.to));
-            const ticketTime = moment(findTime(ticket, req.query.from, req.query.to), 'HH:mm');
-            const currentDate = moment(currentDateFormatted);
-            const currentTime = moment(currentTimeFormatted, 'HH:mm');
-          
-            return ticketDate.isSame(currentDate, 'day') && ticketTime < currentTime;
+            const ticketTimestamp = new Date(findTimestamp(ticket, req.query.from, req.query.to) || findDate(ticket, req.query.from, req.query.to)); 
+            ticketTimestamp.setHours(ticketTimestamp.getHours() + 1);
+            
+            const currentDate = new Date()
+            const cd = currentDate.setHours(parseInt(currentDate.getHours()) + 2)
+            console.log({currentDate, cd})
+            return ticketTimestamp < cd;
           });
           
-                    
+          
           const remainingTickets = uniqueTickets.filter((ticket) => !filteredTickets.includes(ticket));
 
 

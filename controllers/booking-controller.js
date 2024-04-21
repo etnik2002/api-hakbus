@@ -257,7 +257,7 @@ module.exports = {
           const dateTime = { date: dateString, time: findTime(newBooking.ticket, newBooking.fromCode, newBooking.toCode) };
 
           console.log({destination, dateString, dateTime})
-          const emailSent = await generateQRCode(newBooking._id.toString(), newBooking.passengers, destination, dateTime,new Date(dateString).toDateString(), newBooking.ticket?.lineCode?.freeLuggages);
+          const emailSent = await generateQRCode(newBooking._id.toString(), newBooking.passengers, destination, dateTime,new Date(dateString).toDateString(), newBooking.ticket?.lineCode?.freeLuggages, req.params.tid);
           if(!emailSent) {
             return res.status(403).json("error sending email")
           }
