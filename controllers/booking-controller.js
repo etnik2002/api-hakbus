@@ -167,6 +167,7 @@ module.exports = {
       const newBooking = new Booking({
         buyer: buyerObjectId,
         ticket: req.params.ticketID,
+        lineCode: new mongoose.Types.ObjectId(ticket.lineCode._id),
         firstname: req.body.firstname,
         date: dateValue,
         from: req.body.from.value,
