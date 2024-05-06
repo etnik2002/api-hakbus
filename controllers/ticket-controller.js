@@ -223,8 +223,9 @@ module.exports = {
           let size = Number(8);
           const skipCount = (page - 1) * size;
       
-          const currentDateFormatted = moment(new Date()).startOf('day').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
-          const currentTimeFormatted = moment(new Date()).format('HH:mm');
+          const currentDateFormatted = moment().startOf('day').subtract(1, 'day').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
+          console.log({currentDateFormatted: currentDateFormatted.toString()})
+          const currentTimeFormatted = moment().format('HH:mm');
           const distinctTicketIds = await Ticket.distinct('_id', {
             $or: [
               {
@@ -238,7 +239,7 @@ module.exports = {
             {
               $match: {
                 _id: { $in: distinctTicketIds },
-                date: { $gte: currentDateFormatted },
+                date: { $gte: currentDateFormatted.toString() },
                 numberOfTickets: { $gt: 0 },
                 isActive: true
               }
@@ -255,19 +256,17 @@ module.exports = {
           ])
 
 
+          console.log({filteredDate: uniqueTickets[0].date})
           const filteredTickets = uniqueTickets.filter((ticket) => {
-            const ticketTimestamp = new Date(findTimestamp(ticket, req.query.from, req.query.to) || findDate(ticket, req.query.from, req.query.to)); 
-            ticketTimestamp.setHours(ticketTimestamp.getHours() + 1);
-            
-            const currentDate = new Date()
-            const cd = currentDate.setHours(parseInt(currentDate.getHours()) + 2)
-            console.log({currentDate, cd})
-            return ticketTimestamp < cd;
+            const ticketDate = moment(findDate(ticket, req.query.from, req.query.to)).startOf('day');
+            const ticketTime = moment(findTime(ticket, req.query.from, req.query.to), 'HH:mm');
+            const currentDate = moment(currentDateFormatted).startOf('day');
+            const currentTime = moment(currentTimeFormatted, 'HH:mm');
+            return ticketDate.isSame(currentDate, 'day') && ticketTime.isAfter(currentTime);
           });
           
           
           const remainingTickets = uniqueTickets.filter((ticket) => !filteredTickets.includes(ticket));
-
 
           if(uniqueTickets.length == 0) {
             return res.status(204).json("no routes found");
@@ -279,7 +278,8 @@ module.exports = {
           res.status(500).json({ message: "Internal error -> " + error });
         }
       },
-      getNearestTicket: async (req, res) => {
+
+    getNearestTicket: async (req, res) => {
         try {
           const dateNow = moment().format('DD-MM-YYYY');
           const ticket = await Ticket.find({
