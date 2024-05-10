@@ -25,6 +25,28 @@ module.exports = {
           res.status(500).json(`error -> ${error}`);
         }
       },
+
+      editUser: async (req,res)=> {
+        try {
+          const user = await User.findById(req.params.id)
+
+          const payload = {
+            name: req.body.name || user.name,
+            password: req.body.password || user.password,
+            email: req.body.email || user.email,
+          }
+
+          const updated = await User.findByIdAndUpdate(user._id, payload);
+          if(!updated) {
+            return res.staus(403).json("User not updated")
+          }
+
+          return res.status(200).json("Success")
+        } catch (error) {
+          console.log(error)
+          return res.status(500).json(error)  
+        }
+      },
     
       login: async (req, res) => {
         try {
