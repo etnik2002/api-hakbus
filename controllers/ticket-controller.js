@@ -223,7 +223,7 @@ module.exports = {
           const skipCount = (page - 1) * size;
       
           const europeBerlinTimezone = 'Europe/Berlin';
-          const currentDateFormatted = moment().tz(europeBerlinTimezone).subtract(1, 'day').startOf('day').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
+          const currentDateFormatted = moment().tz(europeBerlinTimezone).startOf('day').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
           const currentTimeFormatted = moment().tz(europeBerlinTimezone).format('HH:mm');
           console.log({currentDateFormatted})
           const distinctTicketIds = await Ticket.distinct('_id', {
@@ -256,8 +256,8 @@ module.exports = {
           ])
       
           const filteredTickets = uniqueTickets.filter((ticket) => {
-            const ticketDateTime = moment(`${findDate(ticket, req.query.from, req.query.to)} ${findTime(ticket, req.query.from, req.query.to)}`, 'YYYY-MM-DD HH:mm');
-            const currentDateTime = moment(`${currentDateFormatted} ${currentTimeFormatted}`, 'YYYY-MM-DD HH:mm');
+            const ticketDateTime = moment(`${findDate(ticket, req.query.from, req.query.to)} ${findMAxBuyingTime(ticket, req.query.from, req.query.to)}`, 'YYYY-MM-DD HH:mm');
+            const currentDateTime = moment(`${currentDateFormatted} ${currentTimeFormatted}`, 'YYYY-MM-DD HH:mm').tz(europeBerlinTimezone);
         
             console.log({ ticketDateTime, currentDateTime, isBefore: currentDateTime.isAfter(ticketDateTime) });
         
