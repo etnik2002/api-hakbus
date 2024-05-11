@@ -258,16 +258,15 @@ module.exports = {
           const filteredTickets = uniqueTickets.filter((ticket) => {
             const ticketDateTime = moment(`${findDate(ticket, req.query.from, req.query.to)} ${findMAxBuyingTime(ticket, req.query.from, req.query.to)}`, 'YYYY-MM-DD HH:mm');
             const currentDateTime = moment(`${currentDateFormatted} ${currentTimeFormatted}`, 'YYYY-MM-DD HH:mm').tz(europeBerlinTimezone);
-            
-            console.log({ ticketDateTime, currentDateTime, tdLtCd: ticketDateTime > currentDateTime });
         
-            return currentDateTime < ticketDateTime; 
+            console.log({ ticketDateTime, currentDateTime, isBefore: currentDateTime.isAfter(ticketDateTime) });
+        
+            return currentDateTime.isAfter(ticketDateTime);
         });
-        
       
           const remainingTickets = uniqueTickets.filter((ticket) => !filteredTickets.includes(ticket));
       
-          if (uniqueTickets.length == 0) {
+          if (remainingTickets.length == 0) {
             return res.status(204).json("no routes found");
           }
       
