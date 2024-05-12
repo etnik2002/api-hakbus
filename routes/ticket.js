@@ -11,7 +11,7 @@ router.get('/lines',cache('3 minutes'), getTicketLinesBasedOnDate);
 
 router.post('/create',ceoAccessToken, registerTicket);
 
-router.get('/',cache('10 minutes'), getSearchedTickets);
+router.get('/',cache('3 minutes'), getSearchedTickets);
 
 router.get('/:id', getSingleTicket);
 
