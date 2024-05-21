@@ -1,7 +1,7 @@
 const Ticket = require("../models/Ticket");
 const Agency = require("../models/Agency");
 // const moment = require("moment");
-const moment = require('moment');
+const moment = require('moment-timezone');
 const User = require("../models/User");
 const Line = require("../models/Line");
 const TicketService = require("../services/ticketService");
@@ -19,6 +19,19 @@ const findTime = (ticket, from, to) => {
   );
   if (stop) {
     return stop.time;
+  } else {
+    return "Time not found";
+  }
+};
+
+const findTimestamp = (ticket, from, to) => {
+  const stop = ticket?.stops?.find(
+    (s) =>
+      s.from.some((cityInfo) => cityInfo.code === from) &&
+      s.to.some((t) => t.code === to)
+  );
+  if (stop) {
+    return stop.timestamp;
   } else {
     return "Time not found";
   }
@@ -203,15 +216,16 @@ module.exports = {
         }
       },
 
-      
       getSearchedTickets: async (req,res) => {
         try {
           let page = Number(req.query.page) || 1;
-          let size = Number(15);
+          let size = Number(8);
           const skipCount = (page - 1) * size;
       
-          const currentDateFormatted = moment(new Date()).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
-          const currentTimeFormatted = moment(new Date()).format('HH:mm');
+          const europeBerlinTimezone = 'Europe/Berlin';
+          const currentDateFormatted = moment().tz(europeBerlinTimezone).startOf('day').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
+          const currentTimeFormatted = moment().tz(europeBerlinTimezone).format('HH:mm');
+          console.log({currentDateFormatted})
           const distinctTicketIds = await Ticket.distinct('_id', {
             $or: [
               {
@@ -220,7 +234,7 @@ module.exports = {
               }
             ]
           });
-
+      
           const uniqueTickets = await Ticket.aggregate([
             {
               $match: {
@@ -240,32 +254,29 @@ module.exports = {
               $limit: size,
             },
           ])
-
-
+      
           const filteredTickets = uniqueTickets.filter((ticket) => {
-            const ticketDate = moment(findDate(ticket, req.query.from, req.query.to));
-            const ticketTime = moment(findTime(ticket, req.query.from, req.query.to), 'HH:mm');
-            const currentDate = moment(currentDateFormatted);
-            const currentTime = moment(currentTimeFormatted, 'HH:mm');
-          
-            return ticketDate.isSame(currentDate, 'day') && ticketTime < currentTime;
-          });
-          
-                    
+            const ticketDateTime = moment(`${findDate(ticket, req.query.from, req.query.to)} ${findTime(ticket, req.query.from, req.query.to)}`, 'YYYY-MM-DD HH:mm');
+            const currentDateTime = moment(`${currentDateFormatted} ${currentTimeFormatted}`, 'YYYY-MM-DD HH:mm').tz(europeBerlinTimezone);
+            console.log({after: currentDateTime.isAfter(ticketDateTime), currentDateTime, ticketDateTime})
+            return currentDateTime.isAfter(ticketDateTime);
+        });
+
           const remainingTickets = uniqueTickets.filter((ticket) => !filteredTickets.includes(ticket));
-
-
-          if(uniqueTickets.length == 0) {
+      
+          if (remainingTickets.length == 0) {
             return res.status(204).json("no routes found");
           }
-
-            return res.status(200).json(remainingTickets);
-          } catch (error) {
+      
+          return res.status(200).json(remainingTickets);
+        } catch (error) {
           console.error(error);
           res.status(500).json({ message: "Internal error -> " + error });
         }
       },
-      getNearestTicket: async (req, res) => {
+
+      
+    getNearestTicket: async (req, res) => {
         try {
           const dateNow = moment().format('DD-MM-YYYY');
           const ticket = await Ticket.find({

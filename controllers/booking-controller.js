@@ -167,6 +167,7 @@ module.exports = {
       const newBooking = new Booking({
         buyer: buyerObjectId,
         ticket: req.params.ticketID,
+        lineCode: new mongoose.Types.ObjectId(ticket.lineCode._id),
         firstname: req.body.firstname,
         date: dateValue,
         from: req.body.from.value,
@@ -257,7 +258,7 @@ module.exports = {
           const dateTime = { date: dateString, time: findTime(newBooking.ticket, newBooking.fromCode, newBooking.toCode) };
 
           console.log({destination, dateString, dateTime})
-          const emailSent = await generateQRCode(newBooking._id.toString(), newBooking.passengers, destination, dateTime,new Date(dateString).toDateString(), newBooking.ticket?.lineCode?.freeLuggages);
+          const emailSent = await generateQRCode(newBooking._id.toString(), newBooking.passengers, destination, dateTime,new Date(dateString).toDateString(), newBooking.ticket?.lineCode?.freeLuggages, req.params.tid);
           if(!emailSent) {
             return res.status(403).json("error sending email")
           }

@@ -459,7 +459,7 @@ module.exports = {
         const booking = await Booking.findByIdAndUpdate(id, { $set: { isPaid: true } });
         const destination = { from: booking.from, to: booking.to };
         const dateTime = { date: booking.date, time: findTime(booking.ticket, req.body.from, req.body.to) };
-        await generateQRCode(booking._id.toString(), booking.passengers, destination, dateTime, booking.ticket?.lineCode?.freeLuggages);
+        await generateQRCode(booking._id.toString(), booking.passengers, destination, dateTime, booking.ticket?.lineCode?.freeLuggages, null);
         const agencyPercentage = agency.percentage / 100;
         const agencyEarnings = (booking.price * agencyPercentage);
         agency.debt += agencyEarnings;
@@ -561,7 +561,7 @@ module.exports = {
       console.log({dateString})
 
       if(detectPayment(ticket, req.body.isPaid)){
-        await generateQRCode(newBooking._id.toString(), newBooking.passengers, destination, dateTime,new Date(dateString).toDateString(), ticket?.lineCode?.freeLuggages);
+        await generateQRCode(newBooking._id.toString(), newBooking.passengers, destination, dateTime,new Date(dateString).toDateString(), ticket?.lineCode?.freeLuggages, null);
       }
       res.status(200).json(newBooking);
     } catch (error) {
