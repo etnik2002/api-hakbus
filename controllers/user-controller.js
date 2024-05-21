@@ -1,6 +1,8 @@
+const { sendOTP } = require('../helpers/mail');
 const Booking = require('../models/Booking');
 const User = require('../models/User');
 const bcrypt = require("bcrypt")
+const crypto = require("crypto");
 
 module.exports = {
 
@@ -26,45 +28,64 @@ module.exports = {
         }
       },
 
-      editUser: async (req,res)=> {
+      editUser: async (req, res) => {
         try {
-          const user = await User.findById(req.params.id)
-
-          const payload = {
-            name: req.body.name || user.name,
-            password: req.body.password || user.password,
-            email: req.body.email || user.email,
-          }
-
-          const updated = await User.findByIdAndUpdate(user._id, payload);
-          if(!updated) {
-            return res.staus(403).json("User not updated")
-          }
-
-          return res.status(200).json("Success")
+            const user = await User.findById(req.params.id);
+            if (!user) {
+                return res.status(404).json({ error: "User not found" });
+            }
+    
+            const payload = {
+                name: req.body.name || user.name,
+                email: req.body.email || user.email,
+            };
+    
+            if (req.body.password) {
+                const hashedPassword = await bcrypt.hash(req.body.password, 10);
+                payload.password = hashedPassword;
+            } else {
+                payload.password = user.password;
+            }
+    
+            const updatedUser = await User.findByIdAndUpdate(user._id, payload, { new: true });
+            if (!updatedUser) {
+                return res.status(403).json("User not updated");
+            }
+    
+            return res.status(200).json("Success");
         } catch (error) {
-          console.log(error)
-          return res.status(500).json(error)  
+            console.log(error);
+            return res.status(500).json(error);
         }
-      },
+    },
+    
 
-      sendOtp: async (req,res) => {
-        try {
+    sendOtp: async (req, res) => {
+      try {
           const otp = generateSixDigitNumber();
-          console.log({otp});
-          const user = await User.find({email: req.body.email});
+          console.log({ otp });
+  
+          const user = await User.findOne({ email: req.body.email });
+  
+          if (!user) {
+              return res.status(404).json({ error: "User not found" });
+          }
+  
           user.otp = otp;
+          
           await user.save();
-          console.log(user)
-          return res.status(201).json(otp)
+          await sendOTP(user.email, otp )
+          console.log(user);
+          return res.status(201).json(otp);
         } catch (error) {
-          console.log(error);
-          return res.status(500).json(error)
+            console.log(error);
+            return res.status(500).json(error);
         }
-      }, 
+    },
+  
       checkOtp: async (req,res) => {
         try {
-          const user = await User.findById(req.params.id).select('otp');
+          const user = await User.findOne({ email: req.body.email }).select('otp');
           if(user.otp != req.body.otp){
             return res.status(401).json("Wrong otp");
           }
@@ -75,17 +96,26 @@ module.exports = {
           return res.status(500).json(error)
         }
       },
-       resetPw: async (req,res) => {
+      resetPw: async (req, res) => {
         try {
-          const hashedPassword = await bcrypt.hashSync(req.body.password, 10);
-          await User.findByIdAndUpdate(rqe.params.id, {$set:{password: hashedPassword}});
-          return res.status(200).json("success")
-
+            const hashedPassword = await bcrypt.hash(req.body.password, 10);
+    
+            const user = await User.findOne({ email: req.body.email });
+    
+            if (!user) {
+                return res.status(404).json({ error: "User not found" });
+            }
+    
+            user.password = hashedPassword;
+            await user.save();
+    
+            return res.status(200).json("Success");
         } catch (error) {
-          console.log(error);
-          return res.status(500).json(error)
+            console.log(error);
+            return res.status(500).json(error);
         }
-      },
+    },
+    
     
       login: async (req, res) => {
         try {

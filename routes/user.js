@@ -10,7 +10,7 @@ router.post('/register', registerUser);
 
 router.post('/login', login);
 
-router.post('/send-otp/:id', sendOtp)
+router.post('/send-otp', sendOtp)
 
 router.post('/check-otp', checkOtp)
 
