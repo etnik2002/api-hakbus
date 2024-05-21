@@ -40,8 +40,8 @@ async function generateQRCode(data, passengers, destination, dateTime,dateString
       port: 465,
       secure: true, 
       auth: {
-        user: 'etnikz2002@gmail.com',
-        pass: 'vysmnurlcmrzcwad',
+        user: 'hakbusticket@gmail.com',
+        pass: 'upkaafqoytlnnxjh',
       },
     });
 
