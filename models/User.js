@@ -25,6 +25,9 @@ const userSchema = mongoose.Schema({
     fcmToken: {
         type: String,
     }, 
+    otp: {
+        type: String,
+    },
     
 }, { timestamps: true })
 

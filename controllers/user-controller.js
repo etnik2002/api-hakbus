@@ -47,6 +47,45 @@ module.exports = {
           return res.status(500).json(error)  
         }
       },
+
+      sendOtp: async (req,res) => {
+        try {
+          const otp = generateSixDigitNumber();
+          console.log({otp});
+          const user = await User.find({email: req.body.email});
+          user.otp = otp;
+          await user.save();
+          console.log(user)
+          return res.status(201).json(otp)
+        } catch (error) {
+          console.log(error);
+          return res.status(500).json(error)
+        }
+      }, 
+      checkOtp: async (req,res) => {
+        try {
+          const user = await User.findById(req.params.id).select('otp');
+          if(user.otp != req.body.otp){
+            return res.status(401).json("Wrong otp");
+          }
+
+          return res.status(200).json(true);
+        } catch (error) {
+          console.log(error);
+          return res.status(500).json(error)
+        }
+      },
+       resetPw: async (req,res) => {
+        try {
+          const hashedPassword = await bcrypt.hashSync(req.body.password, 10);
+          await User.findByIdAndUpdate(rqe.params.id, {$set:{password: hashedPassword}});
+          return res.status(200).json("success")
+
+        } catch (error) {
+          console.log(error);
+          return res.status(500).json(error)
+        }
+      },
     
       login: async (req, res) => {
         try {
@@ -103,4 +142,12 @@ module.exports = {
         }
       }
 
+}
+
+
+function generateSixDigitNumber() {
+  const min = 100000;
+  const max = 999999;
+  const randomNumber = crypto.randomInt(min, max + 1);
+  return randomNumber;
 }
