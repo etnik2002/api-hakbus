@@ -37,19 +37,15 @@ module.exports = {
                 return res.status(404).json({ error: "User not found" });
             }
     
+            const hashedPassword = await bcrypt.hash(req.body.password, 10);
             const payload = {
                 name: req.body.name || user.name,
                 email: req.body.email || user.email,
+                password: req.body.password || hashedPassword,
             };
     
-            if (req.body.password) {
-                const hashedPassword = await bcrypt.hash(req.body.password, 10);
-                payload.password = hashedPassword;
-            } else {
-                payload.password = user.password;
-            }
     
-            const updatedUser = await User.findByIdAndUpdate(user._id, payload, { new: true });
+            const updatedUser = await User.findByIdAndUpdate(user._id, payload);
             if (!updatedUser) {
                 return res.status(403).json("User not updated");
             }
