@@ -30,7 +30,11 @@ const userSchema = mongoose.Schema({
     },
     index: {
         type: Number
-    }
+    },
+    hasUsedFirstDiscount: {
+        type: Boolean,
+        default: false
+    },
     
 }, { timestamps: true })
 

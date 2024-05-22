@@ -150,6 +150,15 @@ module.exports = {
 
       const buyerID = req.params.buyerID;
       let buyerObjectId;
+      try {
+        const user = await User.findById(buyerID).select('hasUsedFirstDiscount');
+          if (!user.hasUsedFirstDiscount) {
+            user.hasUsedFirstDiscount = true;
+            await user.save();
+          }
+      } catch (error) {
+        console.error('Error fetching or updating the user:', error);
+      }
 
       if (buyerID) {
         try {
