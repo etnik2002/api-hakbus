@@ -28,6 +28,9 @@ const userSchema = mongoose.Schema({
     otp: {
         type: String,
     },
+    index: {
+        type: Number
+    }
     
 }, { timestamps: true })
 

@@ -13,12 +13,14 @@ module.exports = {
             return res.status(500).json("Email already exists");
           }
           const hashedPassword = await bcrypt.hashSync(req.body.password, 10);
+          const userCount = await User.countDocuments();
     
           const newUser = new User({
             name: req.body.name,
             email: req.body.email,
             password: hashedPassword,
             fcmToken: req.body.fcmToken ? req.body.fcmToken : null,
+            index: userCount + 1,
           })
     
           const savedUser = await newUser.save();
