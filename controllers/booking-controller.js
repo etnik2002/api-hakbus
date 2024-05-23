@@ -150,15 +150,6 @@ module.exports = {
 
       const buyerID = req.params.buyerID;
       let buyerObjectId;
-      try {
-        const user = await User.findById(buyerID).select('hasUsedFirstDiscount');
-          if (!user.hasUsedFirstDiscount) {
-            user.hasUsedFirstDiscount = true;
-            await user.save();
-          }
-      } catch (error) {
-        console.error('Error fetching or updating the user:', error);
-      }
 
       if (buyerID) {
         try {
@@ -223,10 +214,10 @@ module.exports = {
         await Ceo.findByIdAndUpdate(ceo[0]._id, { $push: { notifications: seatNotification } });
       }
        
-      res.status(200).json(createdBooking);
+      return res.status(200).json(createdBooking);
     } catch (error) {
       console.log(error);
-      res.status(500).json({ message: `Server error -> ${error}` });
+      return res.status(500).json({ message: `Server error -> ${error}` });
     }
   },
 
@@ -252,7 +243,6 @@ module.exports = {
       
       payBooking: async (req,res) => {
         try {
-          console.log({tid: req.params.tid})
           const newBooking = await Booking.findById(req.params.id)
           .populate({
             path: 'ticket',
@@ -262,6 +252,14 @@ module.exports = {
             }
           });
           
+          if(newBooking.seller) {
+            const user = await User.findById(newBooking.seller);
+            if(user && user.hasUsedFirstDiscount) {
+              user.hasUsedFirstDiscount = true;
+              await user.save();
+            }
+          }
+
           const destination = { from: newBooking.from, to: newBooking.to };
           const dateString = findDate(newBooking.ticket, newBooking.fromCode, newBooking.toCode)
           const dateTime = { date: dateString, time: findTime(newBooking.ticket, newBooking.fromCode, newBooking.toCode) };
