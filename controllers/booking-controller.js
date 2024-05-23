@@ -252,11 +252,13 @@ module.exports = {
             }
           });
           
-          if(newBooking.seller) {
-            const user = await User.findById(newBooking.seller);
-            if(user && user.hasUsedFirstDiscount) {
-              user.hasUsedFirstDiscount = true;
-              await user.save();
+          if(newBooking && newBooking.buyer) {
+            const user = await User.findById(newBooking.buyer).select('hasUsedFirstDiscount index');
+            if(user && user.index < 2001) {
+              if(!user.hasUsedFirstDiscount) {
+                user.hasUsedFirstDiscount = true;
+                await user.save();
+              }
             }
           }
 
