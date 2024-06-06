@@ -14,6 +14,7 @@ const bookingSchema = mongoose.Schema({
         ref: 'Ticket'
     },
     date: { type: Date },
+    departureDate: { type: Date },
     from: { type: String },
     to: { type: String },
     fromCode: { type: String },

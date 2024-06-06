@@ -170,6 +170,7 @@ module.exports = {
         lineCode: new mongoose.Types.ObjectId(ticket.lineCode._id),
         firstname: req.body.firstname,
         date: dateValue,
+        departureDate: new Date(findDate(ticket, req.body.from.code, req.body.to.code)) || null,
         from: req.body.from.value,
         to: req.body.to.value,
         fromCode: req.body.from.code,
@@ -252,31 +253,36 @@ module.exports = {
             }
           });
           
-          if(newBooking && newBooking.buyer) {
-            const user = await User.findById(newBooking.buyer).select('hasUsedFirstDiscount index');
-            if(user && user.index < 2001) {
-              if(!user.hasUsedFirstDiscount) {
-                user.hasUsedFirstDiscount = true;
-                await user.save();
+          if(!newBooking.isPaid) {
+            if(newBooking && newBooking.buyer) {
+              const user = await User.findById(newBooking.buyer).select('hasUsedFirstDiscount index');
+              if(user && user.index < 2001) {
+                if(!user.hasUsedFirstDiscount) {
+                  user.hasUsedFirstDiscount = true;
+                  await user.save();
+                }
               }
             }
+  
+            const destination = { from: newBooking.from, to: newBooking.to };
+            const dateString = findDate(newBooking.ticket, newBooking.fromCode, newBooking.toCode)
+            const dateTime = { date: dateString, time: findTime(newBooking.ticket, newBooking.fromCode, newBooking.toCode) };
+  
+            console.log({destination, dateString, dateTime})
+            const emailSent = await generateQRCode(newBooking._id.toString(), newBooking.passengers, destination, dateTime,new Date(dateString).toDateString(), newBooking.ticket?.lineCode?.freeLuggages, req.params.tid);
+            if(!emailSent) {
+              return res.status(403).json("error sending email")
+            }
+            console.log({newBooking})
+            await Booking.findByIdAndUpdate(req.params.id, { $set: { isPaid: true, transaction_id: req.params.tid } })
+            return res.status(200).json("Paid");
           }
 
-          const destination = { from: newBooking.from, to: newBooking.to };
-          const dateString = findDate(newBooking.ticket, newBooking.fromCode, newBooking.toCode)
-          const dateTime = { date: dateString, time: findTime(newBooking.ticket, newBooking.fromCode, newBooking.toCode) };
+          return res.status(403).json("Booking is already paid")
 
-          console.log({destination, dateString, dateTime})
-          const emailSent = await generateQRCode(newBooking._id.toString(), newBooking.passengers, destination, dateTime,new Date(dateString).toDateString(), newBooking.ticket?.lineCode?.freeLuggages, req.params.tid);
-          if(!emailSent) {
-            return res.status(403).json("error sending email")
-          }
-          console.log({newBooking})
-          await Booking.findByIdAndUpdate(req.params.id, { $set: { isPaid: true, transaction_id: req.params.tid } })
-          return res.status(200).json("Paid");
         } catch (error) {
           console.log(error);
-          res.status(500).json({ message: `Server error -> ${error}` });
+          return res.status(500).json({ message: `Server error -> ${error}` });
         }
       },
       
