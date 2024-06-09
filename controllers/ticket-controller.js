@@ -219,13 +219,15 @@ module.exports = {
       getSearchedTickets: async (req,res) => {
         try {
           let page = Number(req.query.page) || 1;
-          let size = Number(8);
+          let size = Number(req.query.size) || 8;
           const skipCount = (page - 1) * size;
       
           const europeBerlinTimezone = 'Europe/Berlin';
           const currentDateFormatted = moment().tz(europeBerlinTimezone).startOf('day').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
           const currentTimeFormatted = moment().tz(europeBerlinTimezone).format('HH:mm');
-          console.log({currentDateFormatted})
+          
+          console.log({ currentDateFormatted });
+      
           const distinctTicketIds = await Ticket.distinct('_id', {
             $or: [
               {
@@ -253,25 +255,30 @@ module.exports = {
             {
               $limit: size,
             },
-          ])
+          ]);
       
-          const filteredTickets = uniqueTickets.filter((ticket) => {
-            const ticketDateTime = moment(`${findDate(ticket, req.query.from, req.query.to)} ${findTime(ticket, req.query.from, req.query.to)}`, 'YYYY-MM-DD HH:mm');
-            const currentDateTime = moment(`${currentDateFormatted} ${currentTimeFormatted}`, 'YYYY-MM-DD HH:mm').tz(europeBerlinTimezone);
-            console.log({after: currentDateTime.isAfter(ticketDateTime), currentDateTime, ticketDateTime})
-            return currentDateTime.isAfter(ticketDateTime);
-        });
-
-          const remainingTickets = uniqueTickets.filter((ticket) => !filteredTickets.includes(ticket));
+          const filteredTickets = uniqueTickets.map(ticket => {
+            const matchingStopIndex = ticket.stops.findIndex(stop =>
+              stop.from.some(location => location.code === req.query.from) &&
+              stop.to.some(location => location.code === req.query.to)
+            );
       
-          if (remainingTickets.length == 0) {
+            if (matchingStopIndex !== -1) {
+              const matchingStop = ticket.stops[matchingStopIndex];
+              return { ...ticket, stops: [matchingStop] };
+            } else {
+              return null;
+            }
+          }).filter(Boolean);
+      
+          if (filteredTickets.length === 0) {
             return res.status(204).json("no routes found");
           }
       
-          return res.status(200).json(remainingTickets);
+          return res.status(200).json(filteredTickets);
         } catch (error) {
           console.error(error);
-          res.status(500).json({ message: "Internal error -> " + error });
+          return res.status(500).json({ message: "Internal error -> " + error });
         }
       },
 
