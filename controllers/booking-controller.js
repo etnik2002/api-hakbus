@@ -254,15 +254,15 @@ module.exports = {
           });
           
           if(!newBooking.isPaid) {
-            if(newBooking && newBooking.buyer) {
-              const user = await User.findById(newBooking.buyer).select('hasUsedFirstDiscount index');
-              if(user && user.index < 2001) {
-                if(!user.hasUsedFirstDiscount) {
-                  user.hasUsedFirstDiscount = true;
-                  await user.save();
-                }
-              }
-            }
+            // if(newBooking && newBooking.buyer) {
+            //   const user = await User.findById(newBooking.buyer).select('hasUsedFirstDiscount index');
+            //   if(user && user.index < 2001) {
+            //     if(!user.hasUsedFirstDiscount) {
+            //       user.hasUsedFirstDiscount = true;
+            //       await user.save();
+            //     }
+            //   }
+            // }
   
             const destination = { from: newBooking.from, to: newBooking.to };
             const dateString = findDate(newBooking.ticket, newBooking.fromCode, newBooking.toCode)
