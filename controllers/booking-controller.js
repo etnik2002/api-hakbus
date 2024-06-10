@@ -184,10 +184,8 @@ module.exports = {
         platform: req.body.platform,
       });
   
-      await newBooking.save().then(async () => {
-          await Ticket.findByIdAndUpdate(req.params.ticketID, {
-            $inc: { numberOfTickets: -numberOfPsg },
-          });
+      await newBooking.save().then(() => {
+        console.log("Booking created");
       });
       
       // const destination = { from: req.body.from.value, to: req.body.to.value };
@@ -263,6 +261,9 @@ module.exports = {
             //     }
             //   }
             // }
+            await Ticket.findByIdAndUpdate(newBooking?.ticket?._id, {
+              $inc: { numberOfTickets: -numberOfPsg },
+            });
   
             const destination = { from: newBooking.from, to: newBooking.to };
             const dateString = findDate(newBooking.ticket, newBooking.fromCode, newBooking.toCode)
