@@ -228,22 +228,48 @@ module.exports = {
           
           console.log({ currentDateFormatted });
       
-          const distinctTicketIds = await Ticket.distinct('_id', {
-            $or: [
-              {
-                'stops.from.code': req.query.from,
-                'stops.to.code': req.query.to,
-              }
-            ]
-          });
+          // const distinctTicketIds = await Ticket.distinct('_id', {
+          //   $or: [
+          //     {
+          //       'stops.from.code': req.query.from,
+          //       'stops.to.code': req.query.to,
+          //     }
+          //   ]
+          // });
       
           const uniqueTickets = await Ticket.aggregate([
             {
               $match: {
-                _id: { $in: distinctTicketIds },
+                'stops.from.code': req.query.from,
+                'stops.to.code': req.query.to,
                 date: { $gte: currentDateFormatted },
                 numberOfTickets: { $gt: 0 },
                 isActive: true
+              }
+            },
+            {
+              $project: {
+                _id: 1,
+                lineCode: 1,
+                from: 1,
+                to: 1,
+                date: 1,
+                time: 1,
+                type: 1,
+                numberOfTickets: 1,
+                isActive: 1,
+                stops: {
+                  $filter: {
+                    input: '$stops',
+                    as: 'stop',
+                    cond: {
+                      $and: [
+                        { $anyElementTrue: { $map: { input: '$$stop.from', as: 'from', in: { $eq: ['$$from.code', req.query.from] } } } },
+                        { $anyElementTrue: { $map: { input: '$$stop.to', as: 'to', in: { $eq: ['$$to.code', req.query.to] } } } }
+                      ]
+                    }
+                  }
+                }
               }
             },
             {
@@ -254,7 +280,7 @@ module.exports = {
             },
             {
               $limit: size,
-            },
+            }
           ]);
       
           const filteredTickets = uniqueTickets.filter((ticket) => {
