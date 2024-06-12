@@ -261,8 +261,11 @@ module.exports = {
             //     }
             //   }
             // }
+
+            const numberOfPsg = req.body.psg || req.query.psg;
+            const psg = numberOfPsg || 1;
             await Ticket.findByIdAndUpdate(newBooking?.ticket?._id, {
-              $inc: { numberOfTickets: -numberOfPsg },
+              $inc: { numberOfTickets: -psg },
             });
   
             const destination = { from: newBooking.from, to: newBooking.to };
